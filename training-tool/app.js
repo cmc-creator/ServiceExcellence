@@ -125,6 +125,120 @@ const roleLessonIntros = {
     "Leadership focus: model standards visibly, coach teams in real time, and escalate concerns with accountability.",
 };
 
+const roleDepartmentSpotlights = {
+  clinical: [
+    {
+      title: "Nursing Example",
+      points: [
+        "During intake stress, acknowledge family frustration before discussing throughput.",
+        "Use calm tone and clear next-step timing to reduce escalation risk.",
+      ],
+    },
+    {
+      title: "Nursing Unit Conduct Example",
+      points: [
+        "Stop disrespectful language immediately and redirect to professional communication.",
+        "Document repeated behavior concerns through approved reporting channels.",
+      ],
+    },
+    {
+      title: "Clinical Privacy Example",
+      points: [
+        "Discuss patient details only in private settings with care-relevant staff.",
+        "Avoid hallway updates that expose sensitive psychiatric information.",
+      ],
+    },
+    {
+      title: "Safety Reporting Example",
+      points: [
+        "Escalate missing safety-plan documentation as a reportable reliability event.",
+        "Capture facts quickly to support immediate corrective action.",
+      ],
+    },
+    {
+      title: "Handoff Example",
+      points: [
+        "Use closed-loop read-back for suicide risk triggers and observation level changes.",
+        "Confirm receiving clinician repeats key risks and follow-up tasks.",
+      ],
+    },
+  ],
+  nonclinical: [
+    {
+      title: "Admissions Example",
+      points: [
+        "Set clear expectations for wait times and check back proactively.",
+        "Use empathy statements before process explanations.",
+      ],
+    },
+    {
+      title: "EVS and Support Services Conduct Example",
+      points: [
+        "Maintain respectful language in all shared spaces, even under pressure.",
+        "Report recurring disrespectful conduct through the same channels as clinical teams.",
+      ],
+    },
+    {
+      title: "Front Desk Privacy Example",
+      points: [
+        "Verify caller authorization before confirming patient presence.",
+        "Share only minimum necessary details aligned to policy.",
+      ],
+    },
+    {
+      title: "Operational Reporting Example",
+      points: [
+        "If you see compliance drift, report facts instead of assuming someone else will.",
+        "Protect non-retaliation by using formal pathways.",
+      ],
+    },
+    {
+      title: "Cross-Team Handoff Example",
+      points: [
+        "Transfer requests with accurate context, not partial summaries.",
+        "Confirm receiving team understands urgency and required actions.",
+      ],
+    },
+  ],
+  leadership: [
+    {
+      title: "Leadership Rounding Example",
+      points: [
+        "Coach staff in real time on empathy language and service recovery behaviors.",
+        "Reinforce expectation: ownership first, excuses never first.",
+      ],
+    },
+    {
+      title: "Leadership Conduct Example",
+      points: [
+        "Address policy violations consistently across all departments.",
+        "Model visible accountability to set culture standards.",
+      ],
+    },
+    {
+      title: "Leadership Privacy Oversight",
+      points: [
+        "Audit high-risk communication zones and correct privacy drift quickly.",
+        "Ensure minimum-necessary rules are practiced, not just documented.",
+      ],
+    },
+    {
+      title: "Escalation Governance Example",
+      points: [
+        "Do not suppress reportable concerns for optics.",
+        "Track corrective actions and close the loop with documented outcomes.",
+      ],
+    },
+    {
+      title: "Reliability Leadership Example",
+      points: [
+        "Require handoff read-back norms in daily operations.",
+        "Monitor misses and coach teams on prevention patterns.",
+      ],
+    },
+  ],
+};
+
 const coreLessons = [
   {
     title: "Lesson 1: Service Excellence Foundation",
@@ -329,6 +443,8 @@ const lessonProgressLabel = document.getElementById("lessonProgressLabel");
 const lessonProgressFill = document.getElementById("lessonProgressFill");
 const lessonRoleIntro = document.getElementById("lessonRoleIntro");
 const lessonBody = document.getElementById("lessonBody");
+const lessonSpotlightTitle = document.getElementById("lessonSpotlightTitle");
+const lessonSpotlightList = document.getElementById("lessonSpotlightList");
 const lessonCheckPrompt = document.getElementById("lessonCheckPrompt");
 const lessonChoices = document.getElementById("lessonChoices");
 const lessonFeedback = document.getElementById("lessonFeedback");
@@ -510,6 +626,7 @@ function renderLesson() {
   const lesson = coreLessons[state.lessonIndex];
   const lessonKey = `lesson-${state.lessonIndex}`;
   const attempts = state.lessonAttempts[lessonKey] || 0;
+  const spotlight = roleDepartmentSpotlights[state.role][state.lessonIndex];
 
   updateLessonRail();
 
@@ -517,6 +634,13 @@ function renderLesson() {
   lessonProgress.textContent = `Lesson ${state.lessonIndex + 1} of ${coreLessons.length}`;
   lessonRoleIntro.textContent = `${roleLabels[state.role]} track - ${roleLessonIntros[state.role]}`;
   lessonBody.textContent = lesson.body;
+  lessonSpotlightTitle.textContent = `${spotlight.title} - Lesson Application`;
+  lessonSpotlightList.innerHTML = "";
+  spotlight.points.forEach((point) => {
+    const li = document.createElement("li");
+    li.textContent = point;
+    lessonSpotlightList.appendChild(li);
+  });
   lessonCheckPrompt.textContent = lesson.check;
   lessonFeedback.className = "feedback hidden";
   nextLessonBtn.classList.add("hidden");

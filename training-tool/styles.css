@@ -137,6 +137,30 @@ h1 {
   transition: width 220ms ease;
 }
 
+.lesson-spotlight {
+  margin: 14px 0 16px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(8, 16, 35, 0.36);
+}
+
+.lesson-spotlight__title {
+  margin: 0 0 8px;
+  color: var(--accent-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lesson-spotlight__list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.45;
+  display: grid;
+  gap: 6px;
+}
+
 .lesson-step {
   width: 34px;
   height: 34px;
