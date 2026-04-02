@@ -325,6 +325,8 @@ const trackSummary = document.getElementById("trackSummary");
 const lessonTitle = document.getElementById("lessonTitle");
 const lessonProgress = document.getElementById("lessonProgress");
 const lessonRail = document.getElementById("lessonRail");
+const lessonProgressLabel = document.getElementById("lessonProgressLabel");
+const lessonProgressFill = document.getElementById("lessonProgressFill");
 const lessonRoleIntro = document.getElementById("lessonRoleIntro");
 const lessonBody = document.getElementById("lessonBody");
 const lessonCheckPrompt = document.getElementById("lessonCheckPrompt");
@@ -477,6 +479,9 @@ function buildRoleTrack() {
 function updateLessonRail() {
   if (!lessonRail) return;
   const steps = Array.from(lessonRail.querySelectorAll(".lesson-step"));
+  const completedCount = state.lessonPassed.size;
+  const percent = Math.round((completedCount / coreLessons.length) * 100);
+
   steps.forEach((step, index) => {
     const key = `lesson-${index}`;
     step.classList.remove("active", "complete");
@@ -491,6 +496,14 @@ function updateLessonRail() {
       step.classList.add("active");
     }
   });
+
+  if (lessonProgressLabel) {
+    lessonProgressLabel.textContent = `${completedCount} of ${coreLessons.length} lessons complete (${percent}%)`;
+  }
+
+  if (lessonProgressFill) {
+    lessonProgressFill.style.width = `${percent}%`;
+  }
 }
 
 function renderLesson() {
