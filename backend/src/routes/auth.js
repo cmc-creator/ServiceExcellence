@@ -17,7 +17,9 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
   }
 
-  const { email, password, organizationSlug } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
+  const password = parsed.data.password;
+  const organizationSlug = parsed.data.organizationSlug.trim().toLowerCase();
 
   const organization = await db.organization.findUnique({ where: { slug: organizationSlug } });
   if (!organization) {

@@ -7,9 +7,9 @@ function slugify(value) {
 }
 
 async function main() {
-  const orgName = process.env.DEFAULT_ORG_NAME || "Destiny Springs Healthcare";
-  const ownerEmail = (process.env.DEFAULT_OWNER_EMAIL || "owner@nyxarete.com").toLowerCase();
-  const ownerPassword = process.env.DEFAULT_OWNER_PASSWORD || "ChangeMeNow123!";
+  const orgName = (process.env.DEFAULT_ORG_NAME || "Destiny Springs Healthcare").trim();
+  const ownerEmail = (process.env.DEFAULT_OWNER_EMAIL || "owner@nyxarete.com").trim().toLowerCase();
+  const ownerPassword = (process.env.DEFAULT_OWNER_PASSWORD || "ChangeMeNow123!").trim();
   const slug = slugify(orgName);
 
   const org = await db.organization.upsert({
