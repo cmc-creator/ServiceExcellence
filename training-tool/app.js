@@ -446,6 +446,7 @@ function trackEvent(verb, detail = {}) {
 function showPanel(key) {
   Object.values(panels).forEach((p) => p.classList.add("hidden"));
   panels[key].classList.remove("hidden");
+  timerChip.classList.toggle("hidden", key !== "lightning");
 }
 
 function updateHUD() {
