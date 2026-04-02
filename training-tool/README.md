@@ -46,6 +46,18 @@ Use these with your LMS vendor or internal team to publish completion, scoring, 
 - Master script: `content/master-facilitation-script.md`
 - Production pack: `content/production-content-pack.md`
 
+## Backend Integration
+
+- Backend service docs: `../backend/README.md`
+- Frontend connection setup: `docs/backend-connection.md`
+
+Set runtime config in browser local storage:
+
+```javascript
+localStorage.setItem("nyxApiBase", "https://your-backend-domain")
+localStorage.setItem("nyxOrgSlug", "destint-springs-healthcare")
+```
+
 ## Next Production Steps
 
 - Migrate content into role-based learning paths

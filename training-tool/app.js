@@ -13,7 +13,97 @@ const state = {
   activeScenarios: [],
   finalized: false,
   pass: false,
+  attemptId: null,
+  learnerEmail: null,
+  learnerName: null,
 };
+
+const API_BASE =
+  localStorage.getItem("nyxApiBase") ||
+  window.NYX_API_BASE ||
+  "";
+
+const ORG_SLUG =
+  localStorage.getItem("nyxOrgSlug") ||
+  "destint-springs-healthcare";
+
+async function apiRequest(path, options = {}) {
+  if (!API_BASE) return null;
+
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      method: options.method || "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function getLearnerIdentity() {
+  const cachedEmail = localStorage.getItem("nyxLearnerEmail");
+  const cachedName = localStorage.getItem("nyxLearnerName");
+
+  const email = cachedEmail || `learner-${crypto.randomUUID().slice(0, 8)}@example.local`;
+  const name = cachedName || "Training Learner";
+
+  localStorage.setItem("nyxLearnerEmail", email);
+  localStorage.setItem("nyxLearnerName", name);
+
+  return { email, name };
+}
+
+async function startBackendAttempt() {
+  const identity = getLearnerIdentity();
+  state.learnerEmail = identity.email;
+  state.learnerName = identity.name;
+
+  const payload = {
+    organizationSlug: ORG_SLUG,
+    courseCode: "SE-COC-ANNUAL",
+    courseVersion: "2026.1",
+    learnerEmail: identity.email,
+    learnerName: identity.name,
+    roleTrack: state.role,
+  };
+
+  const result = await apiRequest("/api/training/start", {
+    method: "POST",
+    body: payload,
+  });
+
+  if (result?.attemptId) {
+    state.attemptId = result.attemptId;
+  }
+}
+
+async function pushEventToBackend(verb, detail) {
+  if (!state.attemptId) return;
+
+  await apiRequest("/api/training/event", {
+    method: "POST",
+    body: {
+      attemptId: state.attemptId,
+      verb,
+      payload: {
+        detail,
+        score: state.score,
+        roleTrack: state.role,
+        timestamp: new Date().toISOString(),
+      },
+    },
+  });
+}
 
 const roleLabels = {
   clinical: "Clinical Staff",
@@ -281,6 +371,7 @@ function trackEvent(verb, detail = {}) {
     detail,
   };
   state.trackingEvents.push(event);
+  pushEventToBackend(verb, detail);
 }
 
 function showPanel(key) {
@@ -558,9 +649,22 @@ function submitCompletion() {
   state.finalized = true;
   trackEvent("submitted-completion", { assessmentPercent: assessmentPct, successStatus });
 
-  submissionStatus.textContent = scorm.initialized
-    ? "Completion submitted to LMS successfully."
-    : "Completion saved locally. LMS was not connected in this session.";
+  Promise.resolve(
+    apiRequest("/api/training/complete", {
+      method: "POST",
+      body: {
+        attemptId: state.attemptId,
+        scorePercent: assessmentPct,
+        scoreRaw: state.assessmentCorrect,
+        scoreMax: finalAssessment.length,
+        attested: true,
+      },
+    })
+  ).finally(() => {
+    submissionStatus.textContent = scorm.initialized
+      ? "Completion submitted to LMS successfully."
+      : "Completion saved locally. LMS was not connected in this session.";
+  });
 }
 
 function resetExperience() {
@@ -604,9 +708,10 @@ function exportTracking() {
   URL.revokeObjectURL(link.href);
 }
 
-document.getElementById("startBtn").addEventListener("click", () => {
+document.getElementById("startBtn").addEventListener("click", async () => {
   state.role = roleSelect.value;
   buildRoleTrack();
+  await startBackendAttempt();
   trackEvent("started-training", { role: state.role });
   showPanel("map");
   saveSuspendData();

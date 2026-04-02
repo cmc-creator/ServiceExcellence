@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  PASSED
+  FAILED
+}
+
+model Organization {
+  id             String        @id @default(cuid())
+  name           String
+  slug           String        @unique
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  users          User[]
+  learners       Learner[]
+  courses        Course[]
+  enrollments    Enrollment[]
+  attempts       Attempt[]
+  events         TrainingEvent[]
+  certificates   Certificate[]
+}
+
+model User {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  fullName       String
+  passwordHash   String
+  role           UserRole      @default(STAFF)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([organizationId, email])
+}
+
+model Learner {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId     String?
+  email          String
+  fullName       String
+  department     String?
+  roleTrack      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  enrollments    Enrollment[]
+  attempts       Attempt[]
+  certificates   Certificate[]
+
+  @@unique([organizationId, email])
+}
+
+model Course {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  title          String
+  version        String
+  passPercent    Int           @default(80)
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  enrollments    Enrollment[]
+  attempts       Attempt[]
+  events         TrainingEvent[]
+  certificates   Certificate[]
+
+  @@unique([organizationId, code, version])
+}
+
+model Enrollment {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  learnerId      String
+  learner        Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt     DateTime      @default(now())
+  dueDate        DateTime?
+  completedAt    DateTime?
+
+  @@unique([organizationId, learnerId, courseId])
+}
+
+model Attempt {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  learnerId      String
+  learner        Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  startedAt      DateTime      @default(now())
+  submittedAt    DateTime?
+  status         AttemptStatus @default(IN_PROGRESS)
+  scorePercent   Int?
+  scoreRaw       Int?
+  scoreMax       Int?
+  roleTrack      String?
+  attested       Boolean       @default(false)
+  lmsSessionId   String?
+  events         TrainingEvent[]
+  certificate    Certificate?
+}
+
+model TrainingEvent {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  learnerId      String?
+  learner        Learner?      @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+  attemptId      String?
+  attempt        Attempt?      @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  verb           String
+  payload        Json
+  createdAt      DateTime      @default(now())
+}
+
+model Certificate {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  learnerId      String
+  learner        Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attemptId      String        @unique
+  attempt        Attempt       @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  issuedAt       DateTime      @default(now())
+  certificateNo  String        @unique
+}
