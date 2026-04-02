@@ -1,5 +1,5 @@
 const state = {
-  role: "clinical",
+  role: "clinical-staff",
   score: 0,
   streak: 0,
   lessonIndex: 0,
@@ -21,6 +21,32 @@ const state = {
   learnerEmail: null,
   learnerName: null,
 };
+
+const ROLE_CONFIG_KEY = "nyxRoleConfigs";
+
+const defaultRoleConfigs = [
+  {
+    id: "clinical-staff",
+    name: "Clinical Staff",
+    persona: "clinical",
+    departments: ["Nursing", "Behavioral Health"],
+  },
+  {
+    id: "nonclinical-staff",
+    name: "Non-Clinical Staff",
+    persona: "nonclinical",
+    departments: ["Admissions", "Support Services"],
+  },
+  {
+    id: "leadership-supervisors",
+    name: "Leaders and Supervisors",
+    persona: "leadership",
+    departments: ["Management", "Operations"],
+  },
+];
+
+let roleConfigs = [];
+let editingRoleId = null;
 
 const API_BASE =
   localStorage.getItem("nyxApiBase") ||
@@ -79,7 +105,7 @@ async function startBackendAttempt() {
     courseVersion: "2026.1",
     learnerEmail: identity.email,
     learnerName: identity.name,
-    roleTrack: state.role,
+    roleTrack: getCurrentRoleName(),
   };
 
   const result = await apiRequest("/api/training/start", {
@@ -103,7 +129,8 @@ async function pushEventToBackend(verb, detail) {
       payload: {
         detail,
         score: state.score,
-        roleTrack: state.role,
+        roleTrack: getCurrentRoleName(),
+        rolePersona: getCurrentRolePersona(),
         timestamp: new Date().toISOString(),
       },
     },
@@ -115,6 +142,47 @@ const roleLabels = {
   nonclinical: "Non-Clinical Staff",
   leadership: "Leaders and Supervisors",
 };
+
+function slugifyRoleId(value) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 42);
+}
+
+function loadRoleConfigs() {
+  const raw = localStorage.getItem(ROLE_CONFIG_KEY);
+  if (!raw) return [...defaultRoleConfigs];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return [...defaultRoleConfigs];
+    return parsed.filter((item) => item?.id && item?.name && item?.persona);
+  } catch {
+    return [...defaultRoleConfigs];
+  }
+}
+
+function saveRoleConfigs() {
+  localStorage.setItem(ROLE_CONFIG_KEY, JSON.stringify(roleConfigs));
+}
+
+function getCurrentRoleConfig() {
+  return roleConfigs.find((item) => item.id === state.role) || roleConfigs[0] || defaultRoleConfigs[0];
+}
+
+function getCurrentRoleName() {
+  return getCurrentRoleConfig().name;
+}
+
+function getCurrentRolePersona() {
+  return getCurrentRoleConfig().persona;
+}
+
+function getCurrentRoleDepartments() {
+  return getCurrentRoleConfig().departments || [];
+}
 
 const roleLessonIntros = {
   clinical:
@@ -426,6 +494,7 @@ const finalAssessment = [
 
 const panels = {
   welcome: document.getElementById("welcomePanel"),
+  roleConfig: document.getElementById("roleConfigPanel"),
   map: document.getElementById("mapPanel"),
   lesson: document.getElementById("lessonPanel"),
   scenario: document.getElementById("scenarioPanel"),
@@ -435,6 +504,17 @@ const panels = {
 };
 
 const roleSelect = document.getElementById("roleSelect");
+const configureRolesBtn = document.getElementById("configureRolesBtn");
+const roleConfigPanel = document.getElementById("roleConfigPanel");
+const roleList = document.getElementById("roleList");
+const roleEditorTitle = document.getElementById("roleEditorTitle");
+const roleNameInput = document.getElementById("roleNameInput");
+const rolePersonaSelect = document.getElementById("rolePersonaSelect");
+const roleDepartmentsInput = document.getElementById("roleDepartmentsInput");
+const saveRoleBtn = document.getElementById("saveRoleBtn");
+const clearRoleFormBtn = document.getElementById("clearRoleFormBtn");
+const closeRoleConfigBtn = document.getElementById("closeRoleConfigBtn");
+const roleConfigStatus = document.getElementById("roleConfigStatus");
 const trackSummary = document.getElementById("trackSummary");
 const lessonTitle = document.getElementById("lessonTitle");
 const lessonProgress = document.getElementById("lessonProgress");
@@ -566,7 +646,8 @@ function trackEvent(verb, detail = {}) {
   const event = {
     timestamp: new Date().toISOString(),
     actor: "employee",
-    roleTrack: state.role,
+    roleTrack: getCurrentRoleName(),
+    rolePersona: getCurrentRolePersona(),
     verb,
     score: state.score,
     detail,
@@ -588,8 +669,131 @@ function updateHUD() {
 }
 
 function buildRoleTrack() {
-  state.activeScenarios = scenarios.filter((item) => item.roles.includes(state.role));
-  trackSummary.textContent = `${roleLabels[state.role]} track includes ${coreLessons.length} core lessons and ${state.activeScenarios.length} tailored scenarios.`;
+  const persona = getCurrentRolePersona();
+  const roleName = getCurrentRoleName();
+  state.activeScenarios = scenarios.filter((item) => item.roles.includes(persona));
+  trackSummary.textContent = `${roleName} includes ${coreLessons.length} core lessons and ${state.activeScenarios.length} tailored scenarios.`;
+}
+
+function renderRoleSelect() {
+  roleSelect.innerHTML = "";
+  roleConfigs.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = item.name;
+    roleSelect.appendChild(option);
+  });
+
+  if (!roleConfigs.some((item) => item.id === state.role)) {
+    state.role = roleConfigs[0]?.id || defaultRoleConfigs[0].id;
+  }
+  roleSelect.value = state.role;
+}
+
+function clearRoleEditor(message = "") {
+  editingRoleId = null;
+  roleEditorTitle.textContent = "Add New Role";
+  roleNameInput.value = "";
+  rolePersonaSelect.value = "clinical";
+  roleDepartmentsInput.value = "";
+  roleConfigStatus.textContent = message;
+}
+
+function renderRoleList() {
+  roleList.innerHTML = "";
+  roleConfigs.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "role-item";
+
+    const heading = document.createElement("h4");
+    heading.textContent = item.name;
+    card.appendChild(heading);
+
+    const meta = document.createElement("p");
+    meta.textContent = `Base track: ${roleLabels[item.persona]} | Departments: ${(item.departments || []).join(", ") || "None"}`;
+    card.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "cta-row";
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn btn-secondary btn-sm";
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", () => {
+      editingRoleId = item.id;
+      roleEditorTitle.textContent = "Edit Role";
+      roleNameInput.value = item.name;
+      rolePersonaSelect.value = item.persona;
+      roleDepartmentsInput.value = (item.departments || []).join(", ");
+      roleConfigStatus.textContent = "Editing role. Save to apply updates.";
+    });
+    actions.appendChild(editBtn);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn btn-secondary btn-sm";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.addEventListener("click", () => {
+      if (roleConfigs.length <= 1) {
+        roleConfigStatus.textContent = "At least one role is required.";
+        return;
+      }
+      roleConfigs = roleConfigs.filter((cfg) => cfg.id !== item.id);
+      if (state.role === item.id) {
+        state.role = roleConfigs[0].id;
+      }
+      saveRoleConfigs();
+      renderRoleSelect();
+      renderRoleList();
+      buildRoleTrack();
+      clearRoleEditor("Role deleted.");
+    });
+    actions.appendChild(deleteBtn);
+
+    card.appendChild(actions);
+    roleList.appendChild(card);
+  });
+}
+
+function upsertRoleFromForm() {
+  const name = roleNameInput.value.trim();
+  if (!name) {
+    roleConfigStatus.textContent = "Role name is required.";
+    return;
+  }
+
+  const persona = rolePersonaSelect.value;
+  const departments = roleDepartmentsInput.value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (editingRoleId) {
+    roleConfigs = roleConfigs.map((item) =>
+      item.id === editingRoleId ? { ...item, name, persona, departments } : item,
+    );
+    if (state.role === editingRoleId) state.role = editingRoleId;
+    saveRoleConfigs();
+    renderRoleSelect();
+    renderRoleList();
+    buildRoleTrack();
+    clearRoleEditor("Role updated.");
+    return;
+  }
+
+  let id = slugifyRoleId(name) || `role-${Date.now()}`;
+  let suffix = 1;
+  while (roleConfigs.some((item) => item.id === id)) {
+    id = `${slugifyRoleId(name)}-${suffix}`;
+    suffix += 1;
+  }
+
+  roleConfigs.push({ id, name, persona, departments });
+  state.role = id;
+  saveRoleConfigs();
+  renderRoleSelect();
+  renderRoleList();
+  buildRoleTrack();
+  clearRoleEditor("Role created.");
 }
 
 function updateLessonRail() {
@@ -626,16 +830,23 @@ function renderLesson() {
   const lesson = coreLessons[state.lessonIndex];
   const lessonKey = `lesson-${state.lessonIndex}`;
   const attempts = state.lessonAttempts[lessonKey] || 0;
-  const spotlight = roleDepartmentSpotlights[state.role][state.lessonIndex];
+  const persona = getCurrentRolePersona();
+  const spotlight = roleDepartmentSpotlights[persona][state.lessonIndex];
+  const facilityDepartments = getCurrentRoleDepartments();
 
   updateLessonRail();
 
   lessonTitle.textContent = lesson.title;
   lessonProgress.textContent = `Lesson ${state.lessonIndex + 1} of ${coreLessons.length}`;
-  lessonRoleIntro.textContent = `${roleLabels[state.role]} track - ${roleLessonIntros[state.role]}`;
+  lessonRoleIntro.textContent = `${getCurrentRoleName()} - ${roleLessonIntros[persona]}`;
   lessonBody.textContent = lesson.body;
   lessonSpotlightTitle.textContent = `${spotlight.title} - Lesson Application`;
   lessonSpotlightList.innerHTML = "";
+  if (facilityDepartments.length > 0) {
+    const deptLine = document.createElement("li");
+    deptLine.textContent = `Facility departments for this role: ${facilityDepartments.join(", ")}.`;
+    lessonSpotlightList.appendChild(deptLine);
+  }
   spotlight.points.forEach((point) => {
     const li = document.createElement("li");
     li.textContent = point;
@@ -902,7 +1113,7 @@ function renderResults() {
   if (pass) state.badges.add("Compliance Guardian");
   if (state.score >= 170) state.badges.add("Patient Experience Champion");
 
-  resultSummary.textContent = `Track: ${roleLabels[state.role]}. Final Score: ${state.score}. Assessment: ${assessmentPct}% (${state.assessmentCorrect}/${finalAssessment.length}). Tier: ${level}. Annual status: ${pass ? "PASS" : "REMEDIATE"}.`;
+  resultSummary.textContent = `Track: ${getCurrentRoleName()}. Final Score: ${state.score}. Assessment: ${assessmentPct}% (${state.assessmentCorrect}/${finalAssessment.length}). Tier: ${level}. Annual status: ${pass ? "PASS" : "REMEDIATE"}.`;
 
   badgeRow.innerHTML = "";
   Array.from(state.badges).forEach((name) => {
@@ -1052,6 +1263,21 @@ document.getElementById("overviewBtn").addEventListener("click", () => {
   showPanel("map");
 });
 
+configureRolesBtn.addEventListener("click", () => {
+  showPanel("roleConfig");
+  renderRoleList();
+  clearRoleEditor("");
+});
+
+closeRoleConfigBtn.addEventListener("click", () => {
+  buildRoleTrack();
+  showPanel("welcome");
+});
+
+saveRoleBtn.addEventListener("click", upsertRoleFromForm);
+
+clearRoleFormBtn.addEventListener("click", () => clearRoleEditor("Editor cleared."));
+
 document.getElementById("beginScenarioBtn").addEventListener("click", () => {
   showPanel("lesson");
   state.lessonIndex = 0;
@@ -1094,6 +1320,8 @@ window.addEventListener("beforeunload", () => {
   scormTerminate();
 });
 
-initScorm();
+roleConfigs = loadRoleConfigs();
+renderRoleSelect();
 buildRoleTrack();
+initScorm();
 updateHUD();

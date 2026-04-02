@@ -35,15 +35,48 @@
       </p>
       <div class="field-row">
         <label for="roleSelect">Select your role track</label>
-        <select id="roleSelect" class="input-glass">
-          <option value="clinical">Clinical Staff</option>
-          <option value="nonclinical">Non-Clinical Staff</option>
-          <option value="leadership">Leaders and Supervisors</option>
-        </select>
+        <select id="roleSelect" class="input-glass"></select>
       </div>
       <div class="cta-row">
         <button class="btn btn-primary" id="startBtn">Start Experience</button>
         <button class="btn btn-secondary" id="overviewBtn">View Learning Map</button>
+        <button class="btn btn-secondary" id="configureRolesBtn">Facility Role Builder</button>
+      </div>
+    </section>
+
+    <section class="panel glass hidden" id="roleConfigPanel">
+      <h2>Facility Role Builder</h2>
+      <p class="muted">Create role names that match your facility. Each role is mapped to a base training track.</p>
+      <div class="role-config-grid">
+        <div>
+          <h3 class="role-config-subtitle">Current Roles</h3>
+          <div id="roleList" class="role-list"></div>
+        </div>
+        <div>
+          <h3 class="role-config-subtitle" id="roleEditorTitle">Add New Role</h3>
+          <div class="field-row">
+            <label for="roleNameInput">Role name</label>
+            <input id="roleNameInput" class="input-glass" type="text" placeholder="Example: Behavioral Health RN">
+          </div>
+          <div class="field-row">
+            <label for="rolePersonaSelect">Base training track</label>
+            <select id="rolePersonaSelect" class="input-glass">
+              <option value="clinical">Clinical</option>
+              <option value="nonclinical">Non-Clinical</option>
+              <option value="leadership">Leadership</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <label for="roleDepartmentsInput">Department tags (comma separated)</label>
+            <input id="roleDepartmentsInput" class="input-glass" type="text" placeholder="Nursing, Intake, Admissions">
+          </div>
+          <div class="cta-row">
+            <button class="btn btn-primary" id="saveRoleBtn">Save Role</button>
+            <button class="btn btn-secondary" id="clearRoleFormBtn">Clear</button>
+            <button class="btn btn-secondary" id="closeRoleConfigBtn">Back to Welcome</button>
+          </div>
+          <p class="muted" id="roleConfigStatus"></p>
+        </div>
       </div>
     </section>
 
