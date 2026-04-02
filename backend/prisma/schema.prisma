@@ -62,6 +62,7 @@ model Learner {
   updatedAt      DateTime      @updatedAt
   enrollments    Enrollment[]
   attempts       Attempt[]
+  events         TrainingEvent[]
   certificates   Certificate[]
 
   @@unique([organizationId, email])
