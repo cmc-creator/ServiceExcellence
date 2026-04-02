@@ -11,7 +11,15 @@ const startSchema = z.object({
   learnerEmail: z.string().email(),
   learnerName: z.string().min(2),
   roleTrack: z.string().min(2),
+  rolePersona: z.enum(["clinical", "nonclinical", "leadership"]).optional(),
   lmsSessionId: z.string().optional(),
+});
+
+const roleUpsertSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2),
+  persona: z.enum(["clinical", "nonclinical", "leadership"]),
+  departments: z.array(z.string().min(1)).default([]),
 });
 
 const eventSchema = z.object({
@@ -174,6 +182,90 @@ router.post("/complete", async (req, res) => {
     status: updated.status,
     passed,
   });
+});
+
+router.get("/public/roles/:organizationSlug", async (req, res) => {
+  const org = await db.organization.findUnique({ where: { slug: req.params.organizationSlug } });
+  if (!org) {
+    return res.status(404).json({ error: "Organization not found" });
+  }
+
+  const roles = await db.facilityRole.findMany({
+    where: { organizationId: org.id },
+    orderBy: [{ name: "asc" }],
+  });
+
+  return res.json(roles);
+});
+
+router.post("/public/roles/:organizationSlug", async (req, res) => {
+  const parsed = roleUpsertSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+
+  const org = await db.organization.findUnique({ where: { slug: req.params.organizationSlug } });
+  if (!org) {
+    return res.status(404).json({ error: "Organization not found" });
+  }
+
+  let role;
+  if (parsed.data.id) {
+    role = await db.facilityRole.updateMany({
+      where: {
+        id: parsed.data.id,
+        organizationId: org.id,
+      },
+      data: {
+        name: parsed.data.name,
+        persona: parsed.data.persona,
+        departments: parsed.data.departments,
+      },
+    });
+
+    if (role.count === 0) {
+      return res.status(404).json({ error: "Role not found" });
+    }
+
+    const updated = await db.facilityRole.findUnique({ where: { id: parsed.data.id } });
+    return res.json(updated);
+  }
+
+  const created = await db.facilityRole.create({
+    data: {
+      organizationId: org.id,
+      name: parsed.data.name,
+      persona: parsed.data.persona,
+      departments: parsed.data.departments,
+    },
+  });
+
+  return res.status(201).json(created);
+});
+
+router.delete("/public/roles/:organizationSlug/:roleId", async (req, res) => {
+  const org = await db.organization.findUnique({ where: { slug: req.params.organizationSlug } });
+  if (!org) {
+    return res.status(404).json({ error: "Organization not found" });
+  }
+
+  const count = await db.facilityRole.count({ where: { organizationId: org.id } });
+  if (count <= 1) {
+    return res.status(400).json({ error: "At least one role is required" });
+  }
+
+  const deleted = await db.facilityRole.deleteMany({
+    where: {
+      id: req.params.roleId,
+      organizationId: org.id,
+    },
+  });
+
+  if (deleted.count === 0) {
+    return res.status(404).json({ error: "Role not found" });
+  }
+
+  return res.status(204).send();
 });
 
 router.get("/public/config/:organizationSlug", async (req, res) => {

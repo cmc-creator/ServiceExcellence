@@ -164,8 +164,47 @@ function loadRoleConfigs() {
   }
 }
 
+function syncLocalRoleCache() {
+  localStorage.setItem(ROLE_CONFIG_KEY, JSON.stringify(roleConfigs));
+}
+
 function saveRoleConfigs() {
   localStorage.setItem(ROLE_CONFIG_KEY, JSON.stringify(roleConfigs));
+}
+
+async function loadRoleConfigsFromBackend() {
+  const rows = await apiRequest(`/api/training/public/roles/${ORG_SLUG}`);
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return false;
+  }
+
+  roleConfigs = rows.map((item) => ({
+    id: item.id,
+    name: item.name,
+    persona: item.persona,
+    departments: Array.isArray(item.departments) ? item.departments : [],
+  }));
+  syncLocalRoleCache();
+  return true;
+}
+
+async function upsertRoleToBackend(payload) {
+  return apiRequest(`/api/training/public/roles/${ORG_SLUG}`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+async function deleteRoleFromBackend(roleId) {
+  if (!API_BASE) return false;
+  try {
+    const response = await fetch(`${API_BASE}/api/training/public/roles/${ORG_SLUG}/${roleId}`, {
+      method: "DELETE",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 function getCurrentRoleConfig() {
@@ -732,11 +771,18 @@ function renderRoleList() {
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "btn btn-secondary btn-sm";
     deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", () => {
+    deleteBtn.addEventListener("click", async () => {
       if (roleConfigs.length <= 1) {
         roleConfigStatus.textContent = "At least one role is required.";
         return;
       }
+
+      const deletedOnBackend = await deleteRoleFromBackend(item.id);
+      if (!deletedOnBackend && API_BASE) {
+        roleConfigStatus.textContent = "Could not delete role from backend.";
+        return;
+      }
+
       roleConfigs = roleConfigs.filter((cfg) => cfg.id !== item.id);
       if (state.role === item.id) {
         state.role = roleConfigs[0].id;
@@ -754,7 +800,7 @@ function renderRoleList() {
   });
 }
 
-function upsertRoleFromForm() {
+async function upsertRoleFromForm() {
   const name = roleNameInput.value.trim();
   if (!name) {
     roleConfigStatus.textContent = "Role name is required.";
@@ -768,15 +814,28 @@ function upsertRoleFromForm() {
     .filter(Boolean);
 
   if (editingRoleId) {
-    roleConfigs = roleConfigs.map((item) =>
-      item.id === editingRoleId ? { ...item, name, persona, departments } : item,
-    );
-    if (state.role === editingRoleId) state.role = editingRoleId;
-    saveRoleConfigs();
-    renderRoleSelect();
-    renderRoleList();
-    buildRoleTrack();
-    clearRoleEditor("Role updated.");
+    const updated = await upsertRoleToBackend({
+      id: editingRoleId,
+      name,
+      persona,
+      departments,
+    });
+
+    if (updated?.id) {
+      roleConfigs = roleConfigs.map((item) =>
+        item.id === editingRoleId ? { ...item, name: updated.name, persona: updated.persona, departments: updated.departments || [] } : item,
+      );
+      if (state.role === editingRoleId) state.role = editingRoleId;
+      saveRoleConfigs();
+      renderRoleSelect();
+      renderRoleList();
+      buildRoleTrack();
+      clearRoleEditor("Role updated.");
+    } else {
+      roleConfigStatus.textContent = API_BASE
+        ? "Could not update role in backend."
+        : "Backend not connected. Role updates require API connection.";
+    }
     return;
   }
 
@@ -787,13 +846,30 @@ function upsertRoleFromForm() {
     suffix += 1;
   }
 
+  const created = await upsertRoleToBackend({ name, persona, departments });
+  if (created?.id) {
+    roleConfigs.push({
+      id: created.id,
+      name: created.name,
+      persona: created.persona,
+      departments: Array.isArray(created.departments) ? created.departments : [],
+    });
+    state.role = created.id;
+    saveRoleConfigs();
+    renderRoleSelect();
+    renderRoleList();
+    buildRoleTrack();
+    clearRoleEditor("Role created.");
+    return;
+  }
+
   roleConfigs.push({ id, name, persona, departments });
   state.role = id;
   saveRoleConfigs();
   renderRoleSelect();
   renderRoleList();
   buildRoleTrack();
-  clearRoleEditor("Role created.");
+  clearRoleEditor("Backend unavailable. Role saved locally for this browser.");
 }
 
 function updateLessonRail() {
@@ -1320,8 +1396,18 @@ window.addEventListener("beforeunload", () => {
   scormTerminate();
 });
 
-roleConfigs = loadRoleConfigs();
-renderRoleSelect();
-buildRoleTrack();
-initScorm();
-updateHUD();
+async function bootstrap() {
+  roleConfigs = loadRoleConfigs();
+  const loadedFromBackend = await loadRoleConfigsFromBackend();
+
+  if (!loadedFromBackend && roleConfigs.length === 0) {
+    roleConfigs = [...defaultRoleConfigs];
+  }
+
+  renderRoleSelect();
+  buildRoleTrack();
+  initScorm();
+  updateHUD();
+}
+
+bootstrap();

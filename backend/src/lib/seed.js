@@ -67,6 +67,30 @@ async function main() {
     },
   });
 
+  await db.facilityRole.createMany({
+    data: [
+      {
+        organizationId: org.id,
+        name: "Clinical Staff",
+        persona: "clinical",
+        departments: ["Nursing", "Behavioral Health"],
+      },
+      {
+        organizationId: org.id,
+        name: "Non-Clinical Staff",
+        persona: "nonclinical",
+        departments: ["Admissions", "Support Services"],
+      },
+      {
+        organizationId: org.id,
+        name: "Leaders and Supervisors",
+        persona: "leadership",
+        departments: ["Management", "Operations"],
+      },
+    ],
+    skipDuplicates: true,
+  });
+
   console.log("Seed complete");
   console.log(`Organization slug: ${org.slug}`);
   console.log(`Owner email: ${ownerEmail}`);
