@@ -245,9 +245,29 @@ h1 {
 .footer-note {
   width: min(1100px, 94vw);
   margin: 0 auto 28px;
-  color: var(--muted);
-  font-size: 0.82rem;
+}
+
+.footer-note__inner {
+  padding: 14px 18px;
   text-align: center;
+}
+
+.footer-note__brand,
+.footer-note__legal {
+  margin: 0;
+  color: var(--muted);
+}
+
+.footer-note__brand {
+  font-size: 0.82rem;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.footer-note__legal {
+  font-size: 0.78rem;
+  opacity: 0.92;
 }
 
 @keyframes riseIn {
