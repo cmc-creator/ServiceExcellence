@@ -324,6 +324,7 @@ const roleSelect = document.getElementById("roleSelect");
 const trackSummary = document.getElementById("trackSummary");
 const lessonTitle = document.getElementById("lessonTitle");
 const lessonProgress = document.getElementById("lessonProgress");
+const lessonRail = document.getElementById("lessonRail");
 const lessonRoleIntro = document.getElementById("lessonRoleIntro");
 const lessonBody = document.getElementById("lessonBody");
 const lessonCheckPrompt = document.getElementById("lessonCheckPrompt");
@@ -473,10 +474,31 @@ function buildRoleTrack() {
   trackSummary.textContent = `${roleLabels[state.role]} track includes ${coreLessons.length} core lessons and ${state.activeScenarios.length} tailored scenarios.`;
 }
 
+function updateLessonRail() {
+  if (!lessonRail) return;
+  const steps = Array.from(lessonRail.querySelectorAll(".lesson-step"));
+  steps.forEach((step, index) => {
+    const key = `lesson-${index}`;
+    step.classList.remove("active", "complete");
+    step.textContent = String(index + 1);
+
+    if (state.lessonPassed.has(key)) {
+      step.classList.add("complete");
+      step.textContent = "✓";
+    }
+
+    if (index === state.lessonIndex && !state.lessonPassed.has(key)) {
+      step.classList.add("active");
+    }
+  });
+}
+
 function renderLesson() {
   const lesson = coreLessons[state.lessonIndex];
   const lessonKey = `lesson-${state.lessonIndex}`;
   const attempts = state.lessonAttempts[lessonKey] || 0;
+
+  updateLessonRail();
 
   lessonTitle.textContent = lesson.title;
   lessonProgress.textContent = `Lesson ${state.lessonIndex + 1} of ${coreLessons.length}`;
@@ -547,6 +569,7 @@ function nextLesson() {
   state.lessonIndex += 1;
   if (state.lessonIndex >= coreLessons.length) {
     state.lessonsCompleted = true;
+    updateLessonRail();
     trackEvent("completed-core-lessons", { totalLessons: coreLessons.length });
     showPanel("scenario");
     renderScenario();
