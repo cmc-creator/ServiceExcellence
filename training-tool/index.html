@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Destint Springs Healthcare Training Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-layer"></div>
+  <div class="noise-layer"></div>
+
+  <header class="top-bar glass">
+    <div>
+      <p class="eyebrow">Destint Springs Healthcare</p>
+      <h1>Service Excellence + Code of Conduct</h1>
+    </div>
+    <div class="chip-row">
+      <span class="chip" id="scoreChip">Score: 0</span>
+      <span class="chip" id="streakChip">Streak: 0</span>
+      <span class="chip" id="timerChip">Timer: 60s</span>
+      <span class="chip" id="lmsChip">LMS: Not Connected</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="panel glass" id="welcomePanel">
+      <h2>Annual Mission: The Excellence Vault</h2>
+      <p>
+        Welcome to your annual training quest. Build trust, protect people, and keep care exceptional.
+        Make smart decisions, earn badges, and complete all stations to unlock certification.
+      </p>
+      <div class="field-row">
+        <label for="roleSelect">Select your role track</label>
+        <select id="roleSelect" class="input-glass">
+          <option value="clinical">Clinical Staff</option>
+          <option value="nonclinical">Non-Clinical Staff</option>
+          <option value="leadership">Leaders and Supervisors</option>
+        </select>
+      </div>
+      <div class="cta-row">
+        <button class="btn btn-primary" id="startBtn">Start Experience</button>
+        <button class="btn btn-secondary" id="overviewBtn">View Learning Map</button>
+      </div>
+    </section>
+
+    <section class="panel glass hidden" id="mapPanel">
+      <h2>Learning Map</h2>
+      <div class="module-grid">
+        <article class="module-card">
+          <h3>1. Service Mindset</h3>
+          <p>Patient-first behavior, communication, and recovery moments.</p>
+        </article>
+        <article class="module-card">
+          <h3>2. Conduct Compass</h3>
+          <p>Respect, confidentiality, conflicts, and reporting pathways.</p>
+        </article>
+        <article class="module-card">
+          <h3>3. Scenario Arena</h3>
+          <p>Choose actions in real-world moments and see impact instantly.</p>
+        </article>
+        <article class="module-card">
+          <h3>4. Lightning Round</h3>
+          <p>Fast decisions in 60 seconds to test policy mastery.</p>
+        </article>
+      </div>
+      <div class="cta-row">
+        <button class="btn btn-primary" id="beginScenarioBtn">Begin Scenario Arena</button>
+      </div>
+      <p class="muted" id="trackSummary"></p>
+    </section>
+
+    <section class="panel glass hidden" id="scenarioPanel">
+      <div class="panel-head">
+        <h2 id="scenarioTitle">Scenario 1</h2>
+        <p id="scenarioCategory" class="muted"></p>
+      </div>
+      <p id="scenarioPrompt" class="scenario-text"></p>
+      <div class="choice-list" id="choiceList"></div>
+      <div class="feedback hidden" id="feedbackBox"></div>
+      <div class="cta-row">
+        <button class="btn btn-secondary hidden" id="nextScenarioBtn">Next Scenario</button>
+      </div>
+    </section>
+
+    <section class="panel glass hidden" id="lightningPanel">
+      <h2>Lightning Round</h2>
+      <p class="muted">Answer quickly. Humor allowed. Policy shortcuts not allowed.</p>
+      <p class="scenario-text" id="lightningQuestion"></p>
+      <div class="choice-list" id="lightningChoices"></div>
+      <div class="feedback hidden" id="lightningFeedback"></div>
+      <div class="cta-row">
+        <button class="btn btn-primary hidden" id="finishBtn">Start Final Assessment</button>
+      </div>
+    </section>
+
+    <section class="panel glass hidden" id="assessmentPanel">
+      <h2>Final Assessment (25 Questions)</h2>
+      <p class="muted" id="assessmentProgress"></p>
+      <p class="scenario-text" id="assessmentQuestion"></p>
+      <div class="choice-list" id="assessmentChoices"></div>
+      <div class="feedback hidden" id="assessmentFeedback"></div>
+      <div class="cta-row">
+        <button class="btn btn-secondary hidden" id="nextAssessmentBtn">Next Question</button>
+      </div>
+    </section>
+
+    <section class="panel glass hidden" id="resultsPanel">
+      <h2>Mission Complete</h2>
+      <p id="resultSummary"></p>
+      <div class="badge-row" id="badgeRow"></div>
+      <div class="field-row">
+        <label>
+          <input type="checkbox" id="attestCheckbox">
+          I acknowledge completion of the annual Service Excellence and Code of Conduct training.
+        </label>
+      </div>
+      <div class="cta-row">
+        <button class="btn btn-primary" id="submitCompletionBtn">Submit Completion</button>
+        <button class="btn btn-secondary" id="exportTrackingBtn">Export Tracking JSON</button>
+        <button class="btn btn-primary" id="restartBtn">Replay Experience</button>
+      </div>
+      <p class="muted" id="submissionStatus"></p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
