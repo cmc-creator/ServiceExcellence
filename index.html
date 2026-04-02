@@ -144,6 +144,49 @@
       margin-bottom: 1rem;
     }
 
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    .hub-card {
+      background: rgba(9, 22, 38, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 0.9rem;
+      padding: 1rem;
+      transition: transform 220ms ease, border-color 220ms ease;
+    }
+
+    .hub-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(212, 180, 131, 0.95);
+    }
+
+    .hub-card h3 {
+      margin-bottom: 0.4rem;
+      color: #fce9c8;
+      font-size: 1.08rem;
+    }
+
+    .hub-card p {
+      color: rgba(247, 243, 234, 0.84);
+      font-size: 0.93rem;
+      line-height: 1.45;
+      margin-bottom: 0.8rem;
+    }
+
+    .hub-link {
+      color: #ffdba8;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .hub-link:hover {
+      text-decoration: underline;
+    }
+
     .section-intro {
       color: rgba(247, 243, 234, 0.86);
       max-width: 750px;
@@ -407,6 +450,34 @@
   </div>
 
   <main>
+    <section class="section">
+      <h2>Educational Content Hub</h2>
+      <p class="section-intro">Your slideshow material and curriculum are here. Use these direct links to open the actual training, merged slide plan, and the two source decks you uploaded.</p>
+      <div class="hub-grid">
+        <article class="hub-card reveal">
+          <h3>Interactive Training</h3>
+          <p>Full learning experience with role tracks, scenarios, quiz, and assessment.</p>
+          <a class="hub-link" href="training-tool/index.html">Open Training App</a>
+        </article>
+        <article class="hub-card reveal">
+          <h3>Merged Storyboard</h3>
+          <p>The educational merge of Service Excellence + Code of Conduct content.</p>
+          <a class="hub-link" href="training-tool/docs/final-merged-storyboard.md">Open Merged Storyboard</a>
+        </article>
+        <article class="hub-card reveal">
+          <h3>Slide Inventory + Map</h3>
+          <p>Line-by-line inventory and Keep/Merge/Rewrite mapping across both decks.</p>
+          <a class="hub-link" href="training-tool/docs/deck-slide-inventory.csv">Open Slide Inventory CSV</a>
+        </article>
+        <article class="hub-card reveal">
+          <h3>Original Deck Files</h3>
+          <p>Exact files you gave me for extraction and curriculum build.</p>
+          <a class="hub-link" href="training-tool/source-decks/1)%20Service%20Excellence.pptx">Open Service Excellence Deck</a><br>
+          <a class="hub-link" href="training-tool/source-decks/DSH%20Code_Conduct_.pptx">Open Code of Conduct Deck</a>
+        </article>
+      </div>
+    </section>
+
     <section id="showcase" class="section">
       <h2>Pictures Built Into the Experience</h2>
       <p class="section-intro">Visual modules help learners connect to high-pressure inpatient situations before they enter the interactive quiz and branching scenarios.</p>
