@@ -55,6 +55,7 @@ Use these with your LMS vendor or internal team to publish completion, scoring, 
 ## Backend Integration
 
 - Backend service docs: `../backend/README.md`
+- Backend deployment steps: `../backend/DEPLOYMENT.md`
 - Frontend connection setup: `docs/backend-connection.md`
 
 Set runtime config in browser local storage:

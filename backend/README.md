@@ -40,6 +40,8 @@ Trademark and Copyright (c) NyxArete.
 ## Vercel Deployment (Backend Project)
 Deploy this `backend` folder as a separate Vercel project.
 
+Full production steps: `DEPLOYMENT.md`
+
 ### Required Environment Variables
 - `DATABASE_URL`
 - `JWT_SECRET`
