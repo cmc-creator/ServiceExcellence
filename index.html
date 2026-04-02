@@ -2,11 +2,314 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=training-tool/index.html">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Service Excellence Training</title>
+  <title>Service Excellence & Code of Conduct Training | NyxArete</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      color: white;
+      margin-bottom: 80px;
+      animation: slideInUp 0.8s ease-out;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      line-height: 1.2;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero p {
+      font-size: 1.3rem;
+      margin-bottom: 40px;
+      opacity: 0.95;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: white;
+      color: #667eea;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Features Section */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin-bottom: 80px;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      padding: 40px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      animation: slideInUp 0.8s ease-out;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-8px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .feature-card p {
+      opacity: 0.9;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    /* Stats Section */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 30px;
+      margin-bottom: 80px;
+      text-align: center;
+      color: white;
+    }
+
+    .stat-item h4 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .stat-item p {
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 40px 20px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.85rem;
+      margin-top: auto;
+    }
+
+    footer p {
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .footer-brand {
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* Animations */
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.2rem;
+      }
+
+      .hero p {
+        font-size: 1.1rem;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <p>Redirecting to training tool...</p>
+  <div class="container">
+    <!-- Hero Section -->
+    <div class="hero">
+      <div class="hero-badge">Premium Training Platform</div>
+      <h1>Service Excellence & Code of Conduct</h1>
+      <p>Comprehensive annual training for Destiny Springs Healthcare staff. Interactive, engaging, and designed for psychiatric acute inpatient care excellence.</p>
+      <div class="cta-buttons">
+        <a href="training-tool/index.html" class="btn btn-primary">Start Training</a>
+        <a href="#info" class="btn btn-secondary">Learn More</a>
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">🎮</div>
+        <h3>Interactive Learning</h3>
+        <p>Game-based scenarios and branching decision trees keep staff engaged while reinforcing critical service excellence principles.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Lightning Round Quiz</h3>
+        <p>Timed challenges test knowledge retention with real-time feedback and adaptive difficulty.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Completion Tracking</h3>
+        <p>Real-time analytics dashboard for administrators. Track staff progress, scores, and attestations with full reporting.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <h3>Achievement Badges</h3>
+        <p>Earn recognition badges for completing modules, high scores, and perfect assessments.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>Responsive Design</h3>
+        <p>Premium glassmorphism interface that works seamlessly on desktop, tablet, and mobile devices.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Secure & Compliant</h3>
+        <p>SCORM/xAPI integration, role-based access control, and comprehensive audit logging for compliance.</p>
+      </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats">
+      <div class="stat-item">
+        <h4>100%</h4>
+        <p>Completion Rate Target</p>
+      </div>
+      <div class="stat-item">
+        <h4>25+</h4>
+        <p>Assessment Questions</p>
+      </div>
+      <div class="stat-item">
+        <h4>5</h4>
+        <p>Learning Tracks</p>
+      </div>
+      <div class="stat-item">
+        <h4>Real-time</h4>
+        <p>Analytics & Reporting</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p><span class="footer-brand">NyxArete™ — Service Excellence Training Platform</span></p>
+    <p>White-label training solution for healthcare organizations. Specialized for psychiatric acute inpatient care.</p>
+    <p>&copy; 2026 NyxArete. All rights reserved. | <a href="#" style="color: inherit; text-decoration: underline;">Privacy Policy</a> | <a href="#" style="color: inherit; text-decoration: underline;">Terms of Service</a></p>
+  </footer>
+
+  <script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const href = this.getAttribute('href');
+        if (href !== '#' && document.querySelector(href)) {
+          e.preventDefault();
+          document.querySelector(href).scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
 </body>
 </html>
