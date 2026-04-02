@@ -3,6 +3,8 @@ const state = {
   score: 0,
   streak: 0,
   lessonIndex: 0,
+  lessonAttempts: {},
+  lessonPassed: new Set(),
   scenarioIndex: 0,
   lightningIndex: 0,
   lightningTimer: 60,
@@ -112,6 +114,15 @@ const roleLabels = {
   clinical: "Clinical Staff",
   nonclinical: "Non-Clinical Staff",
   leadership: "Leaders and Supervisors",
+};
+
+const roleLessonIntros = {
+  clinical:
+    "Clinical focus: apply these standards at point of care, in handoffs, and during high-acuity patient interactions.",
+  nonclinical:
+    "Non-clinical focus: apply these standards in access, communication, privacy handling, and patient-family support touchpoints.",
+  leadership:
+    "Leadership focus: model standards visibly, coach teams in real time, and escalate concerns with accountability.",
 };
 
 const coreLessons = [
@@ -313,10 +324,12 @@ const roleSelect = document.getElementById("roleSelect");
 const trackSummary = document.getElementById("trackSummary");
 const lessonTitle = document.getElementById("lessonTitle");
 const lessonProgress = document.getElementById("lessonProgress");
+const lessonRoleIntro = document.getElementById("lessonRoleIntro");
 const lessonBody = document.getElementById("lessonBody");
 const lessonCheckPrompt = document.getElementById("lessonCheckPrompt");
 const lessonChoices = document.getElementById("lessonChoices");
 const lessonFeedback = document.getElementById("lessonFeedback");
+const retryLessonBtn = document.getElementById("retryLessonBtn");
 const nextLessonBtn = document.getElementById("nextLessonBtn");
 const scoreChip = document.getElementById("scoreChip");
 const streakChip = document.getElementById("streakChip");
@@ -462,13 +475,23 @@ function buildRoleTrack() {
 
 function renderLesson() {
   const lesson = coreLessons[state.lessonIndex];
+  const lessonKey = `lesson-${state.lessonIndex}`;
+  const attempts = state.lessonAttempts[lessonKey] || 0;
+
   lessonTitle.textContent = lesson.title;
   lessonProgress.textContent = `Lesson ${state.lessonIndex + 1} of ${coreLessons.length}`;
+  lessonRoleIntro.textContent = `${roleLabels[state.role]} track - ${roleLessonIntros[state.role]}`;
   lessonBody.textContent = lesson.body;
   lessonCheckPrompt.textContent = lesson.check;
   lessonFeedback.className = "feedback hidden";
   nextLessonBtn.classList.add("hidden");
+  retryLessonBtn.classList.add("hidden");
   lessonChoices.innerHTML = "";
+
+  if (attempts > 0) {
+    lessonFeedback.textContent = `Previous attempts: ${attempts}. You need a correct answer to unlock the next lesson.`;
+    lessonFeedback.className = "feedback warn";
+  }
 
   lesson.answers.forEach((answer) => {
     const btn = document.createElement("button");
@@ -480,9 +503,19 @@ function renderLesson() {
 }
 
 function evaluateLessonChoice(answer, lesson) {
-  state.score += answer.score;
-  state.streak = answer.good ? state.streak + 1 : 0;
-  if (answer.good) state.badges.add("Knowledge Builder");
+  const lessonKey = `lesson-${state.lessonIndex}`;
+  state.lessonAttempts[lessonKey] = (state.lessonAttempts[lessonKey] || 0) + 1;
+
+  if (answer.good) {
+    if (!state.lessonPassed.has(lessonKey)) {
+      state.score += answer.score;
+      state.lessonPassed.add(lessonKey);
+    }
+    state.streak = state.streak + 1;
+    state.badges.add("Knowledge Builder");
+  } else {
+    state.streak = 0;
+  }
 
   lessonFeedback.textContent = `${answer.good ? "Correct." : "Not quite."} ${lesson.why}`;
   lessonFeedback.className = `feedback ${answer.good ? "good" : "warn"}`;
@@ -496,8 +529,17 @@ function evaluateLessonChoice(answer, lesson) {
     lesson: lesson.title,
     good: answer.good,
     points: answer.score,
+    attempts: state.lessonAttempts[lessonKey],
   });
-  nextLessonBtn.classList.remove("hidden");
+
+  if (answer.good) {
+    nextLessonBtn.classList.remove("hidden");
+    retryLessonBtn.classList.add("hidden");
+  } else {
+    retryLessonBtn.classList.remove("hidden");
+    nextLessonBtn.classList.add("hidden");
+  }
+
   updateHUD();
 }
 
@@ -794,6 +836,8 @@ function resetExperience() {
   state.score = 0;
   state.streak = 0;
   state.lessonIndex = 0;
+  state.lessonAttempts = {};
+  state.lessonPassed = new Set();
   state.scenarioIndex = 0;
   state.lightningIndex = 0;
   state.lightningTimer = 60;
@@ -851,11 +895,15 @@ document.getElementById("overviewBtn").addEventListener("click", () => {
 document.getElementById("beginScenarioBtn").addEventListener("click", () => {
   showPanel("lesson");
   state.lessonIndex = 0;
+  state.lessonAttempts = {};
+  state.lessonPassed = new Set();
   trackEvent("started-core-lessons", { totalLessons: coreLessons.length });
   renderLesson();
 });
 
 nextLessonBtn.addEventListener("click", nextLesson);
+
+retryLessonBtn.addEventListener("click", renderLesson);
 
 nextScenarioBtn.addEventListener("click", nextScenario);
 
