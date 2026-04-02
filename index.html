@@ -31,13 +31,20 @@
       padding: 2rem;
     }
 
-    .hero video {
+    .hero-media {
       position: absolute;
       inset: 0;
+      overflow: hidden;
+    }
+
+    .hero-media img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: saturate(1.15) contrast(1.1);
+      object-position: center 35%;
+      filter: saturate(1.1) contrast(1.04) brightness(0.86);
+      transform: scale(1.03);
+      animation: slowZoom 18s ease-in-out infinite alternate;
     }
 
     .hero::before {
@@ -356,6 +363,11 @@
       50% { transform: translateY(-18px) scale(1.08); }
     }
 
+    @keyframes slowZoom {
+      from { transform: scale(1.03); }
+      to { transform: scale(1.1); }
+    }
+
     @media (max-width: 768px) {
       .hero { min-height: 82vh; }
       .btn { width: 100%; text-align: center; }
@@ -372,9 +384,9 @@
   </div>
 
   <header class="hero">
-    <video autoplay muted loop playsinline poster="https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=1600&q=80">
-      <source src="https://cdn.coverr.co/videos/coverr-doctor-at-the-hospital-1579/1080p.mp4" type="video/mp4">
-    </video>
+    <div class="hero-media" aria-hidden="true">
+      <img src="https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1800&q=80" alt="Healthcare team collaboration in a clinical setting">
+    </div>
     <div class="hero-content">
       <span class="badge">NyxArete Premium Experience</span>
       <h1>Training That Looks and Feels Alive</h1>
