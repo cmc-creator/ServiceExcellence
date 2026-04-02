@@ -116,6 +116,13 @@
       backdrop-filter: blur(8px);
     }
 
+    .btn-video {
+      background: rgba(201, 106, 71, 0.3);
+      color: #fff5e8;
+      border-color: rgba(255, 224, 196, 0.5);
+      cursor: pointer;
+    }
+
     .btn:hover {
       transform: translateY(-2px) scale(1.02);
     }
@@ -231,6 +238,63 @@
       line-height: 1.5;
     }
 
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(2, 6, 14, 0.82);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 260ms ease;
+      z-index: 50;
+      padding: 1rem;
+    }
+
+    .modal.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-panel {
+      width: min(1040px, 96vw);
+      border-radius: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: #081120;
+      box-shadow: 0 30px 48px rgba(0, 0, 0, 0.55);
+      transform: translateY(16px) scale(0.97);
+      transition: transform 260ms ease;
+      position: relative;
+    }
+
+    .modal.open .modal-panel {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 0.55rem;
+      top: 0.45rem;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      background: rgba(5, 14, 25, 0.72);
+      color: #fff;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .modal iframe {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border: 0;
+      display: block;
+    }
+
     footer {
       margin-top: 3rem;
       padding: 2rem 1rem 2.3rem;
@@ -318,9 +382,17 @@
       <div class="cta-row">
         <a href="training-tool/index.html" class="btn btn-primary">Launch Training</a>
         <a href="#showcase" class="btn btn-secondary">See Media Showcase</a>
+        <button type="button" class="btn btn-video" id="watchTrailer">Watch Trailer</button>
       </div>
     </div>
   </header>
+
+  <div class="modal" id="trailerModal" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-label="Training trailer video">
+      <button class="modal-close" id="closeTrailer" aria-label="Close trailer">X</button>
+      <iframe id="trailerFrame" src="" title="Destiny Springs training trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+  </div>
 
   <main>
     <section id="showcase" class="section">
@@ -398,6 +470,12 @@
 
   <script>
     const reveals = document.querySelectorAll('.reveal');
+    const trailerModal = document.getElementById('trailerModal');
+    const trailerFrame = document.getElementById('trailerFrame');
+    const watchTrailer = document.getElementById('watchTrailer');
+    const closeTrailer = document.getElementById('closeTrailer');
+    const trailerUrl = 'https://www.youtube.com/embed/8r3P2A9WJYk?autoplay=1&rel=0&modestbranding=1';
+
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting) {
@@ -410,6 +488,33 @@
     reveals.forEach((node, i) => {
       node.style.transitionDelay = `${Math.min(i * 80, 420)}ms`;
       observer.observe(node);
+    });
+
+    function openTrailer() {
+      trailerFrame.src = trailerUrl;
+      trailerModal.classList.add('open');
+      trailerModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeTrailerModal() {
+      trailerModal.classList.remove('open');
+      trailerModal.setAttribute('aria-hidden', 'true');
+      trailerFrame.src = '';
+      document.body.style.overflow = '';
+    }
+
+    watchTrailer.addEventListener('click', openTrailer);
+    closeTrailer.addEventListener('click', closeTrailerModal);
+    trailerModal.addEventListener('click', (event) => {
+      if (event.target === trailerModal) {
+        closeTrailerModal();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && trailerModal.classList.contains('open')) {
+        closeTrailerModal();
+      }
     });
   </script>
 </body>
