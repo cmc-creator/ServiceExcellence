@@ -47,6 +47,9 @@ const defaultRoleConfigs = [
 
 let roleConfigs = [];
 let editingRoleId = null;
+let pendingPinAction = null; // Track what action needs PIN authentication
+
+const ADMIN_PIN_KEY = (slug) => `nyxAdminPin_${slug}`;
 
 const API_BASE =
   localStorage.getItem("nyxApiBase") ||
@@ -205,6 +208,54 @@ async function deleteRoleFromBackend(roleId) {
   } catch {
     return false;
   }
+}
+
+// PIN Management Functions
+function getAdminPin() {
+  return localStorage.getItem(ADMIN_PIN_KEY(ORG_SLUG)) || null;
+}
+
+function setAdminPin(pin) {
+  if (!pin || pin.trim() === "") {
+    localStorage.removeItem(ADMIN_PIN_KEY(ORG_SLUG));
+    return true;
+  }
+  
+  const pinStr = String(pin).trim();
+  if (!/^\d{4,6}$/.test(pinStr)) {
+    return false;
+  }
+  
+  localStorage.setItem(ADMIN_PIN_KEY(ORG_SLUG), pinStr);
+  return true;
+}
+
+function validatePin(pin) {
+  const storedPin = getAdminPin();
+  if (!storedPin) return true; // No PIN required
+  return String(pin).trim() === storedPin;
+}
+
+function requiresPinAuth() {
+  return getAdminPin() !== null;
+}
+
+function showPinPrompt(action, roleId = null) {
+  pendingPinAction = { action, roleId };
+  const pinPromptModal = document.getElementById("pinPromptModal");
+  const pinPromptInput = document.getElementById("pinPromptInput");
+  const pinPromptError = document.getElementById("pinPromptError");
+  
+  pinPromptError.textContent = "";
+  pinPromptInput.value = "";
+  pinPromptInput.focus();
+  pinPromptModal.classList.remove("hidden");
+}
+
+function hidePinPrompt() {
+  const pinPromptModal = document.getElementById("pinPromptModal");
+  pinPromptModal.classList.add("hidden");
+  pendingPinAction = null;
 }
 
 function getCurrentRoleConfig() {
@@ -759,12 +810,16 @@ function renderRoleList() {
     editBtn.className = "btn btn-secondary btn-sm";
     editBtn.textContent = "Edit";
     editBtn.addEventListener("click", () => {
-      editingRoleId = item.id;
-      roleEditorTitle.textContent = "Edit Role";
-      roleNameInput.value = item.name;
-      rolePersonaSelect.value = item.persona;
-      roleDepartmentsInput.value = (item.departments || []).join(", ");
-      roleConfigStatus.textContent = "Editing role. Save to apply updates.";
+      if (requiresPinAuth()) {
+        showPinPrompt("edit", item.id);
+      } else {
+        editingRoleId = item.id;
+        roleEditorTitle.textContent = "Edit Role";
+        roleNameInput.value = item.name;
+        rolePersonaSelect.value = item.persona;
+        roleDepartmentsInput.value = (item.departments || []).join(", ");
+        roleConfigStatus.textContent = "Editing role. Save to apply updates.";
+      }
     });
     actions.appendChild(editBtn);
 
@@ -772,6 +827,11 @@ function renderRoleList() {
     deleteBtn.className = "btn btn-secondary btn-sm";
     deleteBtn.textContent = "Delete";
     deleteBtn.addEventListener("click", async () => {
+      if (requiresPinAuth()) {
+        showPinPrompt("delete", item.id);
+        return;
+      }
+
       if (roleConfigs.length <= 1) {
         roleConfigStatus.textContent = "At least one role is required.";
         return;
@@ -1353,6 +1413,105 @@ closeRoleConfigBtn.addEventListener("click", () => {
 saveRoleBtn.addEventListener("click", upsertRoleFromForm);
 
 clearRoleFormBtn.addEventListener("click", () => clearRoleEditor("Editor cleared."));
+
+// PIN Management Event Listeners
+const adminPinInput = document.getElementById("adminPinInput");
+const setAdminPinBtn = document.getElementById("setAdminPinBtn");
+const clearAdminPinBtn = document.getElementById("clearAdminPinBtn");
+const adminPinStatus = document.getElementById("adminPinStatus");
+
+setAdminPinBtn.addEventListener("click", () => {
+  const pin = adminPinInput.value.trim();
+  if (!pin) {
+    adminPinStatus.textContent = "PIN cannot be empty. Enter a 4-6 digit code.";
+    adminPinStatus.className = "muted warn";
+    return;
+  }
+
+  if (!setAdminPin(pin)) {
+    adminPinStatus.textContent = "PIN must be 4-6 digits (0-9 only).";
+    adminPinStatus.className = "muted warn";
+    adminPinInput.value = "";
+    return;
+  }
+
+  adminPinStatus.textContent = "✓ Admin PIN updated. You will be prompted to verify before editing or deleting roles.";
+  adminPinStatus.className = "muted good";
+  adminPinInput.value = "";
+});
+
+clearAdminPinBtn.addEventListener("click", () => {
+  if (setAdminPin("")) {
+    adminPinStatus.textContent = "Admin PIN removed. Role editing no longer requires authorization.";
+    adminPinStatus.className = "muted";
+    adminPinInput.value = "";
+  }
+});
+
+// PIN Prompt Modal Event Listeners
+const pinPromptModal = document.getElementById("pinPromptModal");
+const pinPromptInput = document.getElementById("pinPromptInput");
+const pinPromptSubmitBtn = document.getElementById("pinPromptSubmitBtn");
+const pinPromptCancelBtn = document.getElementById("pinPromptCancelBtn");
+const pinPromptError = document.getElementById("pinPromptError");
+
+pinPromptSubmitBtn.addEventListener("click", async () => {
+  const pin = pinPromptInput.value;
+  if (!validatePin(pin)) {
+    pinPromptError.textContent = "Invalid PIN. Please try again.";
+    pinPromptInput.value = "";
+    pinPromptInput.focus();
+    return;
+  }
+
+  // PIN verified, execute pending action
+  if (pendingPinAction?.action === "edit") {
+    const roleId = pendingPinAction.roleId;
+    const role = roleConfigs.find((r) => r.id === roleId);
+    if (role) {
+      editingRoleId = roleId;
+      roleEditorTitle.textContent = "Edit Role";
+      roleNameInput.value = role.name;
+      rolePersonaSelect.value = role.persona;
+      roleDepartmentsInput.value = (role.departments || []).join(", ");
+      roleConfigStatus.textContent = "Editing role (PIN verified). Save to apply updates.";
+    }
+  } else if (pendingPinAction?.action === "delete") {
+    const roleId = pendingPinAction.roleId;
+    if (roleConfigs.length <= 1) {
+      roleConfigStatus.textContent = "At least one role is required.";
+      hidePinPrompt();
+      return;
+    }
+
+    const deletedOnBackend = await deleteRoleFromBackend(roleId);
+    if (!deletedOnBackend && API_BASE) {
+      roleConfigStatus.textContent = "Could not delete role from backend.";
+      hidePinPrompt();
+      return;
+    }
+
+    roleConfigs = roleConfigs.filter((cfg) => cfg.id !== roleId);
+    if (state.role === roleId) {
+      state.role = roleConfigs[0].id;
+    }
+    saveRoleConfigs();
+    renderRoleSelect();
+    renderRoleList();
+    buildRoleTrack();
+    clearRoleEditor("Role deleted (PIN verified).");
+  }
+
+  hidePinPrompt();
+});
+
+pinPromptCancelBtn.addEventListener("click", hidePinPrompt);
+
+pinPromptInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    pinPromptSubmitBtn.click();
+  }
+});
 
 document.getElementById("beginScenarioBtn").addEventListener("click", () => {
   showPanel("lesson");

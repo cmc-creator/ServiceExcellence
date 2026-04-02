@@ -428,3 +428,78 @@ h1 {
     padding: 18px;
   }
 }
+
+/* Admin PIN Styling */
+.admin-pin-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(153, 225, 217, 0.08);
+}
+
+.admin-pin-toggle {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent-2);
+  user-select: none;
+}
+
+.admin-pin-toggle:hover {
+  text-decoration: underline;
+}
+
+.admin-pin-content {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+}
+
+/* Modal Styling */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  max-width: 400px;
+  padding: 28px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: riseIn 220ms ease;
+}
+
+.modal-content h3 {
+  margin: 0 0 14px;
+  font-size: 1.3rem;
+  color: var(--text);
+}
+
+.modal-content p {
+  margin: 0 0 18px;
+}
+
+.modal-content .field-row {
+  margin-bottom: 18px;
+}
+
+.modal-content .cta-row {
+  margin-top: 20px;
+}

@@ -47,6 +47,23 @@
     <section class="panel glass hidden" id="roleConfigPanel">
       <h2>Facility Role Builder</h2>
       <p class="muted">Create role names that match your facility. Each role is mapped to a base training track.</p>
+      <div class="admin-pin-section">
+        <details>
+          <summary class="admin-pin-toggle">🔒 Admin PIN Settings</summary>
+          <div class="admin-pin-content">
+            <p class="muted">Set a PIN to protect role editing and deletion from non-admins.</p>
+            <div class="field-row">
+              <label for="adminPinInput">Current Admin PIN</label>
+              <input id="adminPinInput" class="input-glass" type="password" placeholder="4-6 digit PIN">
+            </div>
+            <div class="cta-row">
+              <button class="btn btn-secondary btn-sm" id="setAdminPinBtn">Update PIN</button>
+              <button class="btn btn-secondary btn-sm" id="clearAdminPinBtn">Remove PIN</button>
+            </div>
+            <p class="muted" id="adminPinStatus"></p>
+          </div>
+        </details>
+      </div>
       <div class="role-config-grid">
         <div>
           <h3 class="role-config-subtitle">Current Roles</h3>
@@ -79,6 +96,22 @@
         </div>
       </div>
     </section>
+
+    <div class="modal hidden" id="pinPromptModal">
+      <div class="modal-content glass">
+        <h3>Admin PIN Required</h3>
+        <p class="muted" id="pinPromptMessage">Enter the admin PIN to proceed.</p>
+        <div class="field-row">
+          <label for="pinPromptInput">Admin PIN</label>
+          <input id="pinPromptInput" class="input-glass" type="password" placeholder="Enter PIN">
+        </div>
+        <div class="cta-row">
+          <button class="btn btn-primary" id="pinPromptSubmitBtn">Verify PIN</button>
+          <button class="btn btn-secondary" id="pinPromptCancelBtn">Cancel</button>
+        </div>
+        <p class="muted" id="pinPromptError"></p>
+      </div>
+    </div>
 
     <section class="panel glass hidden" id="mapPanel">
       <h2>Learning Map</h2>
