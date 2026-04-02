@@ -15,13 +15,13 @@
 ```json
 {
   "actor": {"name": "employee", "account": {"name": "employee-id"}},
-  "verb": {"id": "https://destintsprings/verbs/answered-assessment", "display": {"en-US": "answered-assessment"}},
-  "object": {"id": "https://destintsprings/training/annual-service-conduct"},
+  "verb": {"id": "https://nyxarete.com/verbs/answered-assessment", "display": {"en-US": "answered-assessment"}},
+  "object": {"id": "https://nyxarete.com/training/destiny-springs-annual-service-conduct"},
   "result": {"score": {"raw": 154}, "success": true},
   "context": {
     "extensions": {
-      "https://destintsprings/extensions/role-track": "clinical",
-      "https://destintsprings/extensions/module": "final-assessment"
+      "https://nyxarete.com/extensions/role-track": "clinical",
+      "https://nyxarete.com/extensions/module": "final-assessment"
     }
   },
   "timestamp": "2026-04-02T00:00:00.000Z"

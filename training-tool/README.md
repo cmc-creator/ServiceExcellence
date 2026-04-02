@@ -1,12 +1,18 @@
-# Destint Springs Healthcare Annual Training Prototype
+# Destiny Springs Healthcare Annual Training Prototype
+
+White-label product edition for Destiny Springs Healthcare.
+Trademark and Copyright (c) NyxArete.
 
 This prototype demonstrates a premium interactive training experience for:
 - Service Excellence
 - Code of Conduct
+- Psychiatric acute care inpatient environment
 
 ## Run
 
 Open `index.html` in a browser.
+
+Configure runtime settings in `runtime-config.js` for production backend routing.
 
 ## Included
 
@@ -55,8 +61,10 @@ Set runtime config in browser local storage:
 
 ```javascript
 localStorage.setItem("nyxApiBase", "https://your-backend-domain")
-localStorage.setItem("nyxOrgSlug", "destint-springs-healthcare")
+localStorage.setItem("nyxOrgSlug", "destiny-springs-healthcare")
 ```
+
+Or set defaults in `runtime-config.js`.
 
 ## Next Production Steps
 

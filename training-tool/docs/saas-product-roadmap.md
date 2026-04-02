@@ -1,4 +1,4 @@
-# NyxCollective SaaS Product Roadmap
+# NyxArete SaaS Product Roadmap
 
 ## Phase 1 - Current Foundation
 - Premium interactive training frontend

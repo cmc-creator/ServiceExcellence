@@ -242,6 +242,14 @@ h1 {
   background: rgba(255, 255, 255, 0.14);
 }
 
+.footer-note {
+  width: min(1100px, 94vw);
+  margin: 0 auto 28px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
 @keyframes riseIn {
   from {
     opacity: 0;

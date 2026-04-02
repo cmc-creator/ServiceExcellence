@@ -25,7 +25,8 @@ const API_BASE =
 
 const ORG_SLUG =
   localStorage.getItem("nyxOrgSlug") ||
-  "destint-springs-healthcare";
+  window.NYX_ORG_SLUG ||
+  "destiny-springs-healthcare";
 
 async function apiRequest(path, options = {}) {
   if (!API_BASE) return null;
@@ -116,7 +117,7 @@ const scenarios = [
     title: "Scenario 1: Waiting Room Heat",
     category: "Service Excellence - De-escalation",
     roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "A family member says they have been waiting forever while others watch. What is your best first move?",
+    prompt: "In the behavioral health intake area, a family member says they have been waiting forever while others watch. What is your best first move?",
     choices: [
       { text: "Lead with staffing excuses.", score: 4, good: false, feedback: "Context helps, but empathy and a clear next step should come first." },
       { text: "Acknowledge frustration, apologize, and provide a specific update time.", score: 16, good: true, feedback: "Excellent service recovery opener." },
@@ -127,7 +128,7 @@ const scenarios = [
     title: "Scenario 2: Hallway Confidentiality",
     category: "Code of Conduct - Privacy",
     roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "Patient details are being discussed in a public hallway. What should you do?",
+    prompt: "Behavioral health details are being discussed in a public hallway near visitors. What should you do?",
     choices: [
       { text: "Walk away and assume they know policy.", score: 0, good: false, feedback: "Silence can normalize risk." },
       { text: "Interrupt respectfully, move to private space, and remind of policy.", score: 18, good: true, feedback: "Correct. Immediate intervention protects patient trust." },
@@ -138,7 +139,7 @@ const scenarios = [
     title: "Scenario 3: Clinical Handoff Gaps",
     category: "Service Excellence - Communication",
     roles: ["clinical"],
-    prompt: "A handoff missed a critical allergy detail. What is your best immediate action?",
+    prompt: "A shift handoff missed a recent self-harm risk trigger and safety plan note. What is your best immediate action?",
     choices: [
       { text: "Wait for next shift and avoid blame.", score: 1, good: false, feedback: "Delay creates avoidable risk." },
       { text: "Correct the record now, notify team, and use closed-loop read-back.", score: 18, good: true, feedback: "Right move for safety and reliability." },
@@ -149,7 +150,7 @@ const scenarios = [
     title: "Scenario 4: Front Desk Data Request",
     category: "Code of Conduct - Minimum Necessary Access",
     roles: ["nonclinical"],
-    prompt: "A caller asks for detailed patient status and claims to be a relative. What do you do first?",
+    prompt: "A caller asks if a patient is currently admitted to the behavioral health unit and claims to be a relative. What do you do first?",
     choices: [
       { text: "Share details quickly to be helpful.", score: 0, good: false, feedback: "Speed does not override privacy rules." },
       { text: "Verify identity and authorization before sharing any protected details.", score: 18, good: true, feedback: "Correct and compliant response." },
@@ -211,7 +212,7 @@ const lightningQuestions = [
 ];
 
 const finalAssessment = [
-  { q: "Service excellence starts with", a: ["Empathy and ownership", "Avoiding difficult conversations", "Speed over clarity"], c: 0 },
+  { q: "In psychiatric acute inpatient care, service excellence starts with", a: ["Calm empathy and ownership", "Avoiding difficult conversations", "Speed over clarity"], c: 0 },
   { q: "If a patient complaint escalates, first step is", a: ["Defend your team", "Acknowledge and clarify next action", "Exit conversation"], c: 1 },
   { q: "Confidentiality should be discussed", a: ["Only in private appropriate settings", "Anywhere if quick", "Only by managers"], c: 0 },
   { q: "Gift policy concerns should be", a: ["Documented and disclosed", "Ignored if shared", "Handled privately"], c: 0 },

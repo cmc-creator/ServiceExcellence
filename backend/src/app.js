@@ -14,7 +14,7 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "nyxcollective-training-backend" });
+  res.json({ ok: true, service: "nyxarete-training-backend" });
 });
 
 app.use("/api/auth", authRoutes);

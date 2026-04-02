@@ -1,0 +1,14 @@
+# Node dependencies
+node_modules/
+backend/node_modules/
+
+# Environment files
+.env
+backend/.env
+
+# Editor artifacts
+.vscode/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

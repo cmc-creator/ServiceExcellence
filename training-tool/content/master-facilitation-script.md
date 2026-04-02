@@ -7,12 +7,12 @@
 
 ## Module 1 - Welcome (3 to 5 minutes)
 Opening line:
-"Welcome to the Excellence Vault. In this annual mission, every choice you make strengthens trust, safety, and integrity at Destint Springs Healthcare."
+"Welcome to the Excellence Vault. In this annual psychiatric acute inpatient mission, every choice you make strengthens trust, safety, and integrity at Destiny Springs Healthcare."
 
 Narration points:
 - Explain score, streak, and badge mechanics.
 - Confirm role track selection.
-- Explain that training is scenario-driven and practical.
+- Explain that training is scenario-driven and practical for psychiatric acute inpatient workflows.
 
 Humor-safe line:
 "Good news: no pop quizzes with trick math. Better news: good decisions still get rewards."
@@ -72,3 +72,6 @@ Closing line:
 
 ## Manager Follow-Up Prompt
 "After completion, discuss one service behavior and one conduct behavior each team member will improve this quarter."
+
+## Product Notice
+"This white-label training experience is provided for Destiny Springs Healthcare and is Trademark and Copyright (c) NyxArete."

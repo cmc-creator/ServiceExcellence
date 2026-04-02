@@ -19,7 +19,7 @@
 
   <organizations default="ORG-1">
     <organization identifier="ORG-1">
-      <title>Destint Springs Healthcare Annual Training</title>
+      <title>Destiny Springs Healthcare Psychiatric Acute Inpatient Annual Training</title>
       <item identifier="ITEM-1" identifierref="RES-1" isvisible="true">
         <title>Service Excellence and Code of Conduct</title>
       </item>

@@ -1,13 +1,17 @@
 # Annual Training Blueprint
 
 ## Program Goal
-Deliver a high-engagement annual training for all Destint Springs Healthcare staff that strengthens Service Excellence and Code of Conduct behaviors using interactive, scenario-driven learning.
+Deliver a high-engagement annual training for all Destiny Springs Healthcare psychiatric acute care inpatient staff that strengthens Service Excellence and Code of Conduct behaviors using interactive, scenario-driven learning.
 
 ## Audience Segments
-- Clinical staff
+- Clinical staff (nursing, therapists, psychiatrists, behavioral techs)
 - Non-clinical support staff
 - Leaders and supervisors
 - New hires using annual module as onboarding refresher
+
+## Product Ownership
+- White-label client edition for Destiny Springs Healthcare.
+- Trademark and Copyright (c) NyxArete.
 
 ## Duration
 - Total run time: 45 to 60 minutes

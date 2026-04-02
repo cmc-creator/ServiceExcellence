@@ -7,8 +7,8 @@ function slugify(value) {
 }
 
 async function main() {
-  const orgName = process.env.DEFAULT_ORG_NAME || "Destint Springs Healthcare";
-  const ownerEmail = (process.env.DEFAULT_OWNER_EMAIL || "owner@nyxcollective.com").toLowerCase();
+  const orgName = process.env.DEFAULT_ORG_NAME || "Destiny Springs Healthcare";
+  const ownerEmail = (process.env.DEFAULT_OWNER_EMAIL || "owner@nyxarete.com").toLowerCase();
   const ownerPassword = process.env.DEFAULT_OWNER_PASSWORD || "ChangeMeNow123!";
   const slug = slugify(orgName);
 
@@ -31,14 +31,14 @@ async function main() {
       },
     },
     update: {
-      fullName: "NYX Owner",
+      fullName: "NyxArete Owner",
       passwordHash,
       role: "OWNER",
     },
     create: {
       organizationId: org.id,
       email: ownerEmail,
-      fullName: "NYX Owner",
+      fullName: "NyxArete Owner",
       passwordHash,
       role: "OWNER",
     },
