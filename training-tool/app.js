@@ -2,6 +2,7 @@ const state = {
   role: "clinical",
   score: 0,
   streak: 0,
+  lessonIndex: 0,
   scenarioIndex: 0,
   lightningIndex: 0,
   lightningTimer: 60,
@@ -13,6 +14,7 @@ const state = {
   activeScenarios: [],
   finalized: false,
   pass: false,
+  lessonsCompleted: false,
   attemptId: null,
   learnerEmail: null,
   learnerName: null,
@@ -111,6 +113,64 @@ const roleLabels = {
   nonclinical: "Non-Clinical Staff",
   leadership: "Leaders and Supervisors",
 };
+
+const coreLessons = [
+  {
+    title: "Lesson 1: Service Excellence Foundation",
+    body: "Service excellence in psychiatric acute inpatient care starts with calm presence, empathy, and clear ownership. Every interaction should reduce uncertainty and build patient and family trust.",
+    check: "Which action best reflects service excellence in the first minute of a tense interaction?",
+    answers: [
+      { text: "Acknowledge concerns, apologize for delays, and give a specific next step.", good: true, score: 8 },
+      { text: "Explain policies first and skip emotions to stay efficient.", good: false, score: 1 },
+      { text: "Redirect to another team member without context.", good: false, score: 0 },
+    ],
+    why: "Empathy plus a clear plan lowers tension and builds confidence.",
+  },
+  {
+    title: "Lesson 2: Code of Conduct Essentials",
+    body: "Code of Conduct means acting with integrity even under pressure: respect for every person, professional language, and policy-aligned behavior across clinical and non-clinical roles.",
+    check: "What is the strongest conduct response when witnessing inappropriate behavior?",
+    answers: [
+      { text: "Address respectfully in the moment and report repeated patterns.", good: true, score: 8 },
+      { text: "Ignore it if patient care is not directly affected.", good: false, score: 0 },
+      { text: "Discuss it informally with peers only.", good: false, score: 1 },
+    ],
+    why: "Respect and accountability require action, not passive observation.",
+  },
+  {
+    title: "Lesson 3: Confidentiality and Minimum Necessary",
+    body: "Protected information must stay private. Share only what is required for care operations, and only with authorized individuals in appropriate settings.",
+    check: "Which statement matches minimum necessary access?",
+    answers: [
+      { text: "Share only information required for the specific task with authorized personnel.", good: true, score: 8 },
+      { text: "Share full context with any coworker to avoid repeat questions.", good: false, score: 0 },
+      { text: "Share details if a caller sounds confident.", good: false, score: 0 },
+    ],
+    why: "Minimum necessary protects patients and reduces compliance risk.",
+  },
+  {
+    title: "Lesson 4: Speaking Up and Reporting",
+    body: "Potential misconduct, safety risks, or retaliation concerns must be escalated through approved channels. Timely factual reporting protects patients, staff, and the organization.",
+    check: "What is the correct response to a potentially reportable concern?",
+    answers: [
+      { text: "Document facts and report promptly using approved pathways.", good: true, score: 8 },
+      { text: "Wait to see if it resolves itself before saying anything.", good: false, score: 1 },
+      { text: "Keep it within your team to avoid visibility.", good: false, score: 0 },
+    ],
+    why: "Prompt transparent reporting is a core compliance expectation.",
+  },
+  {
+    title: "Lesson 5: Communication and Safe Handoffs",
+    body: "High-reliability handoffs use closed-loop communication: state key risk facts, confirm understanding, and verify next actions. Documentation should be timely and accurate.",
+    check: "What creates the safest handoff?",
+    answers: [
+      { text: "Closed-loop read-back with documented risks and plans.", good: true, score: 8 },
+      { text: "Quick verbal summary without confirmation.", good: false, score: 1 },
+      { text: "Assume the next shift can review charts later.", good: false, score: 0 },
+    ],
+    why: "Read-back prevents omissions and reduces patient harm.",
+  },
+];
 
 const scenarios = [
   {
@@ -242,6 +302,7 @@ const finalAssessment = [
 const panels = {
   welcome: document.getElementById("welcomePanel"),
   map: document.getElementById("mapPanel"),
+  lesson: document.getElementById("lessonPanel"),
   scenario: document.getElementById("scenarioPanel"),
   lightning: document.getElementById("lightningPanel"),
   assessment: document.getElementById("assessmentPanel"),
@@ -250,6 +311,13 @@ const panels = {
 
 const roleSelect = document.getElementById("roleSelect");
 const trackSummary = document.getElementById("trackSummary");
+const lessonTitle = document.getElementById("lessonTitle");
+const lessonProgress = document.getElementById("lessonProgress");
+const lessonBody = document.getElementById("lessonBody");
+const lessonCheckPrompt = document.getElementById("lessonCheckPrompt");
+const lessonChoices = document.getElementById("lessonChoices");
+const lessonFeedback = document.getElementById("lessonFeedback");
+const nextLessonBtn = document.getElementById("nextLessonBtn");
 const scoreChip = document.getElementById("scoreChip");
 const streakChip = document.getElementById("streakChip");
 const timerChip = document.getElementById("timerChip");
@@ -388,7 +456,60 @@ function updateHUD() {
 
 function buildRoleTrack() {
   state.activeScenarios = scenarios.filter((item) => item.roles.includes(state.role));
-  trackSummary.textContent = `${roleLabels[state.role]} track includes ${state.activeScenarios.length} tailored scenarios.`;
+  trackSummary.textContent = `${roleLabels[state.role]} track includes ${coreLessons.length} core lessons and ${state.activeScenarios.length} tailored scenarios.`;
+}
+
+function renderLesson() {
+  const lesson = coreLessons[state.lessonIndex];
+  lessonTitle.textContent = lesson.title;
+  lessonProgress.textContent = `Lesson ${state.lessonIndex + 1} of ${coreLessons.length}`;
+  lessonBody.textContent = lesson.body;
+  lessonCheckPrompt.textContent = lesson.check;
+  lessonFeedback.className = "feedback hidden";
+  nextLessonBtn.classList.add("hidden");
+  lessonChoices.innerHTML = "";
+
+  lesson.answers.forEach((answer) => {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = answer.text;
+    btn.addEventListener("click", () => evaluateLessonChoice(answer, lesson));
+    lessonChoices.appendChild(btn);
+  });
+}
+
+function evaluateLessonChoice(answer, lesson) {
+  state.score += answer.score;
+  state.streak = answer.good ? state.streak + 1 : 0;
+  if (answer.good) state.badges.add("Knowledge Builder");
+
+  lessonFeedback.textContent = `${answer.good ? "Correct." : "Not quite."} ${lesson.why}`;
+  lessonFeedback.className = `feedback ${answer.good ? "good" : "warn"}`;
+
+  Array.from(lessonChoices.querySelectorAll("button")).forEach((button) => {
+    button.disabled = true;
+    button.style.opacity = "0.65";
+  });
+
+  trackEvent("answered-core-lesson", {
+    lesson: lesson.title,
+    good: answer.good,
+    points: answer.score,
+  });
+  nextLessonBtn.classList.remove("hidden");
+  updateHUD();
+}
+
+function nextLesson() {
+  state.lessonIndex += 1;
+  if (state.lessonIndex >= coreLessons.length) {
+    state.lessonsCompleted = true;
+    trackEvent("completed-core-lessons", { totalLessons: coreLessons.length });
+    showPanel("scenario");
+    renderScenario();
+    return;
+  }
+  renderLesson();
 }
 
 function renderScenario() {
@@ -671,6 +792,7 @@ function submitCompletion() {
 function resetExperience() {
   state.score = 0;
   state.streak = 0;
+  state.lessonIndex = 0;
   state.scenarioIndex = 0;
   state.lightningIndex = 0;
   state.lightningTimer = 60;
@@ -681,6 +803,7 @@ function resetExperience() {
   state.trackingEvents = [];
   state.finalized = false;
   state.pass = false;
+  state.lessonsCompleted = false;
   attestCheckbox.checked = false;
   submissionStatus.textContent = "";
   buildRoleTrack();
@@ -725,9 +848,13 @@ document.getElementById("overviewBtn").addEventListener("click", () => {
 });
 
 document.getElementById("beginScenarioBtn").addEventListener("click", () => {
-  showPanel("scenario");
-  renderScenario();
+  showPanel("lesson");
+  state.lessonIndex = 0;
+  trackEvent("started-core-lessons", { totalLessons: coreLessons.length });
+  renderLesson();
 });
+
+nextLessonBtn.addEventListener("click", nextLesson);
 
 nextScenarioBtn.addEventListener("click", nextScenario);
 

@@ -59,18 +59,36 @@
           <p>Respect, confidentiality, conflicts, and reporting pathways.</p>
         </article>
         <article class="module-card">
-          <h3>3. Scenario Arena</h3>
+          <h3>3. Core Training Lessons</h3>
+          <p>Merged instructional content before any simulations begin.</p>
+        </article>
+        <article class="module-card">
+          <h3>4. Scenario Arena</h3>
           <p>Choose actions in real-world moments and see impact instantly.</p>
         </article>
         <article class="module-card">
-          <h3>4. Lightning Round</h3>
+          <h3>5. Lightning Round</h3>
           <p>Fast decisions in 60 seconds to test policy mastery.</p>
         </article>
       </div>
       <div class="cta-row">
-        <button class="btn btn-primary" id="beginScenarioBtn">Begin Scenario Arena</button>
+        <button class="btn btn-primary" id="beginScenarioBtn">Begin Core Training</button>
       </div>
       <p class="muted" id="trackSummary"></p>
+    </section>
+
+    <section class="panel glass hidden" id="lessonPanel">
+      <div class="panel-head">
+        <h2 id="lessonTitle">Core Training Lesson</h2>
+        <p id="lessonProgress" class="muted"></p>
+      </div>
+      <p id="lessonBody" class="scenario-text"></p>
+      <p id="lessonCheckPrompt" class="scenario-text"></p>
+      <div class="choice-list" id="lessonChoices"></div>
+      <div class="feedback hidden" id="lessonFeedback"></div>
+      <div class="cta-row">
+        <button class="btn btn-primary hidden" id="nextLessonBtn">Next Lesson</button>
+      </div>
     </section>
 
     <section class="panel glass hidden" id="scenarioPanel">
