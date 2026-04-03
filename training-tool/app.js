@@ -21,6 +21,7 @@ const state = {
   learnerEmail: null,
   learnerName: null,
   soundEnabled: true,
+  brandMode: "luxury",
   difficulty: "challenge",
   startTime: null,
   perfectRun: true, // Tracked as long as no mistakes
@@ -39,6 +40,7 @@ const state = {
 const ROLE_CONFIG_KEY = "nyxRoleConfigs";
 const SOUND_KEY = "nyxSoundEnabled";
 const SEASONAL_KEY = "nyxSeasonalAchievements";
+const BRAND_MODE_KEY = "nyxBrandMode";
 
 const seasonalThemes = {
   0: "January Spotlight: New Year, New Standards.",
@@ -325,6 +327,32 @@ function toggleSound() {
   state.soundEnabled = !state.soundEnabled;
   localStorage.setItem(SOUND_KEY, String(state.soundEnabled));
   updateSoundToggle();
+}
+
+function initBrandMode() {
+  const stored = localStorage.getItem(BRAND_MODE_KEY);
+  state.brandMode = stored === "clean" ? "clean" : "luxury";
+  applyBrandMode();
+}
+
+function toggleBrandMode() {
+  state.brandMode = state.brandMode === "luxury" ? "clean" : "luxury";
+  localStorage.setItem(BRAND_MODE_KEY, state.brandMode);
+  applyBrandMode();
+  showToast(
+    state.brandMode === "luxury"
+      ? "Brand mode: Luxury Presentation"
+      : "Brand mode: Clinical Clean",
+    "info",
+    2200,
+  );
+}
+
+function applyBrandMode() {
+  document.body.classList.toggle("mode-clean", state.brandMode === "clean");
+  const btn = document.getElementById("brandModeToggleBtn");
+  if (!btn) return;
+  btn.textContent = state.brandMode === "luxury" ? "✨ Luxury" : "🩺 Clean";
 }
 
 function updateSoundToggle() {
@@ -2033,6 +2061,7 @@ pinPromptInput.addEventListener("keypress", (e) => {
 
 // Fun Features Event Listeners
 document.getElementById("soundToggleBtn").addEventListener("click", toggleSound);
+document.getElementById("brandModeToggleBtn").addEventListener("click", toggleBrandMode);
 
 document.getElementById("difficultySelect").addEventListener("change", (e) => {
   state.difficulty = e.target.value;
@@ -2096,6 +2125,7 @@ async function bootstrap() {
   buildRoleTrack();
   initScorm();
   initSound();
+  initBrandMode();
   renderSeasonalTheme();
   updateHUD();
   updateLearnerProfile();

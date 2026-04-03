@@ -26,6 +26,52 @@ body {
   overflow-x: hidden;
 }
 
+/* Clinical clean mode (user-toggle) */
+body.mode-clean {
+  font-family: "Outfit", sans-serif;
+  background: linear-gradient(150deg, #0a1731, #132447 48%, #1a3468);
+}
+
+body.mode-clean::before {
+  background: none;
+}
+
+body.mode-clean .bg-layer,
+body.mode-clean .noise-layer {
+  animation: none;
+  opacity: 0.05;
+}
+
+body.mode-clean h1,
+body.mode-clean h2,
+body.mode-clean h3 {
+  font-family: "Outfit", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+body.mode-clean .brand-wrap::before,
+body.mode-clean .logo-frame::after {
+  display: none;
+}
+
+body.mode-clean .logo-frame {
+  animation: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+body.mode-clean .panel {
+  animation: riseIn 360ms ease;
+}
+
+body.mode-clean .btn::before {
+  display: none;
+}
+
+body.mode-clean .panel h2::after {
+  background: linear-gradient(90deg, rgba(153, 225, 217, 0.75), rgba(153, 225, 217, 0.15), rgba(153, 225, 217, 0));
+  box-shadow: none;
+}
+
 body::before {
   content: "";
   position: fixed;
