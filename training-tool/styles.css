@@ -1,12 +1,12 @@
 :root {
-  --bg-1: #091126;
-  --bg-2: #12203d;
-  --bg-3: #18305e;
+  --bg-1: #070b1b;
+  --bg-2: #101935;
+  --bg-3: #1a2d58;
   --glass: rgba(255, 255, 255, 0.14);
   --glass-border: rgba(255, 255, 255, 0.35);
-  --text: #f7f3eb;
-  --muted: #d7d8e6;
-  --accent: #f1d19a;
+  --text: #f9f4ea;
+  --muted: #d4d7e5;
+  --accent: #d8b16e;
   --accent-2: #99e1d9;
   --danger: #ff8d8d;
 }
@@ -19,7 +19,7 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--text);
-  font-family: "Outfit", sans-serif;
+  font-family: "Cormorant Garamond", serif;
   background: radial-gradient(circle at 15% 20%, #294b8d, transparent 40%),
               radial-gradient(circle at 85% 15%, #1e8f8d, transparent 35%),
               linear-gradient(145deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
@@ -53,22 +53,49 @@ body {
   gap: 16px;
 }
 
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-frame {
+  width: 78px;
+  height: 78px;
+  border-radius: 16px;
+  border: 1px solid rgba(216, 177, 110, 0.58);
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.2), rgba(9, 16, 36, 0.35));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .eyebrow {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   letter-spacing: 0.12rem;
   text-transform: uppercase;
-  color: var(--accent-2);
+  color: var(--accent);
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
 }
 
 h1, h2, h3 {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: "Cinzel", serif;
   margin-top: 0;
 }
 
 h1 {
   margin-bottom: 0;
-  font-size: clamp(1.1rem, 2.3vw, 1.7rem);
+  font-size: clamp(1.05rem, 2.1vw, 1.52rem);
+  letter-spacing: 0.02em;
 }
 
 .shell {
@@ -274,13 +301,14 @@ h1 {
   background: rgba(16, 28, 57, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.3);
   font-size: 0.84rem;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn {
   border: 0;
   border-radius: 12px;
   padding: 11px 16px;
-  font-family: inherit;
+  font-family: "Outfit", sans-serif;
   font-weight: 600;
   cursor: pointer;
   transition: transform 180ms ease, box-shadow 180ms ease;
@@ -422,6 +450,16 @@ h1 {
   .top-bar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .brand-wrap {
+    width: 100%;
+  }
+
+  .logo-frame {
+    width: 62px;
+    height: 62px;
+    border-radius: 12px;
   }
 
   .panel {
