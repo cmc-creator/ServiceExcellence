@@ -667,6 +667,37 @@ h1 {
   animation: badge-pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+.mystery-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 14px;
+}
+
+.mystery-badge {
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  border: 1px dashed rgba(255, 255, 255, 0.45);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.mystery-badge.unlocked {
+  border-style: solid;
+  color: var(--text);
+  background: rgba(153, 225, 217, 0.2);
+}
+
+.seasonal-theme {
+  margin-top: 6px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(153, 225, 217, 0.35);
+  background: rgba(153, 225, 217, 0.08);
+}
+
 /* Streak Milestone Animation */
 @keyframes pulse-glow {
   0% {

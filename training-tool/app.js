@@ -28,11 +28,39 @@ const state = {
   bonusScenarioUnlocked: false,
   bonusScenarioCompleted: false,
   seasonalAchievements: new Set(),
+  missStreak: 0,
+  personality: {
+    calm: 0,
+    precision: 0,
+    courage: 0,
+  },
 };
 
 const ROLE_CONFIG_KEY = "nyxRoleConfigs";
 const SOUND_KEY = "nyxSoundEnabled";
 const SEASONAL_KEY = "nyxSeasonalAchievements";
+
+const seasonalThemes = {
+  0: "January Spotlight: New Year, New Standards.",
+  1: "February Spotlight: Respect Is A Daily Practice.",
+  2: "March Spotlight: Calm Communication Under Pressure.",
+  3: "April Spotlight: Kindness During High-Acuity Moments.",
+  4: "May Spotlight: Clear Handoffs Save Time And Lives.",
+  5: "June Spotlight: Speak Up Early, Speak Up Clearly.",
+  6: "July Spotlight: Team Reliability Starts With You.",
+  7: "August Spotlight: Service Recovery Done Right.",
+  8: "September Spotlight: Privacy First, Always.",
+  9: "October Spotlight: Safety Is Built In Small Decisions.",
+  10: "November Spotlight: Gratitude Through Professionalism.",
+  11: "December Spotlight: Finish The Year With Excellence.",
+};
+
+const mysteryBadgeCatalog = [
+  { key: "Comeback Kid", hint: "Recover after two misses in a row." },
+  { key: "Golden Moment", hint: "Hit a rare golden feedback moment." },
+  { key: "Seasonal Champion", hint: "Complete five passes in one month." },
+  { key: "Secret Master", hint: "Find and clear the hidden bonus scenario." },
+];
 
 const defaultRoleConfigs = [
   {
@@ -358,6 +386,61 @@ function showToast(message, type = "info", duration = 3000) {
     toast.style.animation = "slideInRight 300ms ease reverse";
     setTimeout(() => toast.remove(), 300);
   }, duration);
+}
+
+function getSeasonalThemeMessage() {
+  const month = new Date().getMonth();
+  return seasonalThemes[month] || "Monthly Spotlight: Keep standards visible.";
+}
+
+function renderSeasonalTheme() {
+  const seasonalTheme = document.getElementById("seasonalTheme");
+  if (!seasonalTheme) return;
+  seasonalTheme.textContent = getSeasonalThemeMessage();
+}
+
+function maybeGoldenFeedback(good) {
+  if (!good) return "";
+  if (Math.random() > 0.05) return "";
+  state.badges.add("Golden Moment");
+  return "Golden line: That answer belongs in the training hall of fame.";
+}
+
+function handleComebackIfNeeded(good) {
+  if (!good) {
+    state.missStreak += 1;
+    return;
+  }
+  if (state.missStreak >= 2) {
+    state.badges.add("Comeback Kid");
+    showToast("Comeback unlocked. Strong recovery.", "success", 3200);
+    celebrateBadge("Comeback Kid");
+  }
+  state.missStreak = 0;
+}
+
+function renderMysteryBadges() {
+  const row = document.getElementById("mysteryBadgeRow");
+  if (!row) return;
+  row.innerHTML = "";
+  mysteryBadgeCatalog.forEach((item) => {
+    const pill = document.createElement("span");
+    const unlocked = state.badges.has(item.key);
+    pill.className = `mystery-badge ${unlocked ? "unlocked" : ""}`;
+    pill.textContent = unlocked ? `Mystery Unlocked: ${item.key}` : `Mystery: ??? (${item.hint})`;
+    row.appendChild(pill);
+  });
+}
+
+function getPersonalityRecap() {
+  const entries = [
+    { key: "calm", label: "Calm Communicator", value: state.personality.calm },
+    { key: "precision", label: "Precision Thinker", value: state.personality.precision },
+    { key: "courage", label: "Courageous Escalator", value: state.personality.courage },
+  ].sort((a, b) => b.value - a.value);
+
+  const top = entries.slice(0, 2).map((entry) => entry.label).join(" | ");
+  return top || "Reliable Team Contributor";
 }
 
 // Points Popup Animation
@@ -1252,6 +1335,7 @@ function evaluateLessonChoice(answer, lesson) {
       state.lessonPassed.add(lessonKey);
     }
     state.streak = state.streak + 1;
+    state.personality.calm += 1;
     state.badges.add("Knowledge Builder");
     
     // Streak milestone notifications
@@ -1273,8 +1357,11 @@ function evaluateLessonChoice(answer, lesson) {
     playSound("incorrect");
   }
 
+  handleComebackIfNeeded(answer.good);
+
   const humor = getRoleHumor(answer.good);
-  const feedbackText = `${answer.good ? "Correct." : "Not quite."} ${lesson.why}${humor ? " " + humor : ""}`;
+  const golden = maybeGoldenFeedback(answer.good);
+  const feedbackText = `${answer.good ? "Correct." : "Not quite."} ${lesson.why}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
   lessonFeedback.textContent = feedbackText;
   lessonFeedback.className = `feedback ${answer.good ? "good" : "warn"}`;
 
@@ -1344,6 +1431,7 @@ function evaluateScenarioChoice(choice, scenarioTitleValue) {
   if (choice.good) {
     playSound("correct");
     state.badges.add("Trust Builder");
+    state.personality.courage += 1;
     state.streak = state.streak + 1;
     
     // Check for bonus scenario unlock (perfect > 80 score)
@@ -1364,11 +1452,14 @@ function evaluateScenarioChoice(choice, scenarioTitleValue) {
     playSound("incorrect");
     state.streak = 0;
     state.perfectRun = false;
-    if (choice !== choice) showToast(getPersonalizedMessage(true), "info");
+    showToast(getPersonalizedMessage(true), "info");
   }
 
+  handleComebackIfNeeded(choice.good);
+
   const humor = getRoleHumor(choice.good);
-  const feedbackText = `${choice.feedback}${humor ? " " + humor : ""}`;
+  const golden = maybeGoldenFeedback(choice.good);
+  const feedbackText = `${choice.feedback}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
   feedbackBox.textContent = feedbackText;
   feedbackBox.classList.remove("hidden");
   feedbackBox.classList.add(choice.good ? "good" : "warn");
@@ -1509,6 +1600,7 @@ function evaluateLightning(answer, why, question) {
   if (answer.good) {
     playSound("correct");
     state.badges.add("Policy Sprinter");
+    state.personality.precision += 1;
     state.streak = state.streak + 1;
   } else {
     playSound("incorrect");
@@ -1516,8 +1608,11 @@ function evaluateLightning(answer, why, question) {
     state.perfectRun = false;
   }
 
+  handleComebackIfNeeded(answer.good);
+
   const humor = getRoleHumor(answer.good);
-  const feedbackText = `${answer.good ? "Correct." : "Not ideal."} ${why}${humor ? " " + humor : ""}`;
+  const golden = maybeGoldenFeedback(answer.good);
+  const feedbackText = `${answer.good ? "Correct." : "Not ideal."} ${why}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
   lightningFeedback.textContent = feedbackText;
   lightningFeedback.className = `feedback ${answer.good ? "good" : "warn"}`;
 
@@ -1567,6 +1662,7 @@ function evaluateAssessment(selectedIndex) {
   
   if (correct) {
     state.assessmentCorrect += 1;
+    state.personality.precision += 1;
     let points = 4;
     if (state.difficulty === "challenge") {
       points = Math.floor(points * 1.2);
@@ -1578,6 +1674,8 @@ function evaluateAssessment(selectedIndex) {
     playSound("incorrect");
     state.perfectRun = false;
   }
+
+  handleComebackIfNeeded(correct);
 
   assessmentFeedback.textContent = correct ? "Correct." : `Not correct. Best answer: ${item.a[item.c]}`;
   assessmentFeedback.className = `feedback ${correct ? "good" : "warn"}`;
@@ -1655,6 +1753,9 @@ function renderResults() {
 
   resultSummary.textContent = `Track: ${getCurrentRoleName()}. Final Score: ${state.score}. Assessment: ${assessmentPct}% (${state.assessmentCorrect}/${finalAssessment.length}). Tier: ${level}. Status: ${pass ? "PASS ✓" : "REMEDIATE 📚"}.${state.bonusScenarioUnlocked ? " [Secret Master]" : ""} ${state.perfectRun ? "[Perfect Run]" : ""}`;
 
+  const recap = getPersonalityRecap();
+  resultSummary.textContent += ` Personality recap: ${recap}.`;
+
   badgeRow.innerHTML = "";
   Array.from(state.badges).forEach((name) => {
     const badge = document.createElement("span");
@@ -1662,6 +1763,8 @@ function renderResults() {
     badge.textContent = name;
     badgeRow.appendChild(badge);
   });
+
+  renderMysteryBadges();
 
   submissionStatus.textContent = "Review your score, check the acknowledgment box, then submit completion.";
 
@@ -1767,6 +1870,8 @@ function resetExperience() {
   state.speedBonusEarned = 0;
   state.bonusScenarioUnlocked = false;
   state.bonusScenarioCompleted = false;
+  state.missStreak = 0;
+  state.personality = { calm: 0, precision: 0, courage: 0 };
   attestCheckbox.checked = false;
   submissionStatus.textContent = "";
   buildRoleTrack();
@@ -1800,6 +1905,7 @@ document.getElementById("startBtn").addEventListener("click", async () => {
   state.role = roleSelect.value;
   buildRoleTrack();
   await startBackendAttempt();
+  showToast(getSeasonalThemeMessage(), "info", 3200);
   trackEvent("started-training", { role: state.role });
   showPanel("map");
   saveSuspendData();
@@ -1990,6 +2096,7 @@ async function bootstrap() {
   buildRoleTrack();
   initScorm();
   initSound();
+  renderSeasonalTheme();
   updateHUD();
   updateLearnerProfile();
 }
