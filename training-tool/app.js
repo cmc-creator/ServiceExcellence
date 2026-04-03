@@ -20,9 +20,19 @@ const state = {
   attemptId: null,
   learnerEmail: null,
   learnerName: null,
+  soundEnabled: true,
+  difficulty: "challenge",
+  startTime: null,
+  perfectRun: true, // Tracked as long as no mistakes
+  speedBonusEarned: 0,
+  bonusScenarioUnlocked: false,
+  bonusScenarioCompleted: false,
+  seasonalAchievements: new Set(),
 };
 
 const ROLE_CONFIG_KEY = "nyxRoleConfigs";
+const SOUND_KEY = "nyxSoundEnabled";
+const SEASONAL_KEY = "nyxSeasonalAchievements";
 
 const defaultRoleConfigs = [
   {
@@ -273,6 +283,224 @@ function getCurrentRolePersona() {
 function getCurrentRoleDepartments() {
   return getCurrentRoleConfig().departments || [];
 }
+
+// ============ FUN FEATURES SYSTEM ============
+
+// Sound Effects
+function initSound() {
+  const stored = localStorage.getItem(SOUND_KEY);
+  state.soundEnabled = stored !== null ? stored === "true" : true;
+  updateSoundToggle();
+}
+
+function toggleSound() {
+  state.soundEnabled = !state.soundEnabled;
+  localStorage.setItem(SOUND_KEY, String(state.soundEnabled));
+  updateSoundToggle();
+}
+
+function updateSoundToggle() {
+  const btn = document.getElementById("soundToggleBtn");
+  btn.textContent = state.soundEnabled ? "🔊 On" : "🔇 Off";
+}
+
+function playSound(type) {
+  if (!state.soundEnabled) return;
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const now = audioContext.currentTime;
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  
+  if (type === "correct") {
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.setValueAtTime(1000, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.setValueAtTime(0, now + 0.15);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } else if (type === "incorrect") {
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.setValueAtTime(300, now + 0.15);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.setValueAtTime(0, now + 0.2);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  } else if (type === "streak") {
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.setValueAtTime(800, now + 0.05);
+    osc.frequency.setValueAtTime(1000, now + 0.1);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.setValueAtTime(0, now + 0.15);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } else if (type === "badge") {
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.setValueAtTime(1400, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.setValueAtTime(0, now + 0.2);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  }
+}
+
+// Toast Notifications
+function showToast(message, type = "info", duration = 3000) {
+  const container = document.getElementById("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = "slideInRight 300ms ease reverse";
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// Points Popup Animation
+function showPointsPopup(element, points) {
+  if (points === 0) return;
+  const container = document.getElementById("pointsPopupContainer");
+  const popup = document.createElement("div");
+  popup.className = "points-popup";
+  popup.textContent = `+${points}`;
+  
+  const rect = element.getBoundingClientRect();
+  popup.style.left = (rect.left + rect.width / 2 - 20) + "px";
+  popup.style.top = (rect.top + rect.height / 2) + "px";
+  
+  container.appendChild(popup);
+  setTimeout(() => popup.remove(), 1200);
+}
+
+// Badge Unlock Celebration
+function celebrateBadge(badgeName) {
+  playSound("badge");
+  showToast(`🎉 Badge Unlocked: ${badgeName}`, "badge", 4000);
+  confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+}
+
+// Confetti Burst
+function celebrateCompletion() {
+  playSound("badge");
+  confetti({
+    particleCount: 200,
+    spread: 100,
+    origin: { y: 0.5 },
+    colors: ["#f1d19a", "#99e1d9", "#ff8d8d"],
+  });
+}
+
+// Learner Profile Update
+function updateLearnerProfile() {
+  const profile = document.getElementById("learnerProfile");
+  const name = document.getElementById("learnerName");
+  const stats = document.getElementById("learnerStats");
+  
+  name.textContent = state.learnerName || "Training Learner";
+  stats.textContent = `Score: ${state.score} | Streak: ${state.streak}${state.bonusScenarioUnlocked ? " | 🎯 Bonus Unlocked" : ""}`;
+  profile.classList.remove("hidden");
+}
+
+// Role-Specific Humor Database
+const rolesSpecificHumor = {
+  clinical: {
+    good: [
+      "RN-approved decision right there!",
+      "Your shift report would make the charge nurse proud.",
+      "That's the kind of care coordination we dream of.",
+      "Your bedside manner just improved patient outcomes.",
+    ],
+    incorrect: [
+      "Hmm, that's not in the playbook for psych acute care.",
+      "Even the documentation would question that one.",
+      "Your patient chart just raised an eyebrow.",
+      "That wouldn't pass the safety huddle.",
+    ],
+  },
+  nonclinical: {
+    good: [
+      "Front desk excellence right there!",
+      "Your caller would give you 5 stars.",
+      "That's how you build patient family trust instantly.",
+      "Admin team would high-five you for that.",
+    ],
+    incorrect: [
+      "That caller's experience would suffer.",
+      "HR would want to chat about that approach.",
+      "Your efficiency just became risky.",
+      "That's the kind of thing compliance catches.",
+    ],
+  },
+  leadership: {
+    good: [
+      "That's the leadership behavior we coach on.",
+      "Your team would feel accountable and empowered.",
+      "Culture change starts with decisions like that.",
+      "Your rounding notes would praise that call.",
+    ],
+    incorrect: [
+      "That doesn't set the accountability standard.",
+      "Your team is watching this decision.",
+      "That's the pattern we coach away from.",
+      "This is a teaching moment you might miss.",
+    ],
+  },
+};
+
+function getRoleHumor(good) {
+  const persona = getCurrentRolePersona();
+  const options = rolesSpecificHumor[persona]?.[good ? "good" : "incorrect"] || [];
+  return options.length > 0 ? options[Math.floor(Math.random() * options.length)] : "";
+}
+
+// Personalized Encouragement
+function getPersonalizedMessage(struggling) {
+  if (struggling) {
+    const messages = [
+      "You've got this! Take a breath and try again.",
+      "One more attempt, I believe in you.",
+      "Every mistake is a learning moment. Go again!",
+      "Difficulty doesn't mean failure. Try once more.",
+      "You're closer than you think. Give it another shot.",
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  } else {
+    const messages = [
+      "Wow, you're on fire! 🔥",
+      "Perfect execution. Keep it up!",
+      "You're crushing this challenge.",
+      "Excellence in action right there.",
+      "Your training is paying off big time.",
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+}
+
+// Easter Eggs
+const easterEggs = [
+  {
+    description: "Choose something completely unreasonable",
+    trigger: (choice) => choice.score === 0 && Math.random() < 0.15,
+    response: "Nice try, but Destiny Springs isn't ready for that level of creativity. 😄",
+  },
+];
+
+// Secret Bonus Scenario
+const bonusScenario = {
+  title: "Secret Bonus: The Unexpected Moment",
+  category: "Challenge - Complex Ethics",
+  roles: ["clinical", "nonclinical", "leadership"],
+  prompt: "You notice a colleague has been under stress. They mention personal struggles affecting work. Best response?",
+  choices: [
+    { text: "Refer to EAP confidentially and check on them later.", score: 20, good: true, feedback: "Perfect. Leadership looks like caring while maintaining boundaries." },
+    { text: "Tell your manager immediately.", score: 10, good: false, feedback: "Loyalty matters. Direct report might have handled this first." },
+    { text: "Mind your own business.", score: 0, good: false, feedback: "Compassion is part of the culture." },
+  ],
+};
 
 const roleLessonIntros = {
   clinical:
@@ -1014,16 +1242,40 @@ function evaluateLessonChoice(answer, lesson) {
 
   if (answer.good) {
     if (!state.lessonPassed.has(lessonKey)) {
-      state.score += answer.score;
+      let points = answer.score;
+      if (state.difficulty === "challenge") {
+        points = Math.floor(points * 1.2); // 20% bonus for challenge mode
+      }
+      state.score += points;
+      showPointsPopup(lessonCheckPrompt, points);
+      playSound("correct");
       state.lessonPassed.add(lessonKey);
     }
     state.streak = state.streak + 1;
     state.badges.add("Knowledge Builder");
+    
+    // Streak milestone notifications
+    if (state.streak === 3) {
+      showToast("🔥 3-Streak! Keep it going!", "streak");
+      playSound("streak");
+    } else if (state.streak === 5) {
+      showToast("🔥🔥 5-Streak! Unstoppable!", "streak");
+      playSound("streak");
+      state.badges.add("Consistency Pro");
+      celebrateBadge("Consistency Pro");
+    }
   } else {
+    if (state.lessonAttempts[lessonKey] > 1) {
+      showToast(getPersonalizedMessage(true), "info");
+    }
     state.streak = 0;
+    state.perfectRun = false;
+    playSound("incorrect");
   }
 
-  lessonFeedback.textContent = `${answer.good ? "Correct." : "Not quite."} ${lesson.why}`;
+  const humor = getRoleHumor(answer.good);
+  const feedbackText = `${answer.good ? "Correct." : "Not quite."} ${lesson.why}${humor ? " " + humor : ""}`;
+  lessonFeedback.textContent = feedbackText;
   lessonFeedback.className = `feedback ${answer.good ? "good" : "warn"}`;
 
   Array.from(lessonChoices.querySelectorAll("button")).forEach((button) => {
@@ -1047,6 +1299,7 @@ function evaluateLessonChoice(answer, lesson) {
   }
 
   updateHUD();
+  updateLearnerProfile();
 }
 
 function nextLesson() {
@@ -1081,14 +1334,110 @@ function renderScenario() {
 }
 
 function evaluateScenarioChoice(choice, scenarioTitleValue) {
-  state.score += choice.score;
-  state.streak = choice.good ? state.streak + 1 : 0;
-
-  if (choice.good) {
-    state.badges.add("Trust Builder");
+  let points = choice.score;
+  if (state.difficulty === "challenge") {
+    points = Math.floor(points * 1.2); // 20% bonus for challenge mode
   }
-  if (state.streak >= 3) {
-    state.badges.add("Consistency Pro");
+  state.score += points;
+  showPointsPopup(choiceList, points);
+  
+  if (choice.good) {
+    playSound("correct");
+    state.badges.add("Trust Builder");
+    state.streak = state.streak + 1;
+    
+    // Check for bonus scenario unlock (perfect > 80 score)
+    if (state.score >= 80 && !state.bonusScenarioUnlocked) {
+      state.bonusScenarioUnlocked = true;
+      showToast("🎯 Bonus Scenario Unlocked! Complete your final challenge.", "badge", 4000);
+      confetti({ particleCount: 100, spread: 60, origin: { y: 0.4 } });
+    }
+    
+    if (state.streak >= 3) {
+      state.badges.add("Consistency Pro");
+    }
+    if (state.streak === 5) {
+      showToast("🔥🔥 5-Scenario Streak!", "streak");
+      playSound("streak");
+    }
+  } else {
+    playSound("incorrect");
+    state.streak = 0;
+    state.perfectRun = false;
+    if (choice !== choice) showToast(getPersonalizedMessage(true), "info");
+  }
+
+  const humor = getRoleHumor(choice.good);
+  const feedbackText = `${choice.feedback}${humor ? " " + humor : ""}`;
+  feedbackBox.textContent = feedbackText;
+  feedbackBox.classList.remove("hidden");
+  feedbackBox.classList.add(choice.good ? "good" : "warn");
+
+  Array.from(choiceList.querySelectorAll("button")).forEach((button) => {
+    button.disabled = true;
+    button.style.opacity = "0.65";
+  });
+
+  trackEvent("answered-scenario", { scenario: scenarioTitleValue, good: choice.good, points });
+  nextScenarioBtn.classList.remove("hidden");
+  updateHUD();
+  updateLearnerProfile();
+}
+
+function nextScenario() {
+  state.scenarioIndex += 1;
+  
+  // Check if we've completed all regular scenarios and have bonus unlocked
+  if (state.scenarioIndex >= state.activeScenarios.length) {
+    if (state.bonusScenarioUnlocked && !state.bonusScenarioCompleted) {
+      // Inject bonus scenario
+      showToast("🎯 Time for your Bonus Challenge!", "badge", 3000);
+      renderBonusScenario();
+      state.bonusScenarioCompleted = true;
+      return;
+    }
+    showPanel("lightning");
+    startLightning();
+    return;
+  }
+  renderScenario();
+}
+
+function renderBonusScenario() {
+  const scenario = bonusScenario;
+  scenarioTitle.textContent = scenario.title;
+  scenarioCategory.textContent = scenario.category;
+  scenarioPrompt.textContent = scenario.prompt;
+  feedbackBox.className = "feedback hidden";
+  nextScenarioBtn.classList.add("hidden");
+  choiceList.innerHTML = "";
+
+  scenario.choices.forEach((choice) => {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = choice.text;
+    btn.addEventListener("click", () => {
+      evaluateBonusScenario(choice, scenario.title);
+    });
+    choiceList.appendChild(btn);
+  });
+}
+
+function evaluateBonusScenario(choice, bonusTitle) {
+  let points = choice.score;
+  if (state.difficulty === "challenge") {
+    points = Math.floor(points * 1.25); // 25% bonus for challenge mode on bonus
+  }
+  state.score += points;
+  showPointsPopup(choiceList, points);
+  
+  if (choice.good) {
+    playSound("correct");
+    celebrateBadge("Secret Master");
+    state.badges.add("Secret Master");
+    state.badges.add("Patient Experience Champion");
+  } else {
+    playSound("incorrect");
   }
 
   feedbackBox.textContent = choice.feedback;
@@ -1100,25 +1449,17 @@ function evaluateScenarioChoice(choice, scenarioTitleValue) {
     button.style.opacity = "0.65";
   });
 
-  trackEvent("answered-scenario", { scenario: scenarioTitleValue, good: choice.good, points: choice.score });
+  trackEvent("answered-bonus-scenario", { title: bonusTitle, good: choice.good, points });
   nextScenarioBtn.classList.remove("hidden");
   updateHUD();
-}
-
-function nextScenario() {
-  state.scenarioIndex += 1;
-  if (state.scenarioIndex >= state.activeScenarios.length) {
-    showPanel("lightning");
-    startLightning();
-    return;
-  }
-  renderScenario();
+  updateLearnerProfile();
 }
 
 function startLightning() {
   state.lightningActive = true;
   state.lightningTimer = 60;
   state.lightningIndex = 0;
+  state.startTime = Date.now();
   updateHUD();
   renderLightning();
   trackEvent("started-lightning-round");
@@ -1158,11 +1499,26 @@ function renderLightning() {
 function evaluateLightning(answer, why, question) {
   if (!state.lightningActive) return;
 
-  state.score += answer.score;
-  state.streak = answer.good ? state.streak + 1 : 0;
-  if (answer.good) state.badges.add("Policy Sprinter");
+  let points = answer.score;
+  if (state.difficulty === "challenge") {
+    points = Math.floor(points * 1.2);
+  }
+  state.score += points;
+  showPointsPopup(lightningChoices, points);
+  
+  if (answer.good) {
+    playSound("correct");
+    state.badges.add("Policy Sprinter");
+    state.streak = state.streak + 1;
+  } else {
+    playSound("incorrect");
+    state.streak = 0;
+    state.perfectRun = false;
+  }
 
-  lightningFeedback.textContent = `${answer.good ? "Correct." : "Not ideal."} ${why}`;
+  const humor = getRoleHumor(answer.good);
+  const feedbackText = `${answer.good ? "Correct." : "Not ideal."} ${why}${humor ? " " + humor : ""}`;
+  lightningFeedback.textContent = feedbackText;
   lightningFeedback.className = `feedback ${answer.good ? "good" : "warn"}`;
 
   Array.from(lightningChoices.querySelectorAll("button")).forEach((button) => {
@@ -1171,8 +1527,9 @@ function evaluateLightning(answer, why, question) {
   });
 
   state.lightningIndex += 1;
-  trackEvent("answered-lightning", { question, good: answer.good, points: answer.score });
+  trackEvent("answered-lightning", { question, good: answer.good, points });
   updateHUD();
+  updateLearnerProfile();
 
   setTimeout(() => {
     if (state.lightningIndex >= lightningQuestions.length) {
@@ -1207,9 +1564,19 @@ function renderAssessmentQuestion() {
 function evaluateAssessment(selectedIndex) {
   const item = finalAssessment[state.assessmentIndex];
   const correct = selectedIndex === item.c;
+  
   if (correct) {
     state.assessmentCorrect += 1;
-    state.score += 4;
+    let points = 4;
+    if (state.difficulty === "challenge") {
+      points = Math.floor(points * 1.2);
+    }
+    state.score += points;
+    showPointsPopup(assessmentChoices, points);
+    playSound("correct");
+  } else {
+    playSound("incorrect");
+    state.perfectRun = false;
   }
 
   assessmentFeedback.textContent = correct ? "Correct." : `Not correct. Best answer: ${item.a[item.c]}`;
@@ -1226,6 +1593,7 @@ function evaluateAssessment(selectedIndex) {
 
   nextAssessmentBtn.classList.remove("hidden");
   updateHUD();
+  updateLearnerProfile();
 }
 
 function nextAssessmentQuestion() {
@@ -1239,22 +1607,58 @@ function nextAssessmentQuestion() {
 }
 
 function renderResults() {
+  // Calculate speed bonus (if finished more than 5 min early)
+  const elapsedSeconds = Math.floor((Date.now() - (state.startTime || Date.now())) / 1000);
+  const expectedSeconds = 60; // 60 seconds for lightning round is baseline
+  if (elapsedSeconds < expectedSeconds - 300) { // 5 minutes early
+    state.speedBonusEarned = 15;
+    state.score += state.speedBonusEarned;
+    state.badges.add("Speedrunner");
+    celebrateBadge("Speedrunner");
+  }
+
+  // Perfect run bonus
+  if (state.perfectRun && state.lessonPassed.size === 5) {
+    state.score += 20;
+    state.badges.add("Perfect Run");
+    celebrateBadge("Perfect Run");
+  }
+
   const assessmentPct = Math.round((state.assessmentCorrect / finalAssessment.length) * 100);
-  const level = state.score >= 170 ? "Gold" : state.score >= 130 ? "Silver" : "Bronze";
+  const level = state.score >= 200 ? "Gold" : state.score >= 150 ? "Silver" : "Bronze";
   const pass = assessmentPct >= 80;
 
   state.pass = pass;
 
   if (assessmentPct >= 90) state.badges.add("Assessment Ace");
   if (pass) state.badges.add("Compliance Guardian");
-  if (state.score >= 170) state.badges.add("Patient Experience Champion");
+  if (state.score >= 200) {
+    state.badges.add("Elite Expert");
+    celebrateCompletion();
+  }
 
-  resultSummary.textContent = `Track: ${getCurrentRoleName()}. Final Score: ${state.score}. Assessment: ${assessmentPct}% (${state.assessmentCorrect}/${finalAssessment.length}). Tier: ${level}. Annual status: ${pass ? "PASS" : "REMEDIATE"}.`;
+  // Seasonal achievements (based on current month)
+  const month = new Date().getMonth();
+  const seasonalKey = `${new Date().getFullYear()}-${month}`;
+  const stored = localStorage.getItem(SEASONAL_KEY);
+  let achievements = stored ? JSON.parse(stored) : {};
+  
+  if (pass) {
+    achievements[seasonalKey] = (achievements[seasonalKey] || 0) + 1;
+    localStorage.setItem(SEASONAL_KEY, JSON.stringify(achievements));
+    
+    if (achievements[seasonalKey] === 5) {
+      state.badges.add("Seasonal Champion");
+      showToast("🏆 Seasonal Champion Unlocked! (5 completes this month)", "badge", 5000);
+    }
+  }
+
+  resultSummary.textContent = `Track: ${getCurrentRoleName()}. Final Score: ${state.score}. Assessment: ${assessmentPct}% (${state.assessmentCorrect}/${finalAssessment.length}). Tier: ${level}. Status: ${pass ? "PASS ✓" : "REMEDIATE 📚"}.${state.bonusScenarioUnlocked ? " [Secret Master]" : ""} ${state.perfectRun ? "[Perfect Run]" : ""}`;
 
   badgeRow.innerHTML = "";
   Array.from(state.badges).forEach((name) => {
     const badge = document.createElement("span");
-    badge.className = "badge";
+    badge.className = `badge badge-unlocked`;
     badge.textContent = name;
     badgeRow.appendChild(badge);
   });
@@ -1267,6 +1671,9 @@ function renderResults() {
     assessmentTotal: finalAssessment.length,
     level,
     pass,
+    bonusUnlocked: state.bonusScenarioUnlocked,
+    perfectRun: state.perfectRun,
+    speedBonus: state.speedBonusEarned,
   });
 }
 
@@ -1356,11 +1763,16 @@ function resetExperience() {
   state.finalized = false;
   state.pass = false;
   state.lessonsCompleted = false;
+  state.perfectRun = true;
+  state.speedBonusEarned = 0;
+  state.bonusScenarioUnlocked = false;
+  state.bonusScenarioCompleted = false;
   attestCheckbox.checked = false;
   submissionStatus.textContent = "";
   buildRoleTrack();
   clearInterval(timerHandle);
   updateHUD();
+  updateLearnerProfile();
 }
 
 function exportTracking() {
@@ -1513,12 +1925,23 @@ pinPromptInput.addEventListener("keypress", (e) => {
   }
 });
 
+// Fun Features Event Listeners
+document.getElementById("soundToggleBtn").addEventListener("click", toggleSound);
+
+document.getElementById("difficultySelect").addEventListener("change", (e) => {
+  state.difficulty = e.target.value;
+  const difficultyLabel = e.target.selectedOptions[0]?.textContent || "Challenge Mode";
+  showToast(`Difficulty: ${difficultyLabel}`, "info", 2000);
+});
+
 document.getElementById("beginScenarioBtn").addEventListener("click", () => {
   showPanel("lesson");
   state.lessonIndex = 0;
   state.lessonAttempts = {};
   state.lessonPassed = new Set();
-  trackEvent("started-core-lessons", { totalLessons: coreLessons.length });
+  state.perfectRun = true;
+  updateLearnerProfile();
+  trackEvent("started-core-lessons", { totalLessons: coreLessons.length, difficulty: state.difficulty });
   renderLesson();
 });
 
@@ -1566,7 +1989,9 @@ async function bootstrap() {
   renderRoleSelect();
   buildRoleTrack();
   initScorm();
+  initSound();
   updateHUD();
+  updateLearnerProfile();
 }
 
 bootstrap();
