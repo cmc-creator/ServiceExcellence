@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Destiny Springs Login | Service Excellence</title>
+  <meta name="description" content="Secure login for the Destiny Springs annual Service Excellence and Code of Conduct training platform.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="blob blob-left"></div>
+  <div class="blob blob-right"></div>
+  <div class="grain"></div>
+
+  <main class="login-shell reveal">
+    <section class="brand-panel">
+      <p class="eyebrow">NyxArete White-Label Edition</p>
+      <h1>Welcome back to Destiny Springs training.</h1>
+      <p>
+        Sign in to continue your annual Service Excellence and Code of Conduct journey.
+        Your progress and completion records are tracked automatically.
+      </p>
+      <ul>
+        <li>Role-aware learning paths</li>
+        <li>Scenario scoring and final certification</li>
+        <li>Compliance-ready completion evidence</li>
+      </ul>
+      <a class="back-link" href="index.html">Back to landing page</a>
+    </section>
+
+    <section class="form-panel">
+      <h2>Secure Login</h2>
+      <p class="subhead">Use your organization credentials to continue.</p>
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="emailInput">Work Email</label>
+          <input id="emailInput" name="email" type="email" autocomplete="email" placeholder="name@destinysprings.com" required aria-describedby="emailError">
+          <p class="field-error" id="emailError" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <label for="passwordInput">Password</label>
+          <div class="password-row">
+            <input id="passwordInput" name="password" type="password" autocomplete="current-password" placeholder="At least 8 characters" required minlength="8" aria-describedby="passwordError">
+            <button type="button" id="togglePasswordBtn" class="toggle-password" aria-label="Show password">Show</button>
+          </div>
+          <p class="field-error" id="passwordError" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <label for="orgInput">Organization Slug</label>
+          <input id="orgInput" name="organizationSlug" type="text" value="destiny-springs-healthcare" required aria-describedby="orgError">
+          <p class="field-error" id="orgError" aria-live="polite"></p>
+        </div>
+
+        <button type="button" class="toggle-advanced" id="toggleAdvancedBtn">Advanced connection settings</button>
+
+        <div class="advanced hidden" id="advancedPanel">
+          <div class="field">
+            <label for="apiBaseInput">API Base URL</label>
+            <input id="apiBaseInput" name="apiBase" type="url" value="https://backend-three-rho-40.vercel.app" required aria-describedby="apiBaseError">
+            <p class="field-error" id="apiBaseError" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-solid" type="submit" id="submitBtn">Sign In</button>
+          <a class="btn-ghost" href="training-tool/index.html">Continue without login</a>
+        </div>
+      </form>
+
+      <p class="status" id="statusText" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script src="login.js"></script>
+</body>
+</html>
