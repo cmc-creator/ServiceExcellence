@@ -18,6 +18,7 @@ const fieldRefs = {
 };
 
 const revealNodes = document.querySelectorAll(".reveal");
+const searchParams = new URLSearchParams(window.location.search);
 
 const revealObserver = new IntersectionObserver(
   (entries) => {
@@ -46,6 +47,10 @@ togglePasswordBtn.addEventListener("click", () => {
 function updateStatus(message, isError = false) {
   statusText.textContent = message;
   statusText.classList.toggle("error", isError);
+}
+
+if (searchParams.get("session") === "required") {
+  updateStatus("Please sign in to continue your training session.");
 }
 
 function setFieldError(fieldName, message) {

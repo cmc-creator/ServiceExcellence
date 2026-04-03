@@ -1,6 +1,7 @@
 import express from "express";
 import { z } from "zod";
 import { db } from "../lib/db.js";
+import { requireAuth, requireRole } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -36,7 +37,11 @@ const completeSchema = z.object({
   attested: z.boolean(),
 });
 
-router.post("/start", async (req, res) => {
+function requestMatchesOrganization(req, organizationId, organizationSlug) {
+  return req.user?.organizationId === organizationId || req.user?.organizationSlug === organizationSlug;
+}
+
+router.post("/start", requireAuth, async (req, res) => {
   const parsed = startSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
@@ -45,6 +50,10 @@ router.post("/start", async (req, res) => {
   const org = await db.organization.findUnique({ where: { slug: parsed.data.organizationSlug } });
   if (!org) {
     return res.status(404).json({ error: "Organization not found" });
+  }
+
+  if (!requestMatchesOrganization(req, org.id, org.slug)) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const course = await db.course.findFirst({
@@ -112,7 +121,7 @@ router.post("/start", async (req, res) => {
   });
 });
 
-router.post("/event", async (req, res) => {
+router.post("/event", requireAuth, async (req, res) => {
   const parsed = eventSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
@@ -121,6 +130,10 @@ router.post("/event", async (req, res) => {
   const attempt = await db.attempt.findUnique({ where: { id: parsed.data.attemptId } });
   if (!attempt) {
     return res.status(404).json({ error: "Attempt not found" });
+  }
+
+  if (req.user?.organizationId !== attempt.organizationId) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const event = await db.trainingEvent.create({
@@ -137,7 +150,7 @@ router.post("/event", async (req, res) => {
   return res.status(201).json({ id: event.id });
 });
 
-router.post("/complete", async (req, res) => {
+router.post("/complete", requireAuth, async (req, res) => {
   const parsed = completeSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
@@ -150,6 +163,10 @@ router.post("/complete", async (req, res) => {
 
   if (!attempt) {
     return res.status(404).json({ error: "Attempt not found" });
+  }
+
+  if (req.user?.organizationId !== attempt.organizationId) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const passed = parsed.data.scorePercent >= attempt.course.passPercent;
@@ -198,7 +215,7 @@ router.get("/public/roles/:organizationSlug", async (req, res) => {
   return res.json(roles);
 });
 
-router.post("/public/roles/:organizationSlug", async (req, res) => {
+router.post("/public/roles/:organizationSlug", requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
   const parsed = roleUpsertSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
@@ -207,6 +224,10 @@ router.post("/public/roles/:organizationSlug", async (req, res) => {
   const org = await db.organization.findUnique({ where: { slug: req.params.organizationSlug } });
   if (!org) {
     return res.status(404).json({ error: "Organization not found" });
+  }
+
+  if (!requestMatchesOrganization(req, org.id, org.slug)) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   let role;
@@ -243,10 +264,14 @@ router.post("/public/roles/:organizationSlug", async (req, res) => {
   return res.status(201).json(created);
 });
 
-router.delete("/public/roles/:organizationSlug/:roleId", async (req, res) => {
+router.delete("/public/roles/:organizationSlug/:roleId", requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
   const org = await db.organization.findUnique({ where: { slug: req.params.organizationSlug } });
   if (!org) {
     return res.status(404).json({ error: "Organization not found" });
+  }
+
+  if (!requestMatchesOrganization(req, org.id, org.slug)) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const count = await db.facilityRole.count({ where: { organizationId: org.id } });
