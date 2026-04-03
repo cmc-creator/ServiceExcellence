@@ -48,6 +48,14 @@ Full production steps: `DEPLOYMENT.md`
 - `DEFAULT_OWNER_EMAIL`
 - `DEFAULT_OWNER_PASSWORD`
 - `DEFAULT_ORG_NAME`
+- `CORS_ALLOWED_ORIGINS` (comma-separated frontend origins)
+
+### CORS Configuration
+- Set `CORS_ALLOWED_ORIGINS` to the exact frontend URLs that should call this API.
+- Example:
+   `CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app,https://www.your-frontend.com`
+- Include local dev origins when needed:
+   `CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173`
 
 ### Notes
 - Use managed PostgreSQL for production persistence.

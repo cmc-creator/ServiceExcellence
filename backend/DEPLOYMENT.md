@@ -36,11 +36,19 @@ Environment Variables:
 - `DEFAULT_OWNER_EMAIL`
 - `DEFAULT_OWNER_PASSWORD`
 - `DEFAULT_ORG_NAME=Destiny Springs Healthcare`
+- `CORS_ALLOWED_ORIGINS` (comma-separated allowed frontend origins)
 
 Recommended values:
 - `DEFAULT_OWNER_EMAIL=owner@nyxarete.com`
 - `DEFAULT_ORG_NAME=Destiny Springs Healthcare`
 - `JWT_SECRET=` long random secret, minimum 32 characters
+- `CORS_ALLOWED_ORIGINS=https://your-frontend-project.vercel.app`
+
+If you have multiple frontend domains, list all of them:
+
+```env
+CORS_ALLOWED_ORIGINS=https://your-frontend-project.vercel.app,https://www.yourdomain.com
+```
 
 After deploy, your backend URL will look like:
 
@@ -100,6 +108,7 @@ Frontend:
 Backend:
 - Open `https://your-backend-project.vercel.app/health`
 - Expect JSON with `ok: true`
+- From browser dev tools, confirm API requests include an allowed `Origin` and are not blocked by CORS
 
 Training flow:
 - Start experience
