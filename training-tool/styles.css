@@ -429,6 +429,39 @@ h1 {
   font-family: "Outfit", sans-serif;
 }
 
+.chip-button {
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 120ms ease;
+}
+
+.chip-button:hover {
+  background: rgba(16, 28, 57, 0.85);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.icon-button svg {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  stroke: var(--accent);
+  transition: stroke 180ms ease;
+}
+
+.icon-button:hover svg {
+  stroke: var(--accent-2);
+}
+
+.icon-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .btn {
   border: 0;
   border-radius: 12px;
@@ -696,6 +729,15 @@ h1 {
   font-weight: 600;
   color: var(--accent-2);
   user-select: none;
+}
+
+/* Clean mode icon adjustments */
+body.mode-clean .icon-button svg {
+  stroke: var(--accent-2);
+}
+
+body.mode-clean .icon-button:hover svg {
+  stroke: var(--accent);
 }
 
 .admin-pin-toggle:hover {

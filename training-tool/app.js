@@ -352,12 +352,33 @@ function applyBrandMode() {
   document.body.classList.toggle("mode-clean", state.brandMode === "clean");
   const btn = document.getElementById("brandModeToggleBtn");
   if (!btn) return;
-  btn.textContent = state.brandMode === "luxury" ? "✨ Luxury" : "🩺 Clean";
+  const svg = btn.querySelector("svg");
+  const label = btn.querySelector(".icon-label");
+  if (state.brandMode === "luxury") {
+    // Sun icon for luxury
+    svg.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+    label.textContent = "Luxury";
+  } else {
+    // Minimize icon for clean
+    svg.innerHTML = '<line x1="5" y1="12" x2="19" y2="12"></line>';
+    label.textContent = "Clean";
+  }
 }
 
 function updateSoundToggle() {
   const btn = document.getElementById("soundToggleBtn");
-  btn.textContent = state.soundEnabled ? "🔊 On" : "🔇 Off";
+  if (!btn) return;
+  const svg = btn.querySelector("svg");
+  const label = btn.querySelector(".icon-label");
+  if (state.soundEnabled) {
+    // Speaker with waves - sound on
+    svg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a6.5 6.5 0 0 1 0 9.07"></path><path d="M19.07 4.93a10.5 10.5 0 0 1 0 14.14"></path>';
+    label.textContent = "Sound";
+  } else {
+    // Speaker muted - sound off
+    svg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+    label.textContent = "Mute";
+  }
 }
 
 function playSound(type) {
