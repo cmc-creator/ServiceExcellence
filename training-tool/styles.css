@@ -444,6 +444,16 @@ h1 {
   transform: translateY(-1px);
 }
 
+.chip-danger {
+  color: #ffd0c7;
+  border-color: rgba(255, 141, 141, 0.5);
+}
+
+.chip-danger:hover {
+  background: rgba(120, 20, 20, 0.35);
+  border-color: rgba(255, 141, 141, 0.8);
+}
+
 .icon-button svg {
   width: 22px;
   height: 22px;

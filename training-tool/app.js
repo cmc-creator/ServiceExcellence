@@ -101,18 +101,47 @@ const ORG_SLUG =
   window.NYX_ORG_SLUG ||
   "destiny-springs-healthcare";
 
+function getAuthToken() {
+  return localStorage.getItem("nyxAuthToken") || "";
+}
+
+function buildAuthHeaders(extraHeaders = {}) {
+  const token = getAuthToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extraHeaders,
+  };
+}
+
+function clearSessionAndRedirect() {
+  localStorage.removeItem("nyxAuthToken");
+  localStorage.removeItem("nyxUserRole");
+  localStorage.removeItem("nyxLearnerEmail");
+  localStorage.removeItem("nyxLearnerName");
+  window.location.href = "../login.html";
+}
+
+function requireAuthenticatedSession() {
+  if (getAuthToken()) return true;
+  window.location.href = "../login.html?session=required";
+  return false;
+}
+
 async function apiRequest(path, options = {}) {
   if (!API_BASE) return null;
 
   try {
     const response = await fetch(`${API_BASE}${path}`, {
       method: options.method || "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
+      headers: buildAuthHeaders(options.headers || {}),
       body: options.body ? JSON.stringify(options.body) : undefined,
     });
+
+    if (response.status === 401) {
+      clearSessionAndRedirect();
+      return null;
+    }
 
     if (!response.ok) {
       return null;
@@ -243,7 +272,12 @@ async function deleteRoleFromBackend(roleId) {
   try {
     const response = await fetch(`${API_BASE}/api/training/public/roles/${ORG_SLUG}/${roleId}`, {
       method: "DELETE",
+      headers: buildAuthHeaders(),
     });
+    if (response.status === 401) {
+      clearSessionAndRedirect();
+      return false;
+    }
     return response.ok;
   } catch {
     return false;
@@ -2124,6 +2158,10 @@ document.getElementById("restartBtn").addEventListener("click", () => {
 
 document.getElementById("exportTrackingBtn").addEventListener("click", exportTracking);
 
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  clearSessionAndRedirect();
+});
+
 roleSelect.addEventListener("change", () => {
   state.role = roleSelect.value;
   buildRoleTrack();
@@ -2135,6 +2173,10 @@ window.addEventListener("beforeunload", () => {
 });
 
 async function bootstrap() {
+  if (!requireAuthenticatedSession()) {
+    return;
+  }
+
   roleConfigs = loadRoleConfigs();
   const loadedFromBackend = await loadRoleConfigsFromBackend();
 
