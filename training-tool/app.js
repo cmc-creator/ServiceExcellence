@@ -115,10 +115,9 @@ function buildAuthHeaders(extraHeaders = {}) {
 }
 
 function clearSessionAndRedirect() {
-  localStorage.removeItem("nyxAuthToken");
-  localStorage.removeItem("nyxUserRole");
-  localStorage.removeItem("nyxLearnerEmail");
-  localStorage.removeItem("nyxLearnerName");
+  ["nyxAuthToken", "nyxUserRole", "nyxLearnerEmail", "nyxLearnerName",
+    "nyxApiBase", "nyxOrgSlug", "nyxRoleConfigs", "nyxSoundEnabled",
+    "nyxSeasonalAchievements", "nyxBrandMode"].forEach((k) => localStorage.removeItem(k));
   window.location.href = "../login.html";
 }
 
@@ -1914,21 +1913,30 @@ function submitCompletion() {
   state.finalized = true;
   trackEvent("submitted-completion", { assessmentPercent: assessmentPct, successStatus });
 
-  Promise.resolve(
-    apiRequest("/api/training/complete", {
-      method: "POST",
-      body: {
-        attemptId: state.attemptId,
-        scorePercent: assessmentPct,
-        scoreRaw: state.assessmentCorrect,
-        scoreMax: finalAssessment.length,
-        attested: true,
-      },
-    })
-  ).finally(() => {
+  apiRequest("/api/training/complete", {
+    method: "POST",
+    body: {
+      attemptId: state.attemptId,
+      scorePercent: assessmentPct,
+      scoreRaw: state.assessmentCorrect,
+      scoreMax: finalAssessment.length,
+      attested: true,
+    },
+  }).then((result) => {
     submissionStatus.textContent = scorm.initialized
       ? "Completion submitted to LMS successfully."
       : "Completion saved locally. LMS was not connected in this session.";
+    const dashBtn = document.getElementById("dashboardBtn");
+    if (dashBtn) dashBtn.style.display = "";
+    if (result?.passed && result?.certificateId) {
+      const certBtn = document.getElementById("viewCertBtn");
+      if (certBtn) {
+        certBtn.href = `../certificate.html?id=${encodeURIComponent(result.certificateId)}`;
+        certBtn.style.display = "";
+      }
+    }
+  }).catch(() => {
+    submissionStatus.textContent = "Completion saved locally. LMS was not connected in this session.";
     const dashBtn = document.getElementById("dashboardBtn");
     if (dashBtn) dashBtn.style.display = "";
   });

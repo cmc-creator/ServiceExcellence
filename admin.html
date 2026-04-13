@@ -106,6 +106,7 @@
             <p class="section-kicker">Roster</p>
             <h2>Manage Learners</h2>
           </div>
+          <input class="admin-input" id="learnerSearch" type="search" placeholder="Search by name or email..." style="max-width:260px;">
           <button class="btn-solid btn-sm" id="showAddLearnerBtn" type="button">+ Add Learner</button>
         </div>
 
@@ -141,6 +142,39 @@
           <p class="form-status" id="addLearnerStatus"></p>
         </div>
 
+        <!-- Edit learner form -->
+        <div class="admin-form-card hidden" id="editLearnerForm">
+          <h3>Edit Learner</h3>
+          <input type="hidden" id="editLearnerId">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="eFullName">Full Name</label>
+              <input id="eFullName" type="text" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="eEmail">Work Email</label>
+              <input id="eEmail" type="email" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="eEmployeeId">Employee ID (optional)</label>
+              <input id="eEmployeeId" type="text" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="eDepartment">Department (optional)</label>
+              <input id="eDepartment" type="text" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="eRoleTrack">Role Track (optional)</label>
+              <input id="eRoleTrack" type="text" class="admin-input">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-solid btn-sm" id="saveEditLearnerBtn" type="button">Save Changes</button>
+            <button class="btn-ghost btn-sm" id="cancelEditLearnerBtn" type="button">Cancel</button>
+          </div>
+          <p class="form-status" id="editLearnerStatus"></p>
+        </div>
+
         <div class="table-wrap" id="learnersTableWrap">
           <table class="history-table">
             <thead>
@@ -151,6 +185,7 @@
                 <th>Department</th>
                 <th>Role Track</th>
                 <th>Added</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="learnersTableBody"></tbody>
@@ -207,6 +242,7 @@
                 <th>Due Date</th>
                 <th>Completed</th>
                 <th>Issue Cert</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="enrollmentsTableBody"></tbody>

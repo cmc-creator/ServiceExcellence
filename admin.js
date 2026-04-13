@@ -223,21 +223,75 @@ saveLearnerBtn.addEventListener("click", async () => {
   }
 });
 
+// Learner search
+const learnerSearch = document.getElementById("learnerSearch");
+learnerSearch.addEventListener("input", () => {
+  const q = learnerSearch.value.trim().toLowerCase();
+  const filtered = q
+    ? allLearners.filter((l) =>
+        l.fullName.toLowerCase().includes(q) || l.email.toLowerCase().includes(q)
+      )
+    : allLearners;
+  renderLearnerRows(filtered);
+});
+
+// Edit learner form
+const editLearnerForm = document.getElementById("editLearnerForm");
+const cancelEditLearnerBtn = document.getElementById("cancelEditLearnerBtn");
+const saveEditLearnerBtn = document.getElementById("saveEditLearnerBtn");
+const editLearnerStatus = document.getElementById("editLearnerStatus");
+
+cancelEditLearnerBtn.addEventListener("click", () => {
+  editLearnerForm.classList.add("hidden");
+  editLearnerStatus.textContent = "";
+  editLearnerStatus.className = "form-status";
+});
+
+saveEditLearnerBtn.addEventListener("click", async () => {
+  const id = document.getElementById("editLearnerId").value;
+  const fullName = document.getElementById("eFullName").value.trim();
+  const email = document.getElementById("eEmail").value.trim();
+  if (!fullName || !email) {
+    editLearnerStatus.textContent = "Full name and email are required.";
+    editLearnerStatus.className = "form-status is-error";
+    return;
+  }
+  saveEditLearnerBtn.disabled = true;
+  editLearnerStatus.textContent = "Saving...";
+  editLearnerStatus.className = "form-status";
+  try {
+    await api(`/api/admin/learners/${id}`, {
+      method: "PATCH",
+      body: {
+        fullName,
+        email,
+        employeeId: document.getElementById("eEmployeeId").value.trim() || null,
+        department: document.getElementById("eDepartment").value.trim() || null,
+        roleTrack: document.getElementById("eRoleTrack").value.trim() || null,
+      },
+    });
+    editLearnerStatus.textContent = "Changes saved.";
+    editLearnerForm.classList.add("hidden");
+    await loadLearners();
+  } catch (err) {
+    editLearnerStatus.textContent = err.message || "Failed to save changes.";
+    editLearnerStatus.className = "form-status is-error";
+  } finally {
+    saveEditLearnerBtn.disabled = false;
+  }
+});
+
 // ============================================================
 // ENROLLMENTS TAB
 // ============================================================
 async function loadEnrollments() {
-  // Load learners and then all attempts to find completed enrollments
-  const [learners, recent] = await Promise.all([
-    allLearners.length ? Promise.resolve(allLearners) : api("/api/admin/learners"),
-    api("/api/analytics/attempts/recent"),
-  ]);
+  const rows = await api("/api/admin/enrollments");
+  const enrollments = rows || [];
 
   if (!allCourses.length) {
-    // Guess courses from attempts
     const seen = new Map();
-    (recent || []).forEach((a) => {
-      if (a.course && !seen.has(a.courseId)) seen.set(a.courseId, a.course);
+    enrollments.forEach((e) => {
+      if (e.course && !seen.has(e.courseId)) seen.set(e.courseId, e.course);
     });
     allCourses = [...seen.values()].map((c) => ({ id: c.id, title: c.title }));
   }
@@ -252,40 +306,31 @@ async function loadEnrollments() {
     sel.appendChild(opt);
   });
 
-  // Show attempts as enrollment proxy (the backend doesn't have a flat enrollment list endpoint)
   const tbody = document.getElementById("enrollmentsTableBody");
   const noMsg = document.getElementById("noEnrollments");
-  if (!recent || recent.length === 0) {
+  if (!enrollments.length) {
     noMsg.classList.remove("hidden");
     return;
   }
 
-  // Deduplicate by learner+course
-  const seen = new Map();
-  recent.forEach((a) => {
-    const key = `${a.learnerId}|${a.courseId}`;
-    if (!seen.has(key)) seen.set(key, a);
-  });
-
   tbody.innerHTML = "";
-  seen.forEach((a) => {
-    const isCompleted = a.status === "PASSED";
-    const hasCert = false; // Would need a separate cert lookup - show issue button if passed
+  enrollments.forEach((e) => {
+    const certAction = e.passAttemptId
+      ? `<button class="btn-issue-cert" data-attempt-id="${sanitize(e.passAttemptId)}">Issue Cert</button>`
+      : `<span style="opacity:0.3;font-size:12px;">—</span>`;
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${sanitize(a.learner?.fullName || a.learnerId)}</td>
-      <td>${sanitize(a.course?.title || a.courseId)}</td>
-      <td>${fmt(a.startedAt)}</td>
-      <td>—</td>
-      <td>${isCompleted ? `<span class="cert-link">&#10003; ${fmt(a.submittedAt)}</span>` : "<span style='opacity:0.5'>Incomplete</span>"}</td>
-      <td>${isCompleted
-        ? `<button class="btn-issue-cert" data-attempt-id="${sanitize(a.id)}">Issue Cert</button>`
-        : "<span style='opacity:0.3;font-size:12px;'>—</span>"}</td>
+      <td>${sanitize(e.learner?.fullName || e.learnerId)}</td>
+      <td>${sanitize(e.course?.title || e.courseId)}</td>
+      <td>${fmt(e.enrolledAt)}</td>
+      <td>${e.dueDate ? fmt(e.dueDate) : "—"}</td>
+      <td>${e.completedAt ? `<span class="cert-link">&#10003; ${fmt(e.completedAt)}</span>` : "<span style='opacity:0.5'>Incomplete</span>"}</td>
+      <td>${certAction}</td>
+      <td><button class="btn-action btn-action-delete" data-id="${sanitize(e.id)}">Remove</button></td>
     `;
     tbody.appendChild(tr);
   });
 
-  // Wire issue cert buttons
   tbody.querySelectorAll(".btn-issue-cert").forEach((btn) => {
     btn.addEventListener("click", async () => {
       btn.disabled = true;
@@ -295,6 +340,21 @@ async function loadEnrollments() {
         btn.textContent = "Issued";
         btn.style.borderColor = "rgba(110,223,160,0.6)";
       } catch {
+        btn.textContent = "Error";
+        btn.disabled = false;
+      }
+    });
+  });
+
+  tbody.querySelectorAll(".btn-action-delete[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Remove this enrollment? The learner will lose access to this course.")) return;
+      btn.disabled = true;
+      btn.textContent = "Removing...";
+      try {
+        await api(`/api/admin/enrollments/${btn.dataset.id}`, { method: "DELETE" });
+        await loadEnrollments();
+      } catch (err) {
         btn.textContent = "Error";
         btn.disabled = false;
       }

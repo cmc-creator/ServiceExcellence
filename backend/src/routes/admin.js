@@ -153,7 +153,7 @@ router.post("/issue-certificate/:attemptId", requireRole(["OWNER", "ADMIN", "MAN
   return res.status(201).json(cert);
 });
 
-router.get("/certificates/:id", async (req, res) => {
+router.get("/certificates/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
   const cert = await db.certificate.findFirst({
     where: {
       id: req.params.id,
@@ -171,6 +171,73 @@ router.get("/certificates/:id", async (req, res) => {
   }
 
   return res.json(cert);
+});
+
+router.patch("/learners/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const learner = await db.learner.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!learner) return res.status(404).json({ error: "Learner not found" });
+
+  const { fullName, email, employeeId, department, roleTrack } = req.body;
+  const updated = await db.learner.update({
+    where: { id: req.params.id },
+    data: {
+      ...(fullName ? { fullName } : {}),
+      ...(email ? { email } : {}),
+      ...(employeeId !== undefined ? { employeeId: employeeId || null } : {}),
+      ...(department !== undefined ? { department: department || null } : {}),
+      ...(roleTrack !== undefined ? { roleTrack: roleTrack || null } : {}),
+    },
+  });
+  return res.json(updated);
+});
+
+router.delete("/learners/:id", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
+  const learner = await db.learner.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!learner) return res.status(404).json({ error: "Learner not found" });
+  await db.learner.delete({ where: { id: req.params.id } });
+  return res.status(204).send();
+});
+
+router.get("/enrollments", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const enrollments = await db.enrollment.findMany({
+    where: { organizationId: req.user.organizationId },
+    include: { learner: true, course: true },
+    orderBy: { enrolledAt: "desc" },
+  });
+
+  if (!enrollments.length) return res.json([]);
+
+  const passedAttempts = await db.attempt.findMany({
+    where: { organizationId: req.user.organizationId, status: "PASSED" },
+    orderBy: { submittedAt: "desc" },
+    select: { id: true, learnerId: true, courseId: true },
+  });
+
+  const passedMap = new Map();
+  for (const a of passedAttempts) {
+    const key = `${a.learnerId}|${a.courseId}`;
+    if (!passedMap.has(key)) passedMap.set(key, a.id);
+  }
+
+  const result = enrollments.map((e) => ({
+    ...e,
+    passAttemptId: passedMap.get(`${e.learnerId}|${e.courseId}`) ?? null,
+  }));
+
+  return res.json(result);
+});
+
+router.delete("/enrollments/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const enrollment = await db.enrollment.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!enrollment) return res.status(404).json({ error: "Enrollment not found" });
+  await db.enrollment.delete({ where: { id: req.params.id } });
+  return res.status(204).send();
 });
 
 export default router;
