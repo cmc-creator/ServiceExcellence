@@ -3,6 +3,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "../lib/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { hashPassword } from "../lib/auth.js";
 
 const router = express.Router();
 
@@ -52,13 +53,51 @@ router.post("/learners", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req,
 });
 
 router.get("/learners", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+  const cursorId = req.query.cursor || null;
+
   const rows = await db.learner.findMany({
     where: { organizationId: req.user.organizationId },
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: limit + 1,
+    ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
   });
 
-  return res.json(rows);
+  const hasMore = rows.length > limit;
+  const data = hasMore ? rows.slice(0, limit) : rows;
+  const nextCursor = hasMore ? data[data.length - 1].id : null;
+
+  return res.json({ data, nextCursor, hasMore });
+});
+
+router.post("/learners/bulk", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const bulkSchema = z.array(
+    z.object({
+      fullName: z.string().min(2),
+      email: z.string().email(),
+      employeeId: z.string().optional(),
+      department: z.string().optional(),
+      roleTrack: z.string().optional(),
+    })
+  ).min(1).max(500);
+
+  const parsed = bulkSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+
+  const orgId = req.user.organizationId;
+  const results = { created: 0, skipped: 0 };
+
+  for (const row of parsed.data) {
+    const email = row.email.toLowerCase();
+    const existing = await db.learner.findFirst({ where: { organizationId: orgId, email } });
+    if (existing) { results.skipped++; continue; }
+    await db.learner.create({ data: { ...row, email, organizationId: orgId } });
+    results.created++;
+  }
+
+  return res.status(201).json(results);
 });
 
 router.post("/enrollments", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
@@ -217,6 +256,23 @@ router.delete("/learners/:id", requireRole(["OWNER", "ADMIN"]), async (req, res)
   return res.status(204).send();
 });
 
+router.patch("/enrollments/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const enrollment = await db.enrollment.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!enrollment) return res.status(404).json({ error: "Enrollment not found" });
+
+  const schema = z.object({ dueDate: z.string().datetime().nullable() });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const updated = await db.enrollment.update({
+    where: { id: req.params.id },
+    data: { dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null },
+  });
+  return res.json(updated);
+});
+
 router.get("/enrollments", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
   const enrollments = await db.enrollment.findMany({
     where: { organizationId: req.user.organizationId },
@@ -252,6 +308,113 @@ router.delete("/enrollments/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), as
   });
   if (!enrollment) return res.status(404).json({ error: "Enrollment not found" });
   await db.enrollment.delete({ where: { id: req.params.id } });
+  return res.status(204).send();
+});
+
+// ─── User Management ──────────────────────────────────────────────────────────
+const userCreateSchema = z.object({
+  fullName: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8),
+  role: z.enum(["OWNER", "ADMIN", "MANAGER", "STAFF"]).default("STAFF"),
+});
+
+const userUpdateSchema = z.object({
+  fullName: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  role: z.enum(["OWNER", "ADMIN", "MANAGER", "STAFF"]).optional(),
+  newPassword: z.string().min(8).optional(),
+});
+
+router.get("/users", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
+  const users = await db.user.findMany({
+    where: { organizationId: req.user.organizationId },
+    select: { id: true, fullName: true, email: true, role: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+  return res.json(users);
+});
+
+router.post("/users", requireRole(["OWNER"]), async (req, res) => {
+  const parsed = userCreateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+
+  const existing = await db.user.findUnique({
+    where: {
+      organizationId_email: {
+        organizationId: req.user.organizationId,
+        email: parsed.data.email.toLowerCase(),
+      },
+    },
+  });
+  if (existing) return res.status(409).json({ error: "A user with that email already exists." });
+
+  const passwordHash = await hashPassword(parsed.data.password);
+  const user = await db.user.create({
+    data: {
+      fullName: parsed.data.fullName,
+      email: parsed.data.email.toLowerCase(),
+      passwordHash,
+      role: parsed.data.role,
+      organizationId: req.user.organizationId,
+    },
+    select: { id: true, fullName: true, email: true, role: true, createdAt: true },
+  });
+  return res.status(201).json(user);
+});
+
+router.patch("/users/:id", requireRole(["OWNER"]), async (req, res) => {
+  if (req.params.id === req.user.sub && req.body.role && req.body.role !== req.user.role) {
+    return res.status(400).json({ error: "You cannot change your own role." });
+  }
+
+  const target = await db.user.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!target) return res.status(404).json({ error: "User not found" });
+
+  const parsed = userUpdateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+
+  if (parsed.data.email && parsed.data.email.toLowerCase() !== target.email) {
+    const conflict = await db.user.findUnique({
+      where: {
+        organizationId_email: {
+          organizationId: req.user.organizationId,
+          email: parsed.data.email.toLowerCase(),
+        },
+      },
+    });
+    if (conflict) return res.status(409).json({ error: "A user with that email already exists." });
+  }
+
+  const updateData = {};
+  if (parsed.data.fullName) updateData.fullName = parsed.data.fullName;
+  if (parsed.data.email) updateData.email = parsed.data.email.toLowerCase();
+  if (parsed.data.role) updateData.role = parsed.data.role;
+  if (parsed.data.newPassword) updateData.passwordHash = await hashPassword(parsed.data.newPassword);
+
+  const updated = await db.user.update({
+    where: { id: req.params.id },
+    data: updateData,
+    select: { id: true, fullName: true, email: true, role: true, createdAt: true },
+  });
+  return res.json(updated);
+});
+
+router.delete("/users/:id", requireRole(["OWNER"]), async (req, res) => {
+  if (req.params.id === req.user.sub) {
+    return res.status(400).json({ error: "You cannot delete your own account." });
+  }
+  const target = await db.user.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!target) return res.status(404).json({ error: "User not found" });
+  await db.user.delete({ where: { id: req.params.id } });
   return res.status(204).send();
 });
 

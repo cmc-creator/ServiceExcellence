@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { db } from "../lib/db.js";
 import { comparePassword, hashPassword, signToken } from "../lib/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -147,6 +148,30 @@ router.post("/reset-password", async (req, res) => {
   } catch {
     return res.status(400).json({ error: "Token expired or already used" });
   }
+
+  const newHash = await hashPassword(parsed.data.newPassword);
+  await db.user.update({ where: { id: user.id }, data: { passwordHash: newHash } });
+
+  return res.json({ message: "Password updated successfully." });
+});
+
+// POST /api/auth/change-password — authenticated user changes their own password
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
+
+router.post("/change-password", requireAuth, async (req, res) => {
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid payload" });
+  }
+
+  const user = await db.user.findUnique({ where: { id: req.user.sub } });
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  const ok = await comparePassword(parsed.data.currentPassword, user.passwordHash);
+  if (!ok) return res.status(401).json({ error: "Current password is incorrect." });
 
   const newHash = await hashPassword(parsed.data.newPassword);
   await db.user.update({ where: { id: user.id }, data: { passwordHash: newHash } });

@@ -694,6 +694,117 @@ p.muted { font-size: 13px; color: var(--ink-2); opacity: 0.7; }
 /* ==================== UTILITY ==================== */
 .hidden { display: none !important; }
 
+/* ==================== SESSION WARNING ==================== */
+.session-warning {
+  background: rgba(255, 107, 107, 0.12);
+  border-bottom: 1px solid rgba(255, 107, 107, 0.35);
+  color: var(--brand-coral);
+  font-family: "Urbanist", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  padding: 9px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  backdrop-filter: blur(8px);
+}
+
+/* ==================== MODAL ==================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(8, 19, 31, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-card {
+  background: var(--base-1);
+  border: 1px solid rgba(245, 184, 103, 0.28);
+  border-radius: 22px;
+  padding: 40px;
+  width: 100%;
+  max-width: 440px;
+  backdrop-filter: blur(14px);
+}
+.modal-card h2 {
+  font-family: "Cinzel", serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-0);
+  margin: 0 0 26px;
+}
+.modal-field { margin-bottom: 16px; }
+.modal-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+.modal-input {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink-0);
+  font-family: "Urbanist", sans-serif;
+  font-size: 14px;
+  padding: 10px 14px;
+  width: 100%;
+  transition: border-color 0.2s, outline 0.2s;
+  box-sizing: border-box;
+}
+.modal-input:focus {
+  outline: 2px solid rgba(245, 184, 103, 0.4);
+  border-color: rgba(245, 184, 103, 0.7);
+}
+.modal-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+.modal-status {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-gold);
+  min-height: 1.2rem;
+}
+.modal-status.is-error { color: var(--brand-coral); }
+.modal-status.is-success { color: var(--brand-green); }
+
+/* ==================== TOAST ==================== */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: rgba(12, 26, 42, 0.97);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink-0);
+  font-family: "Urbanist", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 20px;
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s, transform 0.25s;
+  max-width: 320px;
+}
+.toast.toast-visible { opacity: 1; transform: translateY(0); }
+.toast-success { border-left: 3px solid var(--brand-green); }
+.toast-error { border-left: 3px solid var(--brand-red); }
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 860px) {
   .dash-nav { padding: 12px 20px; }

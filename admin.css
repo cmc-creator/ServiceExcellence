@@ -238,3 +238,48 @@ select.admin-input option {
   text-decoration: none;
 }
 .cert-view-link:hover { text-decoration: underline; }
+
+/* ==================== TOAST ==================== */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: rgba(12, 26, 42, 0.97);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink-0);
+  font-family: "Urbanist", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 20px;
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s, transform 0.25s;
+  max-width: 340px;
+}
+.toast.toast-visible { opacity: 1; transform: translateY(0); }
+.toast-success { border-left: 3px solid var(--brand-green); }
+.toast-error { border-left: 3px solid var(--brand-red); }
+
+/* ==================== ROLE PILLS ==================== */
+.role-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+.role-owner { background: rgba(245, 184, 103, 0.18); color: var(--brand-gold); border: 1px solid rgba(245, 184, 103, 0.35); }
+.role-admin { background: rgba(110, 223, 160, 0.13); color: var(--brand-green); border: 1px solid rgba(110, 223, 160, 0.3); }
+.role-manager { background: rgba(255, 143, 120, 0.13); color: var(--brand-coral); border: 1px solid rgba(255, 143, 120, 0.3); }
+.role-staff { background: rgba(156, 168, 191, 0.12); color: var(--ink-2); border: 1px solid rgba(156, 168, 191, 0.2); }

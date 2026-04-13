@@ -15,6 +15,7 @@
   <div class="blob blob-a"></div>
   <div class="blob blob-b"></div>
   <div class="grain"></div>
+  <div class="toast-container" id="toastContainer"></div>
 
   <header class="dash-nav">
     <p class="logo-mark">NyxArete <span class="logo-divider">|</span> Admin Panel</p>
@@ -51,6 +52,7 @@
         <button class="admin-tab" data-tab="enrollments" role="tab" aria-selected="false">Enrollments</button>
         <button class="admin-tab" data-tab="certificates" role="tab" aria-selected="false">Certificates</button>
         <button class="admin-tab" data-tab="analytics" role="tab" aria-selected="false">Analytics</button>
+        <button class="admin-tab" data-tab="users" role="tab" aria-selected="false">Users</button>
       </nav>
 
       <!-- TAB: OVERVIEW -->
@@ -101,13 +103,17 @@
 
       <!-- TAB: LEARNERS -->
       <section class="admin-panel hidden reveal" id="tab-learners">
-        <div class="panel-toolbar">
+        <div class="panel-toolbar" style="margin:0;">
           <div class="section-head" style="margin:0;">
             <p class="section-kicker">Roster</p>
             <h2>Manage Learners</h2>
           </div>
-          <input class="admin-input" id="learnerSearch" type="search" placeholder="Search by name or email..." style="max-width:260px;">
-          <button class="btn-solid btn-sm" id="showAddLearnerBtn" type="button">+ Add Learner</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input class="admin-input" id="learnerSearch" type="search" placeholder="Search by name or email..." style="max-width:260px;">
+            <button class="btn-ghost btn-sm" id="csvImportBtn" type="button">Import CSV</button>
+            <input type="file" id="csvImportInput" accept=".csv" style="display:none;">
+            <button class="btn-solid btn-sm" id="showAddLearnerBtn" type="button">+ Add Learner</button>
+          </div>
         </div>
 
         <!-- Add learner form -->
@@ -192,6 +198,9 @@
           </table>
         </div>
         <p class="no-data hidden" id="noLearners">No learners in this organization yet.</p>
+        <div style="text-align:center;margin-top:16px;">
+          <button class="btn-ghost btn-sm hidden" id="loadMoreLearnersBtn" type="button">Load More</button>
+        </div>
       </section>
 
       <!-- TAB: ENROLLMENTS -->
@@ -253,9 +262,12 @@
 
       <!-- TAB: CERTIFICATES -->
       <section class="admin-panel hidden reveal" id="tab-certificates">
-        <div class="section-head">
-          <p class="section-kicker">Compliance Records</p>
-          <h2>Issued Certificates</h2>
+        <div class="panel-toolbar">
+          <div class="section-head" style="margin:0;">
+            <p class="section-kicker">Compliance Records</p>
+            <h2>Issued Certificates</h2>
+          </div>
+          <button class="btn-ghost btn-sm" id="exportCertsBtn" type="button">Export CSV</button>
         </div>
         <div class="table-wrap" id="certsTableWrap">
           <table class="history-table">
@@ -309,6 +321,112 @@
         </div>
         <div class="event-chart" id="eventChart"></div>
         <p class="no-data hidden" id="noEvents">No event data yet.</p>
+
+        <div id="trendsSection" class="hidden" style="margin-top:40px;">
+          <div class="section-head">
+            <p class="section-kicker">Over Time</p>
+            <h2>Monthly Completions</h2>
+          </div>
+          <div class="table-wrap">
+            <table class="history-table">
+              <thead><tr><th>Month</th><th>Completions</th></tr></thead>
+              <tbody id="trendsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: USERS -->
+      <section class="admin-panel hidden reveal" id="tab-users">
+        <div class="panel-toolbar">
+          <div class="section-head" style="margin:0;">
+            <p class="section-kicker">Portal Access</p>
+            <h2>User Accounts</h2>
+          </div>
+          <button class="btn-solid btn-sm" id="showAddUserBtn" type="button" style="display:none;">+ Add User</button>
+        </div>
+
+        <!-- Add user form (OWNER only) -->
+        <div class="admin-form-card hidden" id="addUserForm">
+          <h3>Create User Account</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="uFullName">Full Name</label>
+              <input id="uFullName" type="text" class="admin-input" placeholder="Jane Smith">
+            </div>
+            <div class="form-field">
+              <label for="uEmail">Email</label>
+              <input id="uEmail" type="email" class="admin-input" placeholder="jane@destinysprings.com">
+            </div>
+            <div class="form-field">
+              <label for="uPassword">Temporary Password</label>
+              <input id="uPassword" type="password" class="admin-input" placeholder="Min 8 characters">
+            </div>
+            <div class="form-field">
+              <label for="uRole">Role</label>
+              <select id="uRole" class="admin-input">
+                <option value="STAFF">Staff</option>
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-solid btn-sm" id="saveUserBtn" type="button">Create Account</button>
+            <button class="btn-ghost btn-sm" id="cancelAddUserBtn" type="button">Cancel</button>
+          </div>
+          <p class="form-status" id="addUserStatus"></p>
+        </div>
+
+        <!-- Edit user form (OWNER only) -->
+        <div class="admin-form-card hidden" id="editUserForm">
+          <h3>Edit User Account</h3>
+          <input type="hidden" id="editUserId">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="euFullName">Full Name</label>
+              <input id="euFullName" type="text" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="euEmail">Email</label>
+              <input id="euEmail" type="email" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="euRole">Role</label>
+              <select id="euRole" class="admin-input">
+                <option value="STAFF">Staff</option>
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+                <option value="OWNER">Owner</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="euPassword">New Password (optional)</label>
+              <input id="euPassword" type="password" class="admin-input" placeholder="Leave blank to keep">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-solid btn-sm" id="saveEditUserBtn" type="button">Save Changes</button>
+            <button class="btn-ghost btn-sm" id="cancelEditUserBtn" type="button">Cancel</button>
+          </div>
+          <p class="form-status" id="editUserStatus"></p>
+        </div>
+
+        <div class="table-wrap" id="usersTableWrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+        <p class="no-data hidden" id="noUsers">No user accounts found.</p>
       </section>
 
     </div>

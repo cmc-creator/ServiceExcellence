@@ -50,4 +50,26 @@ router.get("/events/top", async (req, res) => {
   return res.json(rows.map((row) => ({ verb: row.verb, count: row._count.verb })));
 });
 
+router.get("/trends", async (req, res) => {
+  const orgId = req.user.organizationId;
+  const attempts = await db.attempt.findMany({
+    where: {
+      organizationId: orgId,
+      status: "PASSED",
+      submittedAt: { not: null },
+    },
+    select: { submittedAt: true },
+    orderBy: { submittedAt: "asc" },
+  });
+
+  const counts = {};
+  for (const a of attempts) {
+    const key = a.submittedAt.toISOString().slice(0, 7);
+    counts[key] = (counts[key] || 0) + 1;
+  }
+
+  const trends = Object.entries(counts).map(([month, count]) => ({ month, count }));
+  return res.json(trends);
+});
+
 export default router;

@@ -78,6 +78,87 @@ function statusPill(status) {
   return `<span class="attempt-status ${map[status] || "s-in-progress"}">${labels[status] || status}</span>`;
 }
 
+// ============================================================
+// TOAST SYSTEM
+// ============================================================
+function showToast(message, type = "success") {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("toast-visible"));
+  setTimeout(() => {
+    toast.classList.remove("toast-visible");
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+// ============================================================
+// LEARNER TABLE RENDERER
+// ============================================================
+function renderLearnerRows(learners) {
+  const tbody = document.getElementById("learnersTableBody");
+  const noMsg = document.getElementById("noLearners");
+  if (!learners.length) {
+    tbody.innerHTML = "";
+    noMsg.classList.remove("hidden");
+    return;
+  }
+  noMsg.classList.add("hidden");
+  tbody.innerHTML = "";
+  learners.forEach((l) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${sanitize(l.fullName)}</td>
+      <td>${sanitize(l.email)}</td>
+      <td>${sanitize(l.employeeId || "—")}</td>
+      <td>${sanitize(l.department || "—")}</td>
+      <td>${sanitize(l.roleTrack || "—")}</td>
+      <td>${fmt(l.createdAt)}</td>
+      <td>
+        <div class="action-cell">
+          <button class="btn-action btn-action-edit" data-id="${sanitize(l.id)}" data-name="${sanitize(l.fullName)}" data-email="${sanitize(l.email)}" data-emp="${sanitize(l.employeeId || "")}" data-dept="${sanitize(l.department || "")}" data-rt="${sanitize(l.roleTrack || "")}">Edit</button>
+          <button class="btn-action btn-action-delete" data-id="${sanitize(l.id)}">Delete</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".btn-action-edit[data-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.getElementById("editLearnerId").value = btn.dataset.id;
+      document.getElementById("eFullName").value = btn.dataset.name;
+      document.getElementById("eEmail").value = btn.dataset.email;
+      document.getElementById("eEmployeeId").value = btn.dataset.emp;
+      document.getElementById("eDepartment").value = btn.dataset.dept;
+      document.getElementById("eRoleTrack").value = btn.dataset.rt;
+      editLearnerForm.classList.remove("hidden");
+      addLearnerForm.classList.add("hidden");
+      editLearnerStatus.textContent = "";
+      editLearnerStatus.className = "form-status";
+      editLearnerForm.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+  tbody.querySelectorAll(".btn-action-delete[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Permanently delete this learner and all their data?")) return;
+      btn.disabled = true;
+      btn.textContent = "Deleting...";
+      try {
+        await api(`/api/admin/learners/${btn.dataset.id}`, { method: "DELETE" });
+        showToast("Learner deleted.", "success");
+        await loadLearners();
+      } catch (err) {
+        showToast(err.message || "Failed to delete.", "error");
+        btn.textContent = "Delete";
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
 // ---- Tab switching ----
 document.querySelectorAll(".admin-tab").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -138,32 +219,35 @@ async function loadOverview() {
 // ============================================================
 let allLearners = [];
 let allCourses = [];
+let learnerNextCursor = null;
+let learnerHasMore = false;
 
 async function loadLearners() {
-  const rows = await api("/api/admin/learners");
-  allLearners = rows || [];
-  const tbody = document.getElementById("learnersTableBody");
-  const noMsg = document.getElementById("noLearners");
+  learnerNextCursor = null;
+  learnerHasMore = false;
+  allLearners = [];
+  await fetchLearnerPage();
+}
 
-  if (!allLearners.length) {
-    noMsg.classList.remove("hidden");
-    return;
-  }
-  tbody.innerHTML = "";
-  allLearners.forEach((l) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${sanitize(l.fullName)}</td>
-      <td>${sanitize(l.email)}</td>
-      <td>${sanitize(l.employeeId || "—")}</td>
-      <td>${sanitize(l.department || "—")}</td>
-      <td>${sanitize(l.roleTrack || "—")}</td>
-      <td>${fmt(l.createdAt)}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+async function fetchLearnerPage() {
+  const url = `/api/admin/learners?limit=50${learnerNextCursor ? `&cursor=${encodeURIComponent(learnerNextCursor)}` : ""}`;
+  const result = await api(url);
+  if (!result) return;
+  const { data, nextCursor, hasMore } = result;
+  allLearners = [...allLearners, ...(data || [])];
+  learnerNextCursor = nextCursor || null;
+  learnerHasMore = hasMore || false;
 
-  // Populate learner select in enrollment form
+  const q = learnerSearch ? learnerSearch.value.trim().toLowerCase() : "";
+  const displayed = q
+    ? allLearners.filter((l) => l.fullName.toLowerCase().includes(q) || l.email.toLowerCase().includes(q))
+    : allLearners;
+  renderLearnerRows(displayed);
+
+  const loadMoreBtn = document.getElementById("loadMoreLearnersBtn");
+  if (loadMoreBtn) loadMoreBtn.classList.toggle("hidden", !learnerHasMore);
+
+  // Repopulate learner select in enrollment form
   const sel = document.getElementById("enrLearner");
   sel.innerHTML = '<option value="">Select learner...</option>';
   allLearners.forEach((l) => {
@@ -173,6 +257,11 @@ async function loadLearners() {
     sel.appendChild(opt);
   });
 }
+
+// Load More button
+document.getElementById("loadMoreLearnersBtn")?.addEventListener("click", async () => {
+  if (learnerHasMore) await fetchLearnerPage();
+});
 
 // Add learner
 const showAddLearnerBtn = document.getElementById("showAddLearnerBtn");
@@ -212,7 +301,7 @@ saveLearnerBtn.addEventListener("click", async () => {
         roleTrack: document.getElementById("lRoleTrack").value.trim() || undefined,
       },
     });
-    addLearnerStatus.textContent = "Learner added successfully.";
+    showToast("Learner added successfully.", "success");
     addLearnerForm.classList.add("hidden");
     await loadLearners();
   } catch (err) {
@@ -270,7 +359,7 @@ saveEditLearnerBtn.addEventListener("click", async () => {
         roleTrack: document.getElementById("eRoleTrack").value.trim() || null,
       },
     });
-    editLearnerStatus.textContent = "Changes saved.";
+    showToast("Changes saved.", "success");
     editLearnerForm.classList.add("hidden");
     await loadLearners();
   } catch (err) {
@@ -326,9 +415,21 @@ async function loadEnrollments() {
       <td>${e.dueDate ? fmt(e.dueDate) : "—"}</td>
       <td>${e.completedAt ? `<span class="cert-link">&#10003; ${fmt(e.completedAt)}</span>` : "<span style='opacity:0.5'>Incomplete</span>"}</td>
       <td>${certAction}</td>
-      <td><button class="btn-action btn-action-delete" data-id="${sanitize(e.id)}">Remove</button></td>
+      <td><div class="action-cell"><button class="btn-action btn-action-edit" data-id="${sanitize(e.id)}" data-due="${e.dueDate ? new Date(e.dueDate).toISOString().slice(0, 10) : ""}">Edit Date</button><button class="btn-action btn-action-delete" data-id="${sanitize(e.id)}">Remove</button></div></td>
     `;
     tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll(".btn-action-edit[data-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const current = btn.dataset.due || "";
+      const val = prompt("Set due date (YYYY-MM-DD), or clear:", current);
+      if (val === null) return;
+      const dueDate = val.trim() ? new Date(val.trim()).toISOString() : null;
+      api(`/api/admin/enrollments/${btn.dataset.id}`, { method: "PATCH", body: { dueDate } })
+        .then(() => { showToast("Due date updated.", "success"); loadEnrollments(); })
+        .catch((err) => showToast(err.message || "Failed to update.", "error"));
+    });
   });
 
   tbody.querySelectorAll(".btn-issue-cert").forEach((btn) => {
@@ -337,8 +438,8 @@ async function loadEnrollments() {
       btn.textContent = "Issuing...";
       try {
         await api(`/api/admin/issue-certificate/${btn.dataset.attemptId}`, { method: "POST" });
+        showToast("Certificate issued.", "success");
         btn.textContent = "Issued";
-        btn.style.borderColor = "rgba(110,223,160,0.6)";
       } catch {
         btn.textContent = "Error";
         btn.disabled = false;
@@ -353,8 +454,10 @@ async function loadEnrollments() {
       btn.textContent = "Removing...";
       try {
         await api(`/api/admin/enrollments/${btn.dataset.id}`, { method: "DELETE" });
+        showToast("Enrollment removed.", "success");
         await loadEnrollments();
       } catch (err) {
+        showToast(err.message || "Failed to remove.", "error");
         btn.textContent = "Error";
         btn.disabled = false;
       }
@@ -397,7 +500,7 @@ saveEnrollmentBtn.addEventListener("click", async () => {
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
       },
     });
-    addEnrollmentStatus.textContent = "Learner enrolled successfully.";
+    showToast("Learner enrolled successfully.", "success");
     addEnrollmentForm.classList.add("hidden");
     await loadEnrollments();
   } catch (err) {
@@ -411,16 +514,19 @@ saveEnrollmentBtn.addEventListener("click", async () => {
 // ============================================================
 // CERTIFICATES TAB
 // ============================================================
+let allCertificates = [];
+
 async function loadCertificates() {
   const rows = await api("/api/admin/certificates");
+  allCertificates = rows || [];
   const tbody = document.getElementById("certsTableBody");
   const noMsg = document.getElementById("noCerts");
-  if (!rows || rows.length === 0) {
+  if (!allCertificates.length) {
     noMsg.classList.remove("hidden");
     return;
   }
   tbody.innerHTML = "";
-  rows.forEach((c) => {
+  allCertificates.forEach((c) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><strong>${sanitize(c.certificateNo)}</strong></td>
@@ -433,13 +539,40 @@ async function loadCertificates() {
   });
 }
 
+// Export certificates to CSV
+document.getElementById("exportCertsBtn").addEventListener("click", () => {
+  if (!allCertificates.length) {
+    showToast("No certificates to export.", "error");
+    return;
+  }
+  const headers = ["Certificate No", "Learner", "Email", "Course", "Issued Date"];
+  const csvRows = [headers.join(",")];
+  allCertificates.forEach((c) => {
+    csvRows.push([
+      c.certificateNo,
+      c.learner?.fullName || "",
+      c.learner?.email || "",
+      c.course?.title || "",
+      c.issuedAt ? new Date(c.issuedAt).toLocaleDateString("en-US") : "",
+    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+  });
+  const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `certificates-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
 // ============================================================
 // ANALYTICS TAB
 // ============================================================
 async function loadAnalytics() {
-  const [completion, events] = await Promise.all([
+  const [completion, events, trends] = await Promise.all([
     api("/api/analytics/completion"),
     api("/api/analytics/events/top"),
+    api("/api/analytics/trends"),
   ]);
 
   if (completion) {
@@ -455,22 +588,37 @@ async function loadAnalytics() {
   if (!events || events.length === 0) {
     noMsg.classList.remove("hidden");
     chart.classList.add("hidden");
-    return;
+  } else {
+    const max = Math.max(...events.map((e) => e.count), 1);
+    chart.innerHTML = "";
+    events.forEach((e) => {
+      const pct = Math.round((e.count / max) * 100);
+      const row = document.createElement("div");
+      row.className = "event-row";
+      row.innerHTML = `
+        <span class="event-verb">${sanitize(e.verb)}</span>
+        <div class="event-bar-wrap"><div class="event-bar-fill" style="width:${pct}%"></div></div>
+        <span class="event-count">${e.count}</span>
+      `;
+      chart.appendChild(row);
+    });
   }
 
-  const max = Math.max(...events.map((e) => e.count), 1);
-  chart.innerHTML = "";
-  events.forEach((e) => {
-    const pct = Math.round((e.count / max) * 100);
-    const row = document.createElement("div");
-    row.className = "event-row";
-    row.innerHTML = `
-      <span class="event-verb">${sanitize(e.verb)}</span>
-      <div class="event-bar-wrap"><div class="event-bar-fill" style="width:${pct}%"></div></div>
-      <span class="event-count">${e.count}</span>
-    `;
-    chart.appendChild(row);
-  });
+  // Trends table
+  const trendsSection = document.getElementById("trendsSection");
+  const trendsTbody = document.getElementById("trendsTableBody");
+  if (trends && trends.length) {
+    trendsSection.classList.remove("hidden");
+    trendsTbody.innerHTML = "";
+    [...trends].reverse().forEach((t) => {
+      const [year, month] = t.month.split("-");
+      const label = new Date(parseInt(year), parseInt(month) - 1, 1)
+        .toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${label}</td><td>${t.count}</td>`;
+      trendsTbody.appendChild(tr);
+    });
+  }
 }
 
 // ============================================================
@@ -499,7 +647,7 @@ async function bootstrap() {
 }
 
 // Lazy-load tabs on first click
-const tabLoaded = { overview: true, learners: true };
+const tabLoaded = { overview: true, learners: true, users: false };
 document.querySelectorAll(".admin-tab").forEach((btn) => {
   btn.addEventListener("click", async () => {
     const tab = btn.dataset.tab;
@@ -509,10 +657,230 @@ document.querySelectorAll(".admin-tab").forEach((btn) => {
       if (tab === "enrollments") await loadEnrollments();
       if (tab === "certificates") await loadCertificates();
       if (tab === "analytics") await loadAnalytics();
+      if (tab === "users") await loadUsers();
     } catch {
       // errors shown inline
     }
   });
 });
+
+// ============================================================
+// USERS TAB
+// ============================================================
+async function loadUsers() {
+  const rows = await api("/api/admin/users");
+  const tbody = document.getElementById("usersTableBody");
+  const noMsg = document.getElementById("noUsers");
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = "";
+    noMsg.classList.remove("hidden");
+    return;
+  }
+  noMsg.classList.add("hidden");
+  tbody.innerHTML = "";
+  const isOwner = storedRole === "OWNER";
+  rows.forEach((u) => {
+    const rolePill = `<span class="role-pill role-${u.role.toLowerCase()}">${u.role}</span>`;
+    const actions = isOwner
+      ? `<div class="action-cell">
+          <button class="btn-action btn-action-edit" data-id="${sanitize(u.id)}" data-name="${sanitize(u.fullName)}" data-email="${sanitize(u.email)}" data-role="${sanitize(u.role)}">Edit</button>
+          <button class="btn-action btn-action-delete" data-id="${sanitize(u.id)}">Delete</button>
+        </div>`
+      : `<span style="opacity:0.4;font-size:12px;">View only</span>`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${sanitize(u.fullName)}</td>
+      <td>${sanitize(u.email)}</td>
+      <td>${rolePill}</td>
+      <td>${fmt(u.createdAt)}</td>
+      <td>${actions}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".btn-action-edit[data-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.getElementById("editUserId").value = btn.dataset.id;
+      document.getElementById("euFullName").value = btn.dataset.name;
+      document.getElementById("euEmail").value = btn.dataset.email;
+      document.getElementById("euRole").value = btn.dataset.role;
+      document.getElementById("euPassword").value = "";
+      editUserForm.classList.remove("hidden");
+      addUserForm.classList.add("hidden");
+      editUserStatus.textContent = "";
+      editUserStatus.className = "form-status";
+      editUserForm.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+  tbody.querySelectorAll(".btn-action-delete[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this user account? This cannot be undone.")) return;
+      btn.disabled = true;
+      btn.textContent = "Deleting...";
+      try {
+        await api(`/api/admin/users/${btn.dataset.id}`, { method: "DELETE" });
+        showToast("User deleted.", "success");
+        await loadUsers();
+      } catch (err) {
+        showToast(err.message || "Failed to delete user.", "error");
+        btn.textContent = "Delete";
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+// Show/hide add user button based on role
+const showAddUserBtn = document.getElementById("showAddUserBtn");
+const addUserForm = document.getElementById("addUserForm");
+const cancelAddUserBtn = document.getElementById("cancelAddUserBtn");
+const saveUserBtn = document.getElementById("saveUserBtn");
+const addUserStatus = document.getElementById("addUserStatus");
+const editUserForm = document.getElementById("editUserForm");
+const cancelEditUserBtn = document.getElementById("cancelEditUserBtn");
+const saveEditUserBtn = document.getElementById("saveEditUserBtn");
+const editUserStatus = document.getElementById("editUserStatus");
+
+if (storedRole === "OWNER") showAddUserBtn.style.display = "";
+
+showAddUserBtn.addEventListener("click", () => addUserForm.classList.toggle("hidden"));
+cancelAddUserBtn.addEventListener("click", () => {
+  addUserForm.classList.add("hidden");
+  addUserStatus.textContent = "";
+});
+saveUserBtn.addEventListener("click", async () => {
+  const fullName = document.getElementById("uFullName").value.trim();
+  const email = document.getElementById("uEmail").value.trim();
+  const password = document.getElementById("uPassword").value;
+  const role = document.getElementById("uRole").value;
+  if (!fullName || !email || !password) {
+    addUserStatus.textContent = "All fields are required.";
+    addUserStatus.className = "form-status is-error";
+    return;
+  }
+  saveUserBtn.disabled = true;
+  addUserStatus.textContent = "Creating...";
+  addUserStatus.className = "form-status";
+  try {
+    await api("/api/admin/users", { method: "POST", body: { fullName, email, password, role } });
+    showToast("User account created.", "success");
+    addUserForm.classList.add("hidden");
+    addUserStatus.textContent = "";
+    await loadUsers();
+  } catch (err) {
+    addUserStatus.textContent = err.message || "Failed to create user.";
+    addUserStatus.className = "form-status is-error";
+  } finally {
+    saveUserBtn.disabled = false;
+  }
+});
+
+cancelEditUserBtn.addEventListener("click", () => {
+  editUserForm.classList.add("hidden");
+  editUserStatus.textContent = "";
+});
+saveEditUserBtn.addEventListener("click", async () => {
+  const id = document.getElementById("editUserId").value;
+  const fullName = document.getElementById("euFullName").value.trim();
+  const email = document.getElementById("euEmail").value.trim();
+  const role = document.getElementById("euRole").value;
+  const newPassword = document.getElementById("euPassword").value;
+  if (!fullName || !email) {
+    editUserStatus.textContent = "Name and email are required.";
+    editUserStatus.className = "form-status is-error";
+    return;
+  }
+  saveEditUserBtn.disabled = true;
+  editUserStatus.textContent = "Saving...";
+  editUserStatus.className = "form-status";
+  try {
+    await api(`/api/admin/users/${id}`, {
+      method: "PATCH",
+      body: { fullName, email, role, ...(newPassword ? { newPassword } : {}) },
+    });
+    showToast("User updated.", "success");
+    editUserForm.classList.add("hidden");
+    editUserStatus.textContent = "";
+    await loadUsers();
+  } catch (err) {
+    editUserStatus.textContent = err.message || "Failed to update user.";
+    editUserStatus.className = "form-status is-error";
+  } finally {
+    saveEditUserBtn.disabled = false;
+  }
+});
+
+// ============================================================
+// CSV IMPORT
+// ============================================================
+const csvImportBtn = document.getElementById("csvImportBtn");
+const csvImportInput = document.getElementById("csvImportInput");
+
+csvImportBtn.addEventListener("click", () => csvImportInput.click());
+csvImportInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const rows = parseCsv(text);
+  if (!rows.length) {
+    showToast("No valid rows found in CSV. Expected columns: fullName, email.", "error");
+    csvImportInput.value = "";
+    return;
+  }
+  csvImportBtn.disabled = true;
+  csvImportBtn.textContent = "Importing...";
+  try {
+    const result = await api("/api/admin/learners/bulk", { method: "POST", body: rows });
+    showToast(`Imported ${result.created} learner${result.created !== 1 ? "s" : ""}. Skipped ${result.skipped} duplicate${result.skipped !== 1 ? "s" : ""}.`, "success");
+    await loadLearners();
+  } catch (err) {
+    showToast(err.message || "Import failed.", "error");
+  } finally {
+    csvImportBtn.disabled = false;
+    csvImportBtn.textContent = "Import CSV";
+    csvImportInput.value = "";
+  }
+});
+
+function parseCsvLine(line) {
+  const result = [];
+  let inQuotes = false;
+  let current = "";
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (line[i] === "," && !inQuotes) {
+      result.push(current); current = "";
+    } else {
+      current += line[i];
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(",").map((h) =>
+    h.trim().replace(/^"|"$/g, "").toLowerCase().replace(/\s+/g, "").replace(/[^a-z]/g, "")
+  );
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseCsvLine(lines[i]);
+    if (vals.every((v) => !v.trim())) continue;
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = (vals[idx] || "").trim(); });
+    if (!row.fullname || !row.email) continue;
+    rows.push({
+      fullName: row.fullname,
+      email: row.email,
+      ...(row.employeeid ? { employeeId: row.employeeid } : {}),
+      ...(row.department ? { department: row.department } : {}),
+      ...(row.roletrack || row.role ? { roleTrack: row.roletrack || row.role } : {}),
+    });
+  }
+  return rows;
+}
 
 bootstrap();

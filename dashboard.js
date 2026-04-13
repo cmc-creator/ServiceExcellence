@@ -64,6 +64,65 @@ retryBtn.addEventListener("click", () => {
   loadDashboard();
 });
 
+// ---- Change password ----
+const changePwdBtn = document.getElementById("changePwdBtn");
+const changePwdModal = document.getElementById("changePwdModal");
+const cpCancelBtn = document.getElementById("cpCancelBtn");
+const cpSubmitBtn = document.getElementById("cpSubmitBtn");
+const cpStatus = document.getElementById("cpStatus");
+
+changePwdBtn.addEventListener("click", () => {
+  document.getElementById("cpCurrent").value = "";
+  document.getElementById("cpNew").value = "";
+  document.getElementById("cpConfirm").value = "";
+  cpStatus.textContent = "";
+  cpStatus.className = "modal-status";
+  changePwdModal.classList.remove("hidden");
+});
+cpCancelBtn.addEventListener("click", () => changePwdModal.classList.add("hidden"));
+changePwdModal.addEventListener("click", (e) => {
+  if (e.target === changePwdModal) changePwdModal.classList.add("hidden");
+});
+cpSubmitBtn.addEventListener("click", async () => {
+  const current = document.getElementById("cpCurrent").value;
+  const next = document.getElementById("cpNew").value;
+  const confirm = document.getElementById("cpConfirm").value;
+  if (!current || !next || !confirm) {
+    cpStatus.textContent = "All fields are required.";
+    cpStatus.className = "modal-status is-error";
+    return;
+  }
+  if (next.length < 8) {
+    cpStatus.textContent = "New password must be at least 8 characters.";
+    cpStatus.className = "modal-status is-error";
+    return;
+  }
+  if (next !== confirm) {
+    cpStatus.textContent = "New passwords do not match.";
+    cpStatus.className = "modal-status is-error";
+    return;
+  }
+  cpSubmitBtn.disabled = true;
+  cpStatus.textContent = "Updating...";
+  cpStatus.className = "modal-status";
+  try {
+    const res = await fetch(`${apiBase}/api/auth/change-password`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword: current, newPassword: next }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+    changePwdModal.classList.add("hidden");
+    showToast("Password updated successfully.", "success");
+  } catch (err) {
+    cpStatus.textContent = err.message || "Failed to update password.";
+    cpStatus.className = "modal-status is-error";
+  } finally {
+    cpSubmitBtn.disabled = false;
+  }
+});
+
 // ---- Helpers ----
 function fmt(dateStr) {
   if (!dateStr) return "—";
@@ -97,6 +156,47 @@ function sanitizeText(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ---- Session expiry warning ----
+function checkSessionExpiry() {
+  if (!token) return;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (!payload.exp) return;
+    const remainingSec = payload.exp - Math.floor(Date.now() / 1000);
+    if (remainingSec <= 0) {
+      window.location.replace("login.html?session=expired");
+      return;
+    }
+    if (remainingSec < 1800) {
+      const mins = Math.ceil(remainingSec / 60);
+      const warning = document.getElementById("sessionWarning");
+      const msg = document.getElementById("sessionWarningMsg");
+      if (warning && msg) {
+        msg.textContent = `Session expires in ${mins} minute${mins !== 1 ? "s" : ""}. Sign in again to continue.`;
+        warning.classList.remove("hidden");
+      }
+      setTimeout(() => window.location.replace("login.html?session=expired"), remainingSec * 1000);
+    }
+  } catch {
+    // non-critical
+  }
+}
+
+// ---- Toast ----
+function showToast(message, type = "success") {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("toast-visible"));
+  setTimeout(() => {
+    toast.classList.remove("toast-visible");
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
 }
 
 // ---- Fetch training status ----
@@ -473,6 +573,7 @@ function render(data) {
   loadingState.classList.add("hidden");
   dashContent.classList.remove("hidden");
   observeRevealNodes();
+  checkSessionExpiry();
 }
 
 // ---- Bootstrap ----

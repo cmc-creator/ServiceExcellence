@@ -20,10 +20,16 @@
     <p class="logo-mark">NyxArete <span class="logo-divider">|</span> Destiny Springs</p>
     <div class="nav-right">
       <a class="nav-admin-link hidden" id="adminPanelLink" href="admin.html">Admin Panel</a>
+      <button class="btn-ghost btn-sm" id="changePwdBtn" type="button">Change Password</button>
       <span class="nav-user" id="navUserName">Loading...</span>
       <button class="btn-sign-out" id="signOutBtn" type="button">Sign Out</button>
     </div>
   </header>
+
+  <!-- SESSION WARNING -->
+  <div class="session-warning hidden" id="sessionWarning" role="alert">
+    <span id="sessionWarningMsg"></span>
+  </div>
 
   <!-- MAIN CONTENT -->
   <main class="dash-main">
@@ -155,5 +161,32 @@
   </main>
 
   <script src="dashboard.js"></script>
+
+  <!-- CHANGE PASSWORD MODAL -->
+  <div class="modal-overlay hidden" id="changePwdModal" role="dialog" aria-modal="true" aria-labelledby="changePwdTitle">
+    <div class="modal-card">
+      <h2 id="changePwdTitle">Change Password</h2>
+      <div class="modal-field">
+        <label for="cpCurrent">Current Password</label>
+        <input id="cpCurrent" type="password" class="modal-input" placeholder="Enter current password" autocomplete="current-password">
+      </div>
+      <div class="modal-field">
+        <label for="cpNew">New Password</label>
+        <input id="cpNew" type="password" class="modal-input" placeholder="Minimum 8 characters" autocomplete="new-password">
+      </div>
+      <div class="modal-field">
+        <label for="cpConfirm">Confirm New Password</label>
+        <input id="cpConfirm" type="password" class="modal-input" placeholder="Repeat new password" autocomplete="new-password">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-solid btn-sm" id="cpSubmitBtn" type="button">Update Password</button>
+        <button class="btn-ghost btn-sm" id="cpCancelBtn" type="button">Cancel</button>
+      </div>
+      <p class="modal-status" id="cpStatus"></p>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
 </body>
 </html>
