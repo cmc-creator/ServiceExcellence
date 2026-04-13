@@ -1,5 +1,6 @@
 import express from "express";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 import { db } from "../lib/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
@@ -183,6 +184,7 @@ router.post("/complete", requireAuth, async (req, res) => {
     },
   });
 
+  let certificate = null;
   if (passed) {
     await db.enrollment.updateMany({
       where: {
@@ -192,12 +194,26 @@ router.post("/complete", requireAuth, async (req, res) => {
       },
       data: { completedAt: new Date() },
     });
+
+    // Auto-issue certificate on first pass (upsert so retries are idempotent)
+    certificate = await db.certificate.upsert({
+      where: { attemptId: updated.id },
+      update: {},
+      create: {
+        attemptId: updated.id,
+        organizationId: attempt.organizationId,
+        learnerId: attempt.learnerId,
+        courseId: attempt.courseId,
+        certificateNo: `NYX-${nanoid(10).toUpperCase()}`,
+      },
+    });
   }
 
   return res.json({
     attemptId: updated.id,
     status: updated.status,
     passed,
+    certificateId: certificate?.id ?? null,
   });
 });
 
@@ -291,6 +307,83 @@ router.delete("/public/roles/:organizationSlug/:roleId", requireAuth, requireRol
   }
 
   return res.status(204).send();
+});
+
+router.get("/me", requireAuth, async (req, res) => {
+  const { email, organizationId } = req.user;
+
+  const learner = await db.learner.findUnique({
+    where: { organizationId_email: { organizationId, email } },
+  });
+
+  if (!learner) {
+    return res.json({
+      learner: null,
+      enrollments: [],
+      attempts: [],
+      certificates: [],
+      summary: {
+        totalCourses: 0,
+        completedCourses: 0,
+        passedAttempts: 0,
+        failedAttempts: 0,
+        inProgressAttempts: 0,
+        bestScore: null,
+        hasCertificate: false,
+      },
+    });
+  }
+
+  const [enrollments, attempts, certificates] = await Promise.all([
+    db.enrollment.findMany({
+      where: { organizationId, learnerId: learner.id },
+      include: { course: true },
+      orderBy: { enrolledAt: "desc" },
+    }),
+    db.attempt.findMany({
+      where: { organizationId, learnerId: learner.id },
+      include: { course: true },
+      orderBy: { startedAt: "desc" },
+    }),
+    db.certificate.findMany({
+      where: { organizationId, learnerId: learner.id },
+      include: { course: true },
+      orderBy: { issuedAt: "desc" },
+    }),
+  ]);
+
+  const enrichedEnrollments = enrollments.map((e) => {
+    const courseAttempts = attempts.filter((a) => a.courseId === e.courseId);
+    const passedAttempts = courseAttempts.filter((a) => a.status === "PASSED");
+    const bestAttempt =
+      passedAttempts.sort((a, b) => (b.scorePercent ?? 0) - (a.scorePercent ?? 0))[0] ?? null;
+    const inProgressAttempt = courseAttempts.find((a) => a.status === "IN_PROGRESS") ?? null;
+    const certificate = certificates.find((c) => c.courseId === e.courseId) ?? null;
+    return { ...e, courseAttempts, bestAttempt, inProgressAttempt, certificate };
+  });
+
+  const passedAttempts = attempts.filter((a) => a.status === "PASSED").length;
+  const failedAttempts = attempts.filter((a) => a.status === "FAILED").length;
+  const inProgressAttempts = attempts.filter((a) => a.status === "IN_PROGRESS").length;
+  const completedCourses = enrollments.filter((e) => e.completedAt).length;
+  const scores = attempts.filter((a) => a.scorePercent !== null).map((a) => a.scorePercent);
+  const bestScore = scores.length ? Math.max(...scores) : null;
+
+  return res.json({
+    learner,
+    enrollments: enrichedEnrollments,
+    attempts,
+    certificates,
+    summary: {
+      totalCourses: enrollments.length,
+      completedCourses,
+      passedAttempts,
+      failedAttempts,
+      inProgressAttempts,
+      bestScore,
+      hasCertificate: certificates.length > 0,
+    },
+  });
 });
 
 router.get("/public/config/:organizationSlug", async (req, res) => {

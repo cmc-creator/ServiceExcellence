@@ -51,6 +51,8 @@ function updateStatus(message, isError = false) {
 
 if (searchParams.get("session") === "required") {
   updateStatus("Please sign in to continue your training session.");
+} else if (searchParams.get("session") === "expired") {
+  updateStatus("Your session has expired. Please sign in again.");
 }
 
 function setFieldError(fieldName, message) {
@@ -170,9 +172,9 @@ form.addEventListener("submit", async (event) => {
       localStorage.setItem("nyxUserRole", result.user.role);
     }
 
-    updateStatus("Login successful. Opening training platform...");
+    updateStatus("Login successful. Opening your dashboard...");
     window.setTimeout(() => {
-      window.location.href = "training-tool/index.html";
+      window.location.href = "dashboard.html";
     }, 550);
   } catch (error) {
     updateStatus(error.message || "Unable to sign in", true);

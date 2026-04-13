@@ -153,4 +153,24 @@ router.post("/issue-certificate/:attemptId", requireRole(["OWNER", "ADMIN", "MAN
   return res.status(201).json(cert);
 });
 
+router.get("/certificates/:id", async (req, res) => {
+  const cert = await db.certificate.findFirst({
+    where: {
+      id: req.params.id,
+      organizationId: req.user.organizationId,
+    },
+    include: {
+      learner: true,
+      course: true,
+      attempt: true,
+    },
+  });
+
+  if (!cert) {
+    return res.status(404).json({ error: "Certificate not found" });
+  }
+
+  return res.json(cert);
+});
+
 export default router;

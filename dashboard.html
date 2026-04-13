@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Training Dashboard | Destiny Springs</title>
+  <meta name="description" content="Your personal training dashboard. Track progress, view accomplishments, and continue your Service Excellence journey.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="grain"></div>
+
+  <!-- TOP NAV -->
+  <header class="dash-nav">
+    <p class="logo-mark">NyxArete <span class="logo-divider">|</span> Destiny Springs</p>
+    <div class="nav-right">
+      <a class="nav-admin-link hidden" id="adminPanelLink" href="admin.html">Admin Panel</a>
+      <span class="nav-user" id="navUserName">Loading...</span>
+      <button class="btn-sign-out" id="signOutBtn" type="button">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="dash-main">
+
+    <!-- LOADING STATE -->
+    <div class="loading-shell" id="loadingState">
+      <div class="spinner"></div>
+      <p>Loading your training profile...</p>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div class="error-shell hidden" id="errorState">
+      <p class="error-icon">&#9888;</p>
+      <h2>Unable to load your dashboard</h2>
+      <p id="errorMessage">Please try refreshing the page. If this continues, contact your administrator.</p>
+      <button class="btn-solid" type="button" id="retryBtn">Try Again</button>
+    </div>
+
+    <!-- DASHBOARD CONTENT -->
+    <div class="dash-content hidden" id="dashContent">
+
+      <!-- WELCOME HERO -->
+      <section class="welcome-hero reveal">
+        <div class="welcome-copy">
+          <p class="welcome-eyebrow" id="welcomeDate"></p>
+          <h1 id="welcomeHeading">Welcome back.</h1>
+          <p class="welcome-sub" id="welcomeSub"></p>
+        </div>
+        <div class="status-badge-wrap">
+          <div class="status-badge" id="overallStatusBadge">
+            <span class="badge-icon" id="badgeIcon"></span>
+            <span class="badge-label" id="badgeLabel">Checking status...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUMMARY METRICS -->
+      <section class="metrics-row reveal">
+        <div class="metric-card">
+          <p class="metric-val" id="metricCourses">-</p>
+          <p class="metric-lbl">Courses Enrolled</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-val" id="metricCompleted">-</p>
+          <p class="metric-lbl">Completed</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-val" id="metricScore">-</p>
+          <p class="metric-lbl">Best Score</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-val" id="metricAttempts">-</p>
+          <p class="metric-lbl">Total Attempts</p>
+        </div>
+      </section>
+
+      <!-- PRIMARY ACTION -->
+      <section class="action-block reveal" id="actionBlock">
+        <div class="action-inner">
+          <div class="action-copy">
+            <p class="action-eyebrow" id="actionEyebrow"></p>
+            <h2 id="actionHeading"></h2>
+            <p id="actionDescription"></p>
+          </div>
+          <div class="action-buttons" id="actionButtons"></div>
+        </div>
+      </section>
+
+      <!-- COURSE PROGRESS -->
+      <section class="section reveal" id="courseSection">
+        <div class="section-head">
+          <p class="section-kicker">Your Training</p>
+          <h2>Course Progress</h2>
+        </div>
+        <div class="course-grid" id="courseGrid">
+          <!-- Course cards injected by JS -->
+        </div>
+        <!-- NO COURSES STATE -->
+        <div class="no-courses hidden" id="noCoursesMsg">
+          <p>You have not been enrolled in any courses yet.</p>
+          <p class="muted">Contact your administrator to request enrollment.</p>
+        </div>
+      </section>
+
+      <!-- ACCOMPLISHMENTS -->
+      <section class="section reveal" id="accomplishmentsSection">
+        <div class="section-head">
+          <p class="section-kicker">Accomplishments</p>
+          <h2>Earned & Recognized</h2>
+        </div>
+        <div class="accomplishments-grid" id="accomplishmentsGrid">
+          <!-- Accomplishment tiles injected by JS -->
+        </div>
+        <div class="no-accomplishments hidden" id="noAccomplishmentsMsg">
+          <p>Complete your first course to earn accomplishments.</p>
+        </div>
+      </section>
+
+      <!-- ATTEMPT HISTORY -->
+      <section class="section reveal" id="historySection">
+        <div class="section-head">
+          <p class="section-kicker">Activity Log</p>
+          <h2>Attempt History</h2>
+        </div>
+        <div class="history-table-wrap" id="historyTableWrap">
+          <table class="history-table" id="historyTable">
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Started</th>
+                <th>Submitted</th>
+                <th>Score</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="no-history hidden" id="noHistoryMsg">
+          <p>No attempts recorded yet. Begin your training to get started.</p>
+        </div>
+      </section>
+
+    </div>
+    <!-- /dash-content -->
+
+  </main>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

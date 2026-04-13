@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificate of Completion | Destiny Springs Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="certificate.css">
+</head>
+<body>
+  <!-- SCREEN NAV (hidden on print) -->
+  <div class="screen-nav no-print">
+    <a href="dashboard.html" class="back-link">&#8592; Back to Dashboard</a>
+    <button class="btn-print" id="printBtn" type="button">Print / Save PDF</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="cert-loading" id="loadingState">
+    <div class="spinner"></div>
+    <p>Loading certificate...</p>
+  </div>
+
+  <!-- ERROR -->
+  <div class="cert-error hidden" id="errorState">
+    <p id="errorMsg">&#9888; Certificate not found or access denied.</p>
+    <a href="dashboard.html">Back to Dashboard</a>
+  </div>
+
+  <!-- CERTIFICATE -->
+  <div class="cert-page hidden" id="certPage">
+    <div class="cert-border">
+      <div class="cert-inner">
+
+        <div class="cert-header">
+          <p class="cert-org-name" id="certOrgName">Destiny Springs Healthcare</p>
+          <p class="cert-brand">NyxArete Training Platform</p>
+        </div>
+
+        <div class="cert-seal">&#9670;</div>
+
+        <p class="cert-presents">This certifies that</p>
+        <h1 class="cert-name" id="certName">Learner Name</h1>
+
+        <p class="cert-body">
+          has successfully completed all required modules and assessments for
+        </p>
+
+        <h2 class="cert-course" id="certCourse">Course Title</h2>
+
+        <p class="cert-body" id="certScore"></p>
+
+        <div class="cert-meta-row">
+          <div class="cert-meta-item">
+            <p class="cert-meta-label">Certificate No.</p>
+            <p class="cert-meta-value" id="certNo"></p>
+          </div>
+          <div class="cert-meta-item">
+            <p class="cert-meta-label">Date Issued</p>
+            <p class="cert-meta-value" id="certDate"></p>
+          </div>
+          <div class="cert-meta-item">
+            <p class="cert-meta-label">Role Track</p>
+            <p class="cert-meta-value" id="certRole"></p>
+          </div>
+        </div>
+
+        <div class="cert-footer">
+          <div class="cert-sig-line">
+            <div class="cert-sig-block">
+              <div class="cert-sig-rule"></div>
+              <p>Authorized by NyxArete</p>
+            </div>
+            <div class="cert-seal-stamp">
+              <div class="seal-circle">
+                <span class="seal-text">VERIFIED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="certificate.js"></script>
+</body>
+</html>

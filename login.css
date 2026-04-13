@@ -180,11 +180,19 @@ input.invalid {
   font-size: 0.8rem;
 }
 
-.password-row {
+.password-row,
+.copy-row {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
   align-items: center;
+}
+
+.copy-row input[readonly] {
+  font-size: 12px;
+  word-break: break-all;
+  cursor: text;
+  opacity: 0.8;
 }
 
 .toggle-password {
@@ -255,6 +263,17 @@ input.invalid {
   font-weight: 600;
   color: #f6d5a6;
 }
+
+.forgot-link {
+  margin: 10px 0 0;
+  text-align: right;
+  font-size: 13px;
+}
+.forgot-link a {
+  color: rgba(245,184,103,0.75);
+  text-decoration: none;
+}
+.forgot-link a:hover { text-decoration: underline; }
 
 .status.error {
   color: #ffb2a6;

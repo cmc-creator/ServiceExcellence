@@ -1929,6 +1929,8 @@ function submitCompletion() {
     submissionStatus.textContent = scorm.initialized
       ? "Completion submitted to LMS successfully."
       : "Completion saved locally. LMS was not connected in this session.";
+    const dashBtn = document.getElementById("dashboardBtn");
+    if (dashBtn) dashBtn.style.display = "";
   });
 }
 

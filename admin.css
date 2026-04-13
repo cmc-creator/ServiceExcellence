@@ -1,0 +1,213 @@
+/* ==================== ADMIN TABS ==================== */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 36px;
+  overflow-x: auto;
+  padding-bottom: 0;
+}
+.admin-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-2);
+  font-family: "Urbanist", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+  margin-bottom: -1px;
+}
+.admin-tab:hover { color: var(--ink-0); }
+.admin-tab.active {
+  color: var(--brand-gold);
+  border-bottom-color: var(--brand-gold);
+}
+
+/* ==================== ADMIN PANELS ==================== */
+.admin-panel { display: none; }
+.admin-panel.active { display: block; }
+
+/* ==================== TOOLBAR ==================== */
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* ==================== TABLE WRAP ==================== */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+}
+
+/* ==================== ADMIN FORM CARD ==================== */
+.admin-form-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(245, 184, 103, 0.25);
+  border-radius: 18px;
+  padding: 28px 32px;
+  backdrop-filter: blur(12px);
+  margin-bottom: 28px;
+}
+.admin-form-card h3 {
+  font-family: "Cinzel", serif;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 20px;
+  color: var(--ink-0);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-field label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+.admin-input {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink-0);
+  font-family: "Urbanist", sans-serif;
+  font-size: 14px;
+  padding: 10px 14px;
+  width: 100%;
+  transition: border-color 0.2s, outline 0.2s;
+}
+.admin-input:focus {
+  outline: 2px solid rgba(245, 184, 103, 0.4);
+  border-color: rgba(245, 184, 103, 0.7);
+}
+select.admin-input option {
+  background: var(--base-1);
+  color: var(--ink-0);
+}
+.form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.form-status {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-gold);
+  min-height: 1.2rem;
+}
+.form-status.is-error { color: var(--brand-coral); }
+
+/* ==================== BUTTON SIZE VARIANTS ==================== */
+.btn-sm {
+  font-size: 12px !important;
+  padding: 9px 18px !important;
+}
+
+/* ==================== NO DATA STATE ==================== */
+.no-data {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 32px;
+  text-align: center;
+  color: var(--ink-2);
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  margin-top: 8px;
+}
+
+/* ==================== ISSUE CERT BUTTON ==================== */
+.btn-issue-cert {
+  background: transparent;
+  border: 1px solid rgba(110, 223, 160, 0.35);
+  color: var(--brand-green);
+  font-family: "Urbanist", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-issue-cert:hover { background: rgba(110, 223, 160, 0.1); }
+.btn-issue-cert:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ==================== EVENT CHART ==================== */
+.event-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 18px;
+  backdrop-filter: blur(8px);
+}
+.event-verb {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-1);
+  min-width: 220px;
+}
+.event-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.event-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-gold), var(--brand-coral));
+  border-radius: 100px;
+  transition: width 0.5s ease;
+}
+.event-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand-gold);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ==================== CERT LINK ==================== */
+.cert-view-link {
+  color: var(--brand-gold);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.cert-view-link:hover { text-decoration: underline; }

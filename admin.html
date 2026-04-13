@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | Destiny Springs Training</title>
+  <meta name="description" content="Manage learner enrollments, courses, and view completion analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="grain"></div>
+
+  <header class="dash-nav">
+    <p class="logo-mark">NyxArete <span class="logo-divider">|</span> Admin Panel</p>
+    <div class="nav-right">
+      <a class="btn-ghost btn-sm" href="dashboard.html">My Dashboard</a>
+      <span class="nav-user" id="navUserName"></span>
+      <button class="btn-sign-out" id="signOutBtn" type="button">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="dash-main">
+
+    <!-- AUTH ERROR -->
+    <div class="error-shell hidden" id="authError">
+      <p class="error-icon">&#128274;</p>
+      <h2>Access Restricted</h2>
+      <p>This panel is available to OWNER, ADMIN, and MANAGER roles only.</p>
+      <a class="btn-solid" href="dashboard.html">Back to Dashboard</a>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-shell" id="loadingState">
+      <div class="spinner"></div>
+      <p>Loading admin panel...</p>
+    </div>
+
+    <!-- ADMIN CONTENT -->
+    <div class="hidden" id="adminContent">
+
+      <!-- TAB NAV -->
+      <nav class="admin-tabs" role="tablist" aria-label="Admin sections">
+        <button class="admin-tab active" data-tab="overview" role="tab" aria-selected="true">Overview</button>
+        <button class="admin-tab" data-tab="learners" role="tab" aria-selected="false">Learners</button>
+        <button class="admin-tab" data-tab="enrollments" role="tab" aria-selected="false">Enrollments</button>
+        <button class="admin-tab" data-tab="certificates" role="tab" aria-selected="false">Certificates</button>
+        <button class="admin-tab" data-tab="analytics" role="tab" aria-selected="false">Analytics</button>
+      </nav>
+
+      <!-- TAB: OVERVIEW -->
+      <section class="admin-panel active reveal" id="tab-overview">
+        <div class="section-head">
+          <p class="section-kicker">Organization Summary</p>
+          <h2>At a Glance</h2>
+        </div>
+        <div class="metrics-row">
+          <div class="metric-card">
+            <p class="metric-val" id="ovLearners">-</p>
+            <p class="metric-lbl">Total Learners</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-val" id="ovCourses">-</p>
+            <p class="metric-lbl">Active Courses</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-val" id="ovPassed">-</p>
+            <p class="metric-lbl">Passed Attempts</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-val" id="ovRate">-</p>
+            <p class="metric-lbl">Completion Rate</p>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:40px;">
+          <p class="section-kicker">Recent Activity</p>
+          <h2>Latest Attempts</h2>
+        </div>
+        <div class="table-wrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Learner</th>
+                <th>Course</th>
+                <th>Started</th>
+                <th>Score</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recentAttemptsBody"></tbody>
+          </table>
+        </div>
+        <p class="no-data hidden" id="noRecentAttempts">No attempts recorded yet.</p>
+      </section>
+
+      <!-- TAB: LEARNERS -->
+      <section class="admin-panel hidden reveal" id="tab-learners">
+        <div class="panel-toolbar">
+          <div class="section-head" style="margin:0;">
+            <p class="section-kicker">Roster</p>
+            <h2>Manage Learners</h2>
+          </div>
+          <button class="btn-solid btn-sm" id="showAddLearnerBtn" type="button">+ Add Learner</button>
+        </div>
+
+        <!-- Add learner form -->
+        <div class="admin-form-card hidden" id="addLearnerForm">
+          <h3>Add Learner</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="lFullName">Full Name</label>
+              <input id="lFullName" type="text" placeholder="Jane Smith" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="lEmail">Work Email</label>
+              <input id="lEmail" type="email" placeholder="jane@destinysprings.com" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="lEmployeeId">Employee ID (optional)</label>
+              <input id="lEmployeeId" type="text" placeholder="EMP-1234" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="lDepartment">Department (optional)</label>
+              <input id="lDepartment" type="text" placeholder="Nursing" class="admin-input">
+            </div>
+            <div class="form-field">
+              <label for="lRoleTrack">Role Track (optional)</label>
+              <input id="lRoleTrack" type="text" placeholder="Clinical Staff" class="admin-input">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-solid btn-sm" id="saveLearnerBtn" type="button">Save Learner</button>
+            <button class="btn-ghost btn-sm" id="cancelAddLearnerBtn" type="button">Cancel</button>
+          </div>
+          <p class="form-status" id="addLearnerStatus"></p>
+        </div>
+
+        <div class="table-wrap" id="learnersTableWrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Employee ID</th>
+                <th>Department</th>
+                <th>Role Track</th>
+                <th>Added</th>
+              </tr>
+            </thead>
+            <tbody id="learnersTableBody"></tbody>
+          </table>
+        </div>
+        <p class="no-data hidden" id="noLearners">No learners in this organization yet.</p>
+      </section>
+
+      <!-- TAB: ENROLLMENTS -->
+      <section class="admin-panel hidden reveal" id="tab-enrollments">
+        <div class="panel-toolbar">
+          <div class="section-head" style="margin:0;">
+            <p class="section-kicker">Course Access</p>
+            <h2>Enrollments</h2>
+          </div>
+          <button class="btn-solid btn-sm" id="showAddEnrollmentBtn" type="button">+ Enroll Learner</button>
+        </div>
+
+        <!-- Enroll form -->
+        <div class="admin-form-card hidden" id="addEnrollmentForm">
+          <h3>Enroll a Learner</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="enrLearner">Learner</label>
+              <select id="enrLearner" class="admin-input">
+                <option value="">Select learner...</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="enrCourse">Course</label>
+              <select id="enrCourse" class="admin-input">
+                <option value="">Select course...</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="enrDueDate">Due Date (optional)</label>
+              <input id="enrDueDate" type="date" class="admin-input">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-solid btn-sm" id="saveEnrollmentBtn" type="button">Enroll</button>
+            <button class="btn-ghost btn-sm" id="cancelAddEnrollmentBtn" type="button">Cancel</button>
+          </div>
+          <p class="form-status" id="addEnrollmentStatus"></p>
+        </div>
+
+        <div class="table-wrap" id="enrollmentsTableWrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Learner</th>
+                <th>Course</th>
+                <th>Enrolled</th>
+                <th>Due Date</th>
+                <th>Completed</th>
+                <th>Issue Cert</th>
+              </tr>
+            </thead>
+            <tbody id="enrollmentsTableBody"></tbody>
+          </table>
+        </div>
+        <p class="no-data hidden" id="noEnrollments">No enrollments yet.</p>
+      </section>
+
+      <!-- TAB: CERTIFICATES -->
+      <section class="admin-panel hidden reveal" id="tab-certificates">
+        <div class="section-head">
+          <p class="section-kicker">Compliance Records</p>
+          <h2>Issued Certificates</h2>
+        </div>
+        <div class="table-wrap" id="certsTableWrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Certificate No.</th>
+                <th>Learner</th>
+                <th>Course</th>
+                <th>Issued</th>
+                <th>View</th>
+              </tr>
+            </thead>
+            <tbody id="certsTableBody"></tbody>
+          </table>
+        </div>
+        <p class="no-data hidden" id="noCerts">No certificates issued yet.</p>
+      </section>
+
+      <!-- TAB: ANALYTICS -->
+      <section class="admin-panel hidden reveal" id="tab-analytics">
+        <div class="section-head">
+          <p class="section-kicker">Engagement Data</p>
+          <h2>Analytics</h2>
+        </div>
+        <div class="metrics-row">
+          <div class="metric-card">
+            <p class="metric-val" id="anTotal">-</p>
+            <p class="metric-lbl">Enrollments</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-val" id="anCompleted">-</p>
+            <p class="metric-lbl">Completed</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-val" id="anRate">-</p>
+            <p class="metric-lbl">Completion Rate</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-val" id="anPassed">-</p>
+            <p class="metric-lbl">Passed</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-val" id="anFailed">-</p>
+            <p class="metric-lbl">Failed</p>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:40px;">
+          <p class="section-kicker">Event Breakdown</p>
+          <h2>Top Training Events</h2>
+        </div>
+        <div class="event-chart" id="eventChart"></div>
+        <p class="no-data hidden" id="noEvents">No event data yet.</p>
+      </section>
+
+    </div>
+    <!-- /adminContent -->
+
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>
