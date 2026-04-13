@@ -386,6 +386,31 @@ router.get("/me", requireAuth, async (req, res) => {
   });
 });
 
+router.get("/certificates/:id", requireAuth, async (req, res) => {
+  const { email, organizationId, role } = req.user;
+
+  const cert = await db.certificate.findFirst({
+    where: { id: req.params.id, organizationId },
+    include: {
+      learner: true,
+      course: true,
+      attempt: true,
+    },
+  });
+
+  if (!cert) {
+    return res.status(404).json({ error: "Certificate not found" });
+  }
+
+  // Managers+ can see any cert in the org. STAFF can only see their own.
+  const elevated = ["OWNER", "ADMIN", "MANAGER"].includes(role);
+  if (!elevated && cert.learner?.email.toLowerCase() !== email.toLowerCase()) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  return res.json(cert);
+});
+
 router.get("/public/config/:organizationSlug", async (req, res) => {
   const org = await db.organization.findUnique({ where: { slug: req.params.organizationSlug } });
   if (!org) {

@@ -393,9 +393,14 @@ function renderAccomplishments(data) {
     });
   }
 
-  // First attempt pass
-  const passedFirstTry = attempts.filter((a) => a.status === "PASSED");
-  if (passedFirstTry.length > 0) {
+  // First attempt pass (only award if learner's FIRST attempt per course was a pass)
+  const firstTryPass = data.enrollments?.some((enr) => {
+    const sorted = [...(enr.courseAttempts || [])].sort(
+      (a, b) => new Date(a.startedAt) - new Date(b.startedAt)
+    );
+    return sorted.length > 0 && sorted[0].status === "PASSED";
+  });
+  if (firstTryPass) {
     tiles.push({
       icon: "🎯",
       title: "First-Try Pass",

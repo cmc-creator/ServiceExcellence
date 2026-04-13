@@ -94,7 +94,7 @@
   async function loadCert() {
     showState("loading");
     try {
-      const res = await fetch(`${apiBase}/api/admin/certificates/${encodeURIComponent(certId)}`, {
+      const res = await fetch(`${apiBase}/api/training/certificates/${encodeURIComponent(certId)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

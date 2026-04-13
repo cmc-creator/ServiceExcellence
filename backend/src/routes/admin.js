@@ -180,11 +180,26 @@ router.patch("/learners/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), async 
   if (!learner) return res.status(404).json({ error: "Learner not found" });
 
   const { fullName, email, employeeId, department, roleTrack } = req.body;
+
+  // Guard against duplicate email in the same org
+  if (email && email.toLowerCase() !== learner.email) {
+    const conflict = await db.learner.findFirst({
+      where: {
+        organizationId: req.user.organizationId,
+        email: email.toLowerCase(),
+        NOT: { id: req.params.id },
+      },
+    });
+    if (conflict) {
+      return res.status(409).json({ error: "A learner with that email already exists in this organization." });
+    }
+  }
+
   const updated = await db.learner.update({
     where: { id: req.params.id },
     data: {
       ...(fullName ? { fullName } : {}),
-      ...(email ? { email } : {}),
+      ...(email ? { email: email.toLowerCase() } : {}),
       ...(employeeId !== undefined ? { employeeId: employeeId || null } : {}),
       ...(department !== undefined ? { department: department || null } : {}),
       ...(roleTrack !== undefined ? { roleTrack: roleTrack || null } : {}),
