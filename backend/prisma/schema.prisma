@@ -59,6 +59,7 @@ model User {
   role           UserRole      @default(STAFF)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  learner        Learner?
 
   @@unique([organizationId, email])
 }
@@ -72,6 +73,8 @@ model Learner {
   fullName       String
   department     String?
   roleTrack      String?
+  userId         String?       @unique
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   enrollments    Enrollment[]

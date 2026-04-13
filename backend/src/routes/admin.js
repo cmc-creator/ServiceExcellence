@@ -418,4 +418,98 @@ router.delete("/users/:id", requireRole(["OWNER"]), async (req, res) => {
   return res.status(204).send();
 });
 
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+router.get("/settings", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
+  const org = await db.organization.findUnique({
+    where: { id: req.user.organizationId },
+    select: { id: true, name: true, slug: true },
+  });
+  return res.json(org);
+});
+
+router.patch("/settings", requireRole(["OWNER"]), async (req, res) => {
+  const schema = z.object({ name: z.string().min(2) });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const org = await db.organization.update({
+    where: { id: req.user.organizationId },
+    data: { name: parsed.data.name },
+    select: { id: true, name: true, slug: true },
+  });
+  return res.json(org);
+});
+
+// ─── Course management ────────────────────────────────────────────────────────
+
+router.get("/courses", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
+  const courses = await db.course.findMany({
+    where: { organizationId: req.user.organizationId },
+    orderBy: { createdAt: "asc" },
+  });
+  return res.json(courses);
+});
+
+router.patch("/courses/:id", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
+  const course = await db.course.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!course) return res.status(404).json({ error: "Course not found" });
+  const schema = z.object({
+    title: z.string().min(2).optional(),
+    isActive: z.boolean().optional(),
+    passPercent: z.number().int().min(1).max(100).optional(),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const updated = await db.course.update({ where: { id: req.params.id }, data: parsed.data });
+  return res.json(updated);
+});
+
+// ─── Enrollment reminder email ────────────────────────────────────────────────
+
+router.post("/enrollments/:id/remind", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const enrollment = await db.enrollment.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+    include: { learner: true, course: true },
+  });
+  if (!enrollment) return res.status(404).json({ error: "Enrollment not found" });
+  if (enrollment.completedAt) {
+    return res.status(400).json({ error: "Learner has already completed this course." });
+  }
+
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const FROM_EMAIL = process.env.FROM_EMAIL || "training@noreply.nyxarete.com";
+  const APP_URL = process.env.APP_URL || "";
+
+  if (!RESEND_API_KEY) {
+    return res.status(503).json({ error: "Email service not configured. Set RESEND_API_KEY in environment variables." });
+  }
+
+  const dueStr = enrollment.dueDate
+    ? new Date(enrollment.dueDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : "no set deadline";
+
+  const emailRes = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: FROM_EMAIL,
+      to: enrollment.learner.email,
+      subject: `Reminder: Complete your ${enrollment.course.title} training`,
+      html: `<p>Hi ${enrollment.learner.fullName},</p>
+<p>This is a friendly reminder to complete your <strong>${enrollment.course.title}</strong> training (due: <strong>${dueStr}</strong>).</p>
+${APP_URL ? `<p><a href="${APP_URL}">Log in to complete your training</a></p>` : ""}
+<p>If you have questions, contact your administrator.</p>`,
+    }),
+  });
+
+  if (!emailRes.ok) {
+    const body = await emailRes.json().catch(() => ({}));
+    return res.status(502).json({ error: body.message || "Failed to send reminder email." });
+  }
+
+  return res.json({ message: `Reminder sent to ${enrollment.learner.email}.` });
+});
+
 export default router;

@@ -53,6 +53,7 @@
         <button class="admin-tab" data-tab="certificates" role="tab" aria-selected="false">Certificates</button>
         <button class="admin-tab" data-tab="analytics" role="tab" aria-selected="false">Analytics</button>
         <button class="admin-tab" data-tab="users" role="tab" aria-selected="false">Users</button>
+        <button class="admin-tab" data-tab="settings" role="tab" aria-selected="false">Settings</button>
       </nav>
 
       <!-- TAB: OVERVIEW -->
@@ -427,6 +428,46 @@
           </table>
         </div>
         <p class="no-data hidden" id="noUsers">No user accounts found.</p>
+      </section>
+
+      <!-- TAB: SETTINGS -->
+      <section class="admin-panel hidden reveal" id="tab-settings">
+        <div class="section-head">
+          <p class="section-kicker">Organization</p>
+          <h2>Settings</h2>
+        </div>
+
+        <div class="admin-form-card" style="max-width:480px;">
+          <h3>Organization Details</h3>
+          <div class="form-field" style="margin-bottom:20px;">
+            <label for="settingsOrgName">Organization Name</label>
+            <input id="settingsOrgName" type="text" class="admin-input" placeholder="My Organization">
+          </div>
+          <div class="form-actions">
+            <button class="btn-solid btn-sm" id="saveSettingsBtn" type="button">Save Name</button>
+          </div>
+          <p class="form-status" id="settingsStatus"></p>
+        </div>
+
+        <div class="section-head" style="margin-top:40px;">
+          <p class="section-kicker">Course Catalogue</p>
+          <h2>Manage Courses</h2>
+        </div>
+        <div class="table-wrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Title</th>
+                <th>Version</th>
+                <th>Pass %</th>
+                <th>Active</th>
+              </tr>
+            </thead>
+            <tbody id="coursesTableBody"></tbody>
+          </table>
+        </div>
+        <p class="no-data hidden" id="noCourses">No courses found.</p>
       </section>
 
     </div>

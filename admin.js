@@ -415,20 +415,60 @@ async function loadEnrollments() {
       <td>${e.dueDate ? fmt(e.dueDate) : "—"}</td>
       <td>${e.completedAt ? `<span class="cert-link">&#10003; ${fmt(e.completedAt)}</span>` : "<span style='opacity:0.5'>Incomplete</span>"}</td>
       <td>${certAction}</td>
-      <td><div class="action-cell"><button class="btn-action btn-action-edit" data-id="${sanitize(e.id)}" data-due="${e.dueDate ? new Date(e.dueDate).toISOString().slice(0, 10) : ""}">Edit Date</button><button class="btn-action btn-action-delete" data-id="${sanitize(e.id)}">Remove</button></div></td>
+      <td><div class="action-cell"><button class="btn-action btn-action-edit" data-id="${sanitize(e.id)}" data-due="${e.dueDate ? new Date(e.dueDate).toISOString().slice(0, 10) : ''}">Edit Date</button><div class="inline-date-edit hidden" data-id="${sanitize(e.id)}"><input type="date" class="admin-input-inline" value="${e.dueDate ? new Date(e.dueDate).toISOString().slice(0, 10) : ''}"><button class="btn-action btn-action-save-date">Save</button><button class="btn-action btn-action-cancel-date">&#10005;</button></div><button class="btn-action btn-action-delete" data-id="${sanitize(e.id)}">Remove</button><button class="btn-action btn-action-remind" data-id="${sanitize(e.id)}">Remind</button></div></td>
     `;
     tbody.appendChild(tr);
   });
 
   tbody.querySelectorAll(".btn-action-edit[data-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const current = btn.dataset.due || "";
-      const val = prompt("Set due date (YYYY-MM-DD), or clear:", current);
-      if (val === null) return;
-      const dueDate = val.trim() ? new Date(val.trim()).toISOString() : null;
-      api(`/api/admin/enrollments/${btn.dataset.id}`, { method: "PATCH", body: { dueDate } })
+      const wrap = btn.closest(".action-cell").querySelector(".inline-date-edit");
+      btn.classList.add("hidden");
+      wrap.classList.remove("hidden");
+      wrap.querySelector("input[type=date]").focus();
+    });
+  });
+
+  tbody.querySelectorAll(".btn-action-save-date").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const wrap = btn.closest(".inline-date-edit");
+      const input = wrap.querySelector("input[type=date]");
+      const enrollId = wrap.dataset.id;
+      const dueDate = input.value ? new Date(input.value).toISOString() : null;
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+      api(`/api/admin/enrollments/${enrollId}`, { method: "PATCH", body: { dueDate } })
         .then(() => { showToast("Due date updated.", "success"); loadEnrollments(); })
-        .catch((err) => showToast(err.message || "Failed to update.", "error"));
+        .catch((err) => {
+          showToast(err.message || "Failed to update.", "error");
+          btn.disabled = false;
+          btn.textContent = "Save";
+        });
+    });
+  });
+
+  tbody.querySelectorAll(".btn-action-cancel-date").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const wrap = btn.closest(".inline-date-edit");
+      wrap.classList.add("hidden");
+      wrap.closest(".action-cell").querySelector(".btn-action-edit").classList.remove("hidden");
+    });
+  });
+
+  tbody.querySelectorAll(".btn-action-remind[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Send a reminder email to this learner?")) return;
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+      try {
+        const res = await api(`/api/admin/enrollments/${btn.dataset.id}/remind`, { method: "POST" });
+        showToast(res.message || "Reminder sent.", "success");
+      } catch (err) {
+        showToast(err.message || "Failed to send reminder.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Remind";
+      }
     });
   });
 
@@ -622,6 +662,88 @@ async function loadAnalytics() {
 }
 
 // ============================================================
+// SETTINGS TAB
+// ============================================================
+async function loadSettings() {
+  let settings, courses;
+  try {
+    [settings, courses] = await Promise.all([
+      api("/api/admin/settings"),
+      api("/api/admin/courses"),
+    ]);
+  } catch (err) {
+    showToast(err.message || "Failed to load settings.", "error");
+    return;
+  }
+
+  // Org name form
+  const nameInput = document.getElementById("settingsOrgName");
+  const saveBtn = document.getElementById("saveSettingsBtn");
+  const statusEl = document.getElementById("settingsStatus");
+  if (nameInput && settings) nameInput.value = settings.name || "";
+
+  saveBtn.onclick = async () => {
+    const name = nameInput.value.trim();
+    if (!name) { showToast("Organization name cannot be empty.", "error"); return; }
+    saveBtn.disabled = true;
+    statusEl.textContent = "Saving...";
+    statusEl.className = "form-status";
+    try {
+      await api("/api/admin/settings", { method: "PATCH", body: { name } });
+      statusEl.textContent = "Saved.";
+      showToast("Organization name updated.", "success");
+    } catch (err) {
+      statusEl.textContent = err.message || "Failed to save.";
+      statusEl.className = "form-status is-error";
+    } finally {
+      saveBtn.disabled = false;
+    }
+  };
+
+  // Courses table
+  const tbody = document.getElementById("coursesTableBody");
+  const noMsg = document.getElementById("noCourses");
+  if (!courses || !courses.length) {
+    noMsg.classList.remove("hidden");
+    return;
+  }
+  noMsg.classList.add("hidden");
+  tbody.innerHTML = "";
+  courses.forEach((c) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${sanitize(c.code)}</td>
+      <td>${sanitize(c.title)}</td>
+      <td>${sanitize(c.version)}</td>
+      <td>${c.passPercent}%</td>
+      <td><label class="toggle-label">
+        <input type="checkbox" class="course-active-toggle" data-id="${sanitize(c.id)}" ${c.isActive ? "checked" : ""}>
+        <span class="toggle-text ${c.isActive ? "text-green" : "text-muted"}">${c.isActive ? "Active" : "Inactive"}</span>
+      </label></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll(".course-active-toggle").forEach((toggle) => {
+    toggle.addEventListener("change", async () => {
+      const label = toggle.nextElementSibling;
+      try {
+        await api(`/api/admin/courses/${toggle.dataset.id}`, {
+          method: "PATCH",
+          body: { isActive: toggle.checked },
+        });
+        label.textContent = toggle.checked ? "Active" : "Inactive";
+        label.className = `toggle-text ${toggle.checked ? "text-green" : "text-muted"}`;
+        showToast(`Course ${toggle.checked ? "activated" : "deactivated"}.`, "success");
+      } catch (err) {
+        toggle.checked = !toggle.checked;
+        showToast(err.message || "Failed to update course.", "error");
+      }
+    });
+  });
+}
+
+// ============================================================
 // BOOTSTRAP
 // ============================================================
 async function bootstrap() {
@@ -631,6 +753,12 @@ async function bootstrap() {
     loadingState.classList.add("hidden");
     authError.classList.remove("hidden");
     return;
+  }
+
+  // Hide OWNER/ADMIN-only tabs from MANAGER role
+  if (!["OWNER", "ADMIN"].includes(storedRole)) {
+    document.querySelector('[data-tab="users"]')?.remove();
+    document.querySelector('[data-tab="settings"]')?.remove();
   }
 
   try {
@@ -647,7 +775,7 @@ async function bootstrap() {
 }
 
 // Lazy-load tabs on first click
-const tabLoaded = { overview: true, learners: true, users: false };
+const tabLoaded = { overview: true, learners: true, users: false, settings: false };
 document.querySelectorAll(".admin-tab").forEach((btn) => {
   btn.addEventListener("click", async () => {
     const tab = btn.dataset.tab;
@@ -658,6 +786,7 @@ document.querySelectorAll(".admin-tab").forEach((btn) => {
       if (tab === "certificates") await loadCertificates();
       if (tab === "analytics") await loadAnalytics();
       if (tab === "users") await loadUsers();
+      if (tab === "settings") await loadSettings();
     } catch {
       // errors shown inline
     }

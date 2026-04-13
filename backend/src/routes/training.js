@@ -430,4 +430,66 @@ router.get("/public/config/:organizationSlug", async (req, res) => {
   });
 });
 
+// ─── Available courses (active courses the authenticated learner is NOT enrolled in) ──
+
+router.get("/available", requireAuth, async (req, res) => {
+  const { email, organizationId } = req.user;
+  const learner = await db.learner.findUnique({
+    where: { organizationId_email: { organizationId, email } },
+  });
+
+  const enrolledCourseIds = learner
+    ? (await db.enrollment.findMany({
+        where: { organizationId, learnerId: learner.id },
+        select: { courseId: true },
+      })).map((e) => e.courseId)
+    : [];
+
+  const available = await db.course.findMany({
+    where: {
+      organizationId,
+      isActive: true,
+      ...(enrolledCourseIds.length ? { id: { notIn: enrolledCourseIds } } : {}),
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return res.json(available);
+});
+
+// ─── Self-enrollment ──────────────────────────────────────────────────────────
+
+router.post("/self-enroll", requireAuth, async (req, res) => {
+  const schema = z.object({ courseId: z.string().min(1) });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const { email, organizationId } = req.user;
+  const learner = await db.learner.findUnique({
+    where: { organizationId_email: { organizationId, email } },
+  });
+  if (!learner) {
+    return res.status(404).json({ error: "Learner profile not found. Contact your administrator." });
+  }
+
+  const course = await db.course.findFirst({
+    where: { id: parsed.data.courseId, organizationId, isActive: true },
+  });
+  if (!course) return res.status(404).json({ error: "Course not found." });
+
+  const enrollment = await db.enrollment.upsert({
+    where: {
+      organizationId_learnerId_courseId: {
+        organizationId,
+        learnerId: learner.id,
+        courseId: course.id,
+      },
+    },
+    update: {},
+    create: { organizationId, learnerId: learner.id, courseId: course.id },
+  });
+
+  return res.status(201).json(enrollment);
+});
+
 export default router;

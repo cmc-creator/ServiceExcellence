@@ -576,11 +576,77 @@ function render(data) {
   checkSessionExpiry();
 }
 
+// ---- Available courses (self-enroll) ----
+async function loadAvailableCourses() {
+  let available;
+  try {
+    const res = await fetch(`${apiBase}/api/training/available`, {
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    if (!res.ok) return;
+    available = await res.json();
+  } catch {
+    return;
+  }
+
+  if (!available || !available.length) return;
+
+  const section = document.getElementById("availableSection");
+  const grid = document.getElementById("availableGrid");
+  if (!section || !grid) return;
+
+  section.classList.remove("hidden");
+  grid.innerHTML = "";
+
+  available.forEach((course) => {
+    const card = document.createElement("div");
+    card.className = "course-card card-not-started";
+    card.innerHTML = `
+      <div class="course-card-header">
+        <div>
+          <p class="course-title">${sanitizeText(course.title)}</p>
+          <p class="course-meta">Version ${sanitizeText(course.version)} &middot; Code: ${sanitizeText(course.code)} &middot; Pass: ${course.passPercent}%</p>
+        </div>
+        <span class="course-status-tag tag-not-started">Available</span>
+      </div>
+      <div class="course-card-actions">
+        <button class="btn-solid enroll-btn" data-course-id="${sanitizeText(course.id)}">Enroll</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  grid.querySelectorAll(".enroll-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Enrolling...";
+      try {
+        const res = await fetch(`${apiBase}/api/training/self-enroll`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ courseId: btn.dataset.courseId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+        showToast("Enrolled! Refreshing...", "success");
+        setTimeout(() => window.location.reload(), 1200);
+      } catch (err) {
+        showToast(err.message || "Failed to enroll.", "error");
+        btn.disabled = false;
+        btn.textContent = "Enroll";
+      }
+    });
+  });
+}
+
 // ---- Bootstrap ----
 async function loadDashboard() {
   try {
     const data = await fetchMyStatus();
-    if (data) render(data);
+    if (data) {
+      render(data);
+      loadAvailableCourses();
+    }
   } catch (err) {
     loadingState.classList.add("hidden");
     errorMessage.textContent = err.message || "Unable to load your training profile.";

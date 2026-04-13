@@ -86,8 +86,9 @@
       // Build the reset URL from the token
       const token = body.resetToken;
       if (!token) {
-        // Account not found — server returns a neutral message
-        statusText.textContent = body.message || "If that account exists, a reset link has been generated.";
+        // Email was sent — show email-sent state
+        formState.classList.add("hidden");
+        document.getElementById("emailSentState").classList.remove("hidden");
         return;
       }
 

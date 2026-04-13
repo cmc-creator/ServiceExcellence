@@ -283,3 +283,46 @@ select.admin-input option {
 .role-admin { background: rgba(110, 223, 160, 0.13); color: var(--brand-green); border: 1px solid rgba(110, 223, 160, 0.3); }
 .role-manager { background: rgba(255, 143, 120, 0.13); color: var(--brand-coral); border: 1px solid rgba(255, 143, 120, 0.3); }
 .role-staff { background: rgba(156, 168, 191, 0.12); color: var(--ink-2); border: 1px solid rgba(156, 168, 191, 0.2); }
+
+/* ==================== INLINE DATE EDIT ==================== */
+.inline-date-edit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.admin-input-inline {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(245,184,103,0.4);
+  border-radius: 8px;
+  color: var(--ink-0);
+  font-family: "Urbanist", sans-serif;
+  font-size: 12px;
+  padding: 4px 8px;
+  width: 130px;
+  transition: border-color 0.2s;
+}
+.admin-input-inline:focus {
+  outline: 2px solid rgba(245,184,103,0.35);
+  border-color: var(--brand-gold);
+}
+
+/* ==================== REMIND BUTTON ==================== */
+.btn-action-remind { border-color: rgba(110,223,160,0.3); color: var(--brand-green); }
+.btn-action-remind:hover { background: rgba(110,223,160,0.08); }
+
+/* ==================== SETTINGS: COURSE ACTIVE TOGGLE ==================== */
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.toggle-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand-green);
+  cursor: pointer;
+}
+.toggle-text { font-size: 12px; font-weight: 600; }
+.text-green { color: var(--brand-green); }
+.text-muted { color: var(--ink-2); }
