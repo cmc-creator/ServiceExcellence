@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "express-rate-limit": "^7.4.1",
     "nanoid": "^5.0.7",
+    "nodemailer": "^6.9.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { db } from "../lib/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { hashPassword } from "../lib/auth.js";
+import { sendEmail } from "../lib/email.js";
 
 const router = express.Router();
 
@@ -478,35 +479,23 @@ router.post("/enrollments/:id/remind", requireRole(["OWNER", "ADMIN", "MANAGER"]
     return res.status(400).json({ error: "Learner has already completed this course." });
   }
 
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  const FROM_EMAIL = process.env.FROM_EMAIL || "training@noreply.nyxarete.com";
   const APP_URL = process.env.APP_URL || "";
-
-  if (!RESEND_API_KEY) {
-    return res.status(503).json({ error: "Email service not configured. Set RESEND_API_KEY in environment variables." });
-  }
 
   const dueStr = enrollment.dueDate
     ? new Date(enrollment.dueDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : "no set deadline";
 
-  const emailRes = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: FROM_EMAIL,
-      to: enrollment.learner.email,
-      subject: `Reminder: Complete your ${enrollment.course.title} training`,
-      html: `<p>Hi ${enrollment.learner.fullName},</p>
+  const sent = await sendEmail({
+    to: enrollment.learner.email,
+    subject: `Reminder: Complete your ${enrollment.course.title} training`,
+    html: `<p>Hi ${enrollment.learner.fullName},</p>
 <p>This is a friendly reminder to complete your <strong>${enrollment.course.title}</strong> training (due: <strong>${dueStr}</strong>).</p>
 ${APP_URL ? `<p><a href="${APP_URL}">Log in to complete your training</a></p>` : ""}
 <p>If you have questions, contact your administrator.</p>`,
-    }),
   });
 
-  if (!emailRes.ok) {
-    const body = await emailRes.json().catch(() => ({}));
-    return res.status(502).json({ error: body.message || "Failed to send reminder email." });
+  if (!sent) {
+    return res.status(503).json({ error: "Email service not configured. Set EMAIL_USER and EMAIL_PASS in environment variables." });
   }
 
   return res.json({ message: `Reminder sent to ${enrollment.learner.email}.` });

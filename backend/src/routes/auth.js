@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "../lib/db.js";
 import { comparePassword, hashPassword, signToken } from "../lib/auth.js";
 import { requireAuth } from "../middleware/auth.js";
+import { sendEmail } from "../lib/email.js";
 
 const router = express.Router();
 
@@ -112,32 +113,25 @@ router.post("/forgot-password", async (req, res) => {
     { expiresIn: "1h" },
   );
 
-  // ── Send via Resend if configured, otherwise return token for admin manual flow ──
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  const FROM_EMAIL = process.env.FROM_EMAIL || "training@noreply.nyxarete.com";
+  // ── Send via Gmail if configured, otherwise return token for admin manual flow ──
   const APP_URL = (process.env.APP_URL || "").replace(/\/$/, "");
   const API_BASE_URL = (process.env.API_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
 
-  if (RESEND_API_KEY && APP_URL) {
+  if (APP_URL) {
     const resetUrl = `${APP_URL}/reset-password.html?token=${encodeURIComponent(resetToken)}&apiBase=${encodeURIComponent(API_BASE_URL)}`;
-    const emailRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: user.email,
-        subject: "Reset your password",
-        html: `<p>Hi ${user.fullName},</p>
+    const sent = await sendEmail({
+      to: user.email,
+      subject: "Reset your password",
+      html: `<p>Hi ${user.fullName},</p>
 <p>A password reset was requested for your account. Click the link below to set a new password:</p>
 <p><a href="${resetUrl}">Reset my password</a></p>
 <p>This link expires in 1 hour and can only be used once. If you did not request this, you can safely ignore this email.</p>`,
-      }),
     });
 
-    if (emailRes.ok) {
+    if (sent) {
       return res.json({ message: "Password reset link sent to the user's email." });
     }
-    // Email failed — fall through to return token for manual sharing
+    // Email credentials not configured — fall through to return token for manual sharing
   }
 
   return res.json({
