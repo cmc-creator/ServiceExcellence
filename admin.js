@@ -741,6 +741,63 @@ async function loadSettings() {
       }
     });
   });
+
+  // Add Course form (wired once per loadSettings call)
+  const showAddCourseBtn = document.getElementById("showAddCourseBtn");
+  const addCourseForm = document.getElementById("addCourseForm");
+  const cancelAddCourseBtn = document.getElementById("cancelAddCourseBtn");
+  const saveAddCourseBtn = document.getElementById("saveAddCourseBtn");
+  const addCourseStatus = document.getElementById("addCourseStatus");
+
+  showAddCourseBtn.onclick = () => {
+    addCourseForm.classList.toggle("hidden");
+    addCourseStatus.textContent = "";
+    addCourseStatus.className = "form-status";
+  };
+
+  cancelAddCourseBtn.onclick = () => {
+    addCourseForm.classList.add("hidden");
+    addCourseStatus.textContent = "";
+  };
+
+  saveAddCourseBtn.onclick = async () => {
+    const code = document.getElementById("acCode").value.trim();
+    const title = document.getElementById("acTitle").value.trim();
+    const version = document.getElementById("acVersion").value.trim();
+    const passPercent = parseInt(document.getElementById("acPassPercent").value, 10);
+
+    if (!code || !title || !version) {
+      addCourseStatus.textContent = "Code, title, and version are required.";
+      addCourseStatus.className = "form-status is-error";
+      return;
+    }
+    if (isNaN(passPercent) || passPercent < 0 || passPercent > 100) {
+      addCourseStatus.textContent = "Pass % must be between 0 and 100.";
+      addCourseStatus.className = "form-status is-error";
+      return;
+    }
+
+    saveAddCourseBtn.disabled = true;
+    addCourseStatus.textContent = "Creating...";
+    addCourseStatus.className = "form-status";
+    try {
+      await api("/api/admin/courses", { method: "POST", body: { code, title, version, passPercent } });
+      showToast("Course created.", "success");
+      addCourseForm.classList.add("hidden");
+      document.getElementById("acCode").value = "";
+      document.getElementById("acTitle").value = "";
+      document.getElementById("acVersion").value = "";
+      document.getElementById("acPassPercent").value = "80";
+      addCourseStatus.textContent = "";
+      // Reload the courses table
+      await loadSettings();
+    } catch (err) {
+      addCourseStatus.textContent = err.message || "Failed to create course.";
+      addCourseStatus.className = "form-status is-error";
+    } finally {
+      saveAddCourseBtn.disabled = false;
+    }
+  };
 }
 
 // ============================================================
