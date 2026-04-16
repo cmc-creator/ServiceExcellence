@@ -57,6 +57,11 @@ router.post("/start", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "Forbidden" });
   }
 
+  // Ensure the authenticated user can only submit training under their own email
+  if (parsed.data.learnerEmail.toLowerCase() !== req.user.email.toLowerCase()) {
+    return res.status(403).json({ error: "learnerEmail must match your login email" });
+  }
+
   const course = await db.course.findFirst({
     where: {
       organizationId: org.id,
@@ -392,7 +397,7 @@ router.get("/certificates/:id", requireAuth, async (req, res) => {
   const cert = await db.certificate.findFirst({
     where: { id: req.params.id, organizationId },
     include: {
-      learner: true,
+      learner: { include: { organization: true } },
       course: true,
       attempt: true,
     },
@@ -465,12 +470,21 @@ router.post("/self-enroll", requireAuth, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
   const { email, organizationId } = req.user;
-  const learner = await db.learner.findUnique({
+
+  // Auto-create learner profile on first self-enroll so users never hit a 404
+  const user = await db.user.findUnique({ where: { id: req.user.sub } });
+  if (!user) return res.status(401).json({ error: "User not found." });
+
+  const learner = await db.learner.upsert({
     where: { organizationId_email: { organizationId, email } },
+    update: {},
+    create: {
+      organizationId,
+      email,
+      fullName: user.fullName,
+      userId: user.id,
+    },
   });
-  if (!learner) {
-    return res.status(404).json({ error: "Learner profile not found. Contact your administrator." });
-  }
 
   const course = await db.course.findFirst({
     where: { id: parsed.data.courseId, organizationId, isActive: true },
