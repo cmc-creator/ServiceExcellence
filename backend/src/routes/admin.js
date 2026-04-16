@@ -129,6 +129,48 @@ router.post("/enrollments", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (r
   return res.status(201).json(enrollment);
 });
 
+router.post("/enrollments/bulk", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const schema = z.object({
+    courseId: z.string(),
+    learnerIds: z.union([z.literal("all"), z.array(z.string()).min(1)]),
+    dueDate: z.string().datetime().optional(),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+
+  const orgId = req.user.organizationId;
+  const { courseId, learnerIds, dueDate } = parsed.data;
+
+  const course = await db.course.findFirst({ where: { id: courseId, organizationId: orgId } });
+  if (!course) return res.status(404).json({ error: "Course not found" });
+
+  let targetLearnerIds;
+  if (learnerIds === "all") {
+    const learners = await db.learner.findMany({ where: { organizationId: orgId }, select: { id: true } });
+    targetLearnerIds = learners.map((l) => l.id);
+  } else {
+    targetLearnerIds = learnerIds;
+  }
+
+  if (!targetLearnerIds.length) {
+    return res.status(400).json({ error: "No learners found to enroll." });
+  }
+
+  const results = { enrolled: 0, skipped: 0 };
+  for (const learnerId of targetLearnerIds) {
+    const existing = await db.enrollment.findFirst({ where: { organizationId: orgId, learnerId, courseId } });
+    if (existing) { results.skipped++; continue; }
+    await db.enrollment.create({
+      data: { organizationId: orgId, learnerId, courseId, dueDate: dueDate ? new Date(dueDate) : null },
+    });
+    results.enrolled++;
+  }
+
+  return res.json(results);
+});
+
 router.post("/courses", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
   const schema = z.object({
     code: z.string().min(2),
@@ -480,6 +522,25 @@ router.patch("/courses/:id", requireRole(["OWNER", "ADMIN"]), async (req, res) =
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
   const updated = await db.course.update({ where: { id: req.params.id }, data: parsed.data });
   return res.json(updated);
+});
+
+router.delete("/courses/:id", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
+  const course = await db.course.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!course) return res.status(404).json({ error: "Course not found" });
+
+  const enrollCount = await db.enrollment.count({
+    where: { courseId: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (enrollCount > 0) {
+    return res.status(409).json({
+      error: `Cannot delete: ${enrollCount} enrollment(s) exist for this course. Deactivate it instead.`,
+    });
+  }
+
+  await db.course.delete({ where: { id: req.params.id } });
+  return res.status(204).send();
 });
 
 // ─── Enrollment reminder email ────────────────────────────────────────────────

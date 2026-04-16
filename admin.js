@@ -220,6 +220,8 @@ async function loadOverview() {
 let allLearners = [];
 let allCourses = [];
 let allEnrollments = [];
+let analyticsCompletion = null;
+let analyticsTrends = [];
 let learnerNextCursor = null;
 let learnerHasMore = false;
 
@@ -388,7 +390,9 @@ function renderEnrollmentsTable(list) {
     const certAction = e.passAttemptId
       ? `<button class="btn-issue-cert" data-attempt-id="${sanitize(e.passAttemptId)}">Issue Cert</button>`
       : `<span style="opacity:0.3;font-size:12px;">—</span>`;
+    const isOverdue = !e.completedAt && e.dueDate && new Date(e.dueDate) < new Date();
     const tr = document.createElement("tr");
+    if (isOverdue) { tr.style.background = "rgba(239,68,68,0.07)"; tr.title = "Overdue"; }
     tr.innerHTML = `
       <td>${sanitize(e.learner?.fullName || e.learnerId)}</td>
       <td>${sanitize(e.course?.title || e.courseId)}</td>
@@ -515,14 +519,17 @@ async function loadEnrollments() {
     allCourses = [...seen.values()].map((c) => ({ id: c.id, title: c.title }));
   }
 
-  // Populate course select
-  const sel = document.getElementById("enrCourse");
-  sel.innerHTML = '<option value="">Select course...</option>';
-  allCourses.forEach((c) => {
-    const opt = document.createElement("option");
-    opt.value = c.id;
-    opt.textContent = c.title;
-    sel.appendChild(opt);
+  // Populate course selects (enrollment form + bulk enroll form)
+  ["enrCourse", "bulkEnrCourse"].forEach((selId) => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Select course...</option>';
+    allCourses.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.title;
+      sel.appendChild(opt);
+    });
   });
 
   // Wire search filter (idempotent — only attach once)
@@ -662,6 +669,9 @@ async function loadAnalytics() {
     api("/api/analytics/trends"),
   ]);
 
+  analyticsCompletion = completion || null;
+  analyticsTrends = trends || [];
+
   if (completion) {
     document.getElementById("anTotal").textContent = completion.totalEnrollments;
     document.getElementById("anCompleted").textContent = completion.completedEnrollments;
@@ -767,6 +777,10 @@ async function loadSettings() {
         <input type="checkbox" class="course-active-toggle" data-id="${sanitize(c.id)}" ${c.isActive ? "checked" : ""}>
         <span class="toggle-text ${c.isActive ? "text-green" : "text-muted"}">${c.isActive ? "Active" : "Inactive"}</span>
       </label></td>
+      <td><div class="action-cell">
+        <button class="btn-action btn-action-edit course-edit-btn" data-id="${sanitize(c.id)}" data-title="${sanitize(c.title)}" data-pass="${c.passPercent}">Edit</button>
+        <button class="btn-action btn-action-delete course-delete-btn" data-id="${sanitize(c.id)}" data-title="${sanitize(c.title)}">Delete</button>
+      </div></td>
     `;
     tbody.appendChild(tr);
   });
@@ -785,6 +799,35 @@ async function loadSettings() {
       } catch (err) {
         toggle.checked = !toggle.checked;
         showToast(err.message || "Failed to update course.", "error");
+      }
+    });
+  });
+
+  tbody.querySelectorAll(".course-edit-btn[data-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.getElementById("editCourseId").value = btn.dataset.id;
+      document.getElementById("ecTitle").value = btn.dataset.title;
+      document.getElementById("ecPassPercent").value = btn.dataset.pass;
+      editCourseForm.classList.remove("hidden");
+      editCourseStatus.textContent = "";
+      editCourseStatus.className = "form-status";
+      editCourseForm.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+
+  tbody.querySelectorAll(".course-delete-btn[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm(`Delete course "${btn.dataset.title}"? This is blocked if enrollments exist.`)) return;
+      btn.disabled = true;
+      btn.textContent = "Deleting...";
+      try {
+        await api(`/api/admin/courses/${btn.dataset.id}`, { method: "DELETE" });
+        showToast("Course deleted.", "success");
+        await loadSettings();
+      } catch (err) {
+        showToast(err.message || "Failed to delete course.", "error");
+        btn.textContent = "Delete";
+        btn.disabled = false;
       }
     });
   });
@@ -1117,3 +1160,135 @@ function parseCsv(text) {
 }
 
 bootstrap();
+
+// ============================================================
+// COURSE EDIT FORM (module-level)
+// ============================================================
+const editCourseForm = document.getElementById("editCourseForm");
+const editCourseStatus = document.getElementById("editCourseStatus");
+
+document.getElementById("cancelEditCourseBtn").addEventListener("click", () => {
+  editCourseForm.classList.add("hidden");
+  editCourseStatus.textContent = "";
+  editCourseStatus.className = "form-status";
+});
+
+document.getElementById("saveEditCourseBtn").addEventListener("click", async () => {
+  const id = document.getElementById("editCourseId").value;
+  const title = document.getElementById("ecTitle").value.trim();
+  const passPercent = parseInt(document.getElementById("ecPassPercent").value, 10);
+  if (!title) {
+    editCourseStatus.textContent = "Title is required.";
+    editCourseStatus.className = "form-status is-error";
+    return;
+  }
+  if (isNaN(passPercent) || passPercent < 0 || passPercent > 100) {
+    editCourseStatus.textContent = "Pass % must be 0-100.";
+    editCourseStatus.className = "form-status is-error";
+    return;
+  }
+  const saveBtn = document.getElementById("saveEditCourseBtn");
+  saveBtn.disabled = true;
+  editCourseStatus.textContent = "Saving...";
+  editCourseStatus.className = "form-status";
+  try {
+    await api(`/api/admin/courses/${id}`, { method: "PATCH", body: { title, passPercent } });
+    showToast("Course updated.", "success");
+    editCourseForm.classList.add("hidden");
+    editCourseStatus.textContent = "";
+    await loadSettings();
+  } catch (err) {
+    editCourseStatus.textContent = err.message || "Failed to update course.";
+    editCourseStatus.className = "form-status is-error";
+  } finally {
+    saveBtn.disabled = false;
+  }
+});
+
+// ============================================================
+// BULK ENROLLMENT (module-level)
+// ============================================================
+const bulkEnrollForm = document.getElementById("bulkEnrollForm");
+const bulkEnrollStatus = document.getElementById("bulkEnrollStatus");
+
+document.getElementById("showBulkEnrollBtn").addEventListener("click", () => {
+  bulkEnrollForm.classList.toggle("hidden");
+  bulkEnrollStatus.textContent = "";
+  bulkEnrollStatus.className = "form-status";
+});
+
+document.getElementById("cancelBulkEnrollBtn").addEventListener("click", () => {
+  bulkEnrollForm.classList.add("hidden");
+  bulkEnrollStatus.textContent = "";
+});
+
+document.getElementById("saveBulkEnrollBtn").addEventListener("click", async () => {
+  const courseId = document.getElementById("bulkEnrCourse").value;
+  const dueDate = document.getElementById("bulkEnrDueDate").value;
+  if (!courseId) {
+    bulkEnrollStatus.textContent = "Select a course.";
+    bulkEnrollStatus.className = "form-status is-error";
+    return;
+  }
+  const enrollAll = document.getElementById("bulkEnrAll").checked;
+  const saveBtn = document.getElementById("saveBulkEnrollBtn");
+  saveBtn.disabled = true;
+  bulkEnrollStatus.textContent = "Enrolling...";
+  bulkEnrollStatus.className = "form-status";
+  try {
+    const result = await api("/api/admin/enrollments/bulk", {
+      method: "POST",
+      body: {
+        courseId,
+        learnerIds: enrollAll ? "all" : allLearners.map((l) => l.id),
+        ...(dueDate ? { dueDate: new Date(dueDate).toISOString() } : {}),
+      },
+    });
+    showToast(`Enrolled ${result.enrolled}. Skipped ${result.skipped} already enrolled.`, "success");
+    bulkEnrollForm.classList.add("hidden");
+    bulkEnrollStatus.textContent = "";
+    await loadEnrollments();
+  } catch (err) {
+    bulkEnrollStatus.textContent = err.message || "Failed to bulk enroll.";
+    bulkEnrollStatus.className = "form-status is-error";
+  } finally {
+    saveBtn.disabled = false;
+  }
+});
+
+// ============================================================
+// ANALYTICS EXPORT (module-level)
+// ============================================================
+document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
+  if (!analyticsCompletion && !analyticsTrends.length) {
+    showToast("Open the Analytics tab first to load data.", "error");
+    return;
+  }
+  const rows = [];
+  if (analyticsCompletion) {
+    rows.push(["Metric", "Value"]);
+    rows.push(["Total Enrollments", analyticsCompletion.totalEnrollments]);
+    rows.push(["Completed", analyticsCompletion.completedEnrollments]);
+    rows.push(["Completion Rate", `${analyticsCompletion.completionRate}%`]);
+    rows.push(["Passed Attempts", analyticsCompletion.passCount]);
+    rows.push(["Failed Attempts", analyticsCompletion.failCount]);
+    rows.push([]);
+  }
+  if (analyticsTrends.length) {
+    rows.push(["Month", "Completions"]);
+    [...analyticsTrends].reverse().forEach((t) => {
+      const [year, month] = t.month.split("-");
+      const label = new Date(parseInt(year), parseInt(month) - 1, 1)
+        .toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      rows.push([label, t.count]);
+    });
+  }
+  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
