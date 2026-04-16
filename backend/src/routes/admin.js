@@ -312,6 +312,21 @@ router.delete("/enrollments/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), as
   return res.status(204).send();
 });
 
+router.patch("/enrollments/:id/complete", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const enrollment = await db.enrollment.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!enrollment) return res.status(404).json({ error: "Enrollment not found" });
+  if (enrollment.completedAt) {
+    return res.status(400).json({ error: "Enrollment is already marked complete." });
+  }
+  const updated = await db.enrollment.update({
+    where: { id: req.params.id },
+    data: { completedAt: new Date() },
+  });
+  return res.json(updated);
+});
+
 // ─── User Management ──────────────────────────────────────────────────────────
 const userCreateSchema = z.object({
   fullName: z.string().min(2),

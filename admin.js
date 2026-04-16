@@ -219,6 +219,7 @@ async function loadOverview() {
 // ============================================================
 let allLearners = [];
 let allCourses = [];
+let allEnrollments = [];
 let learnerNextCursor = null;
 let learnerHasMore = false;
 
@@ -373,37 +374,17 @@ saveEditLearnerBtn.addEventListener("click", async () => {
 // ============================================================
 // ENROLLMENTS TAB
 // ============================================================
-async function loadEnrollments() {
-  const rows = await api("/api/admin/enrollments");
-  const enrollments = rows || [];
-
-  if (!allCourses.length) {
-    const seen = new Map();
-    enrollments.forEach((e) => {
-      if (e.course && !seen.has(e.courseId)) seen.set(e.courseId, e.course);
-    });
-    allCourses = [...seen.values()].map((c) => ({ id: c.id, title: c.title }));
-  }
-
-  // Populate course select
-  const sel = document.getElementById("enrCourse");
-  sel.innerHTML = '<option value="">Select course...</option>';
-  allCourses.forEach((c) => {
-    const opt = document.createElement("option");
-    opt.value = c.id;
-    opt.textContent = c.title;
-    sel.appendChild(opt);
-  });
-
+function renderEnrollmentsTable(list) {
   const tbody = document.getElementById("enrollmentsTableBody");
   const noMsg = document.getElementById("noEnrollments");
-  if (!enrollments.length) {
+  if (!list.length) {
+    tbody.innerHTML = "";
     noMsg.classList.remove("hidden");
     return;
   }
-
+  noMsg.classList.add("hidden");
   tbody.innerHTML = "";
-  enrollments.forEach((e) => {
+  list.forEach((e) => {
     const certAction = e.passAttemptId
       ? `<button class="btn-issue-cert" data-attempt-id="${sanitize(e.passAttemptId)}">Issue Cert</button>`
       : `<span style="opacity:0.3;font-size:12px;">—</span>`;
@@ -415,7 +396,7 @@ async function loadEnrollments() {
       <td>${e.dueDate ? fmt(e.dueDate) : "—"}</td>
       <td>${e.completedAt ? `<span class="cert-link">&#10003; ${fmt(e.completedAt)}</span>` : "<span style='opacity:0.5'>Incomplete</span>"}</td>
       <td>${certAction}</td>
-      <td><div class="action-cell"><button class="btn-action btn-action-edit" data-id="${sanitize(e.id)}" data-due="${e.dueDate ? new Date(e.dueDate).toISOString().slice(0, 10) : ''}">Edit Date</button><div class="inline-date-edit hidden" data-id="${sanitize(e.id)}"><input type="date" class="admin-input-inline" value="${e.dueDate ? new Date(e.dueDate).toISOString().slice(0, 10) : ''}"><button class="btn-action btn-action-save-date">Save</button><button class="btn-action btn-action-cancel-date">&#10005;</button></div><button class="btn-action btn-action-delete" data-id="${sanitize(e.id)}">Remove</button><button class="btn-action btn-action-remind" data-id="${sanitize(e.id)}">Remind</button></div></td>
+      <td><div class="action-cell"><button class="btn-action btn-action-edit" data-id="${sanitize(e.id)}" data-due="${e.dueDate ? new Date(e.dueDate).toISOString().slice(0, 10) : ''}">Edit Date</button><div class="inline-date-edit hidden" data-id="${sanitize(e.id)}"><input type="date" class="admin-input-inline" value="${e.dueDate ? new Date(e.dueDate).toISOString().slice(0, 10) : ''}"><button class="btn-action btn-action-save-date">Save</button><button class="btn-action btn-action-cancel-date">&#10005;</button></div><button class="btn-action btn-action-delete" data-id="${sanitize(e.id)}">Remove</button><button class="btn-action btn-action-remind" data-id="${sanitize(e.id)}">Remind</button>${!e.completedAt ? `<button class="btn-action btn-action-complete" data-id="${sanitize(e.id)}">Mark Complete</button>` : ""}</div></td>
     `;
     tbody.appendChild(tr);
   });
@@ -487,6 +468,23 @@ async function loadEnrollments() {
     });
   });
 
+  tbody.querySelectorAll(".btn-action-complete[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Mark this enrollment as complete? This will set the completion date to today.")) return;
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+      try {
+        await api(`/api/admin/enrollments/${btn.dataset.id}/complete`, { method: "PATCH" });
+        showToast("Enrollment marked complete.", "success");
+        await loadEnrollments();
+      } catch (err) {
+        showToast(err.message || "Failed to mark complete.", "error");
+        btn.disabled = false;
+        btn.textContent = "Mark Complete";
+      }
+    });
+  });
+
   tbody.querySelectorAll(".btn-action-delete[data-id]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (!confirm("Remove this enrollment? The learner will lose access to this course.")) return;
@@ -503,6 +501,55 @@ async function loadEnrollments() {
       }
     });
   });
+}
+
+async function loadEnrollments() {
+  const rows = await api("/api/admin/enrollments");
+  allEnrollments = rows || [];
+
+  if (!allCourses.length) {
+    const seen = new Map();
+    allEnrollments.forEach((e) => {
+      if (e.course && !seen.has(e.courseId)) seen.set(e.courseId, e.course);
+    });
+    allCourses = [...seen.values()].map((c) => ({ id: c.id, title: c.title }));
+  }
+
+  // Populate course select
+  const sel = document.getElementById("enrCourse");
+  sel.innerHTML = '<option value="">Select course...</option>';
+  allCourses.forEach((c) => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.title;
+    sel.appendChild(opt);
+  });
+
+  // Wire search filter (idempotent — only attach once)
+  const searchInput = document.getElementById("enrollmentSearch");
+  if (searchInput && !searchInput.dataset.wired) {
+    searchInput.dataset.wired = "1";
+    searchInput.addEventListener("input", (ev) => {
+      const q = ev.target.value.toLowerCase();
+      const filtered = allEnrollments.filter(
+        (enr) =>
+          (enr.learner?.fullName || "").toLowerCase().includes(q) ||
+          (enr.course?.title || "").toLowerCase().includes(q)
+      );
+      renderEnrollmentsTable(filtered);
+    });
+  }
+
+  // Apply current search value when reloading after an action
+  const q = searchInput ? searchInput.value.toLowerCase() : "";
+  const filtered = q
+    ? allEnrollments.filter(
+        (enr) =>
+          (enr.learner?.fullName || "").toLowerCase().includes(q) ||
+          (enr.course?.title || "").toLowerCase().includes(q)
+      )
+    : allEnrollments;
+  renderEnrollmentsTable(filtered);
 }
 
 // Enroll learner form
