@@ -24,6 +24,8 @@ model Organization {
   id             String        @id @default(cuid())
   name           String
   slug           String        @unique
+  logoUrl        String?
+  brandColor     String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   users          User[]
@@ -95,6 +97,8 @@ model Course {
   version        String
   passPercent    Int           @default(80)
   isActive       Boolean       @default(true)
+  opensAt        DateTime?
+  closesAt       DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   enrollments    Enrollment[]

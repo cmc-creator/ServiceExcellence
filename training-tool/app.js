@@ -103,6 +103,23 @@ const ORG_SLUG =
 
 let activeCourseConfig = null;
 
+// Apply org branding from public config (non-blocking)
+if (API_BASE && ORG_SLUG) {
+  fetch(`${API_BASE}/api/training/public/config/${ORG_SLUG}`)
+    .then((r) => r.ok ? r.json() : null)
+    .then((data) => {
+      const org = data?.organization;
+      if (!org) return;
+      if (org.brandColor) {
+        document.documentElement.style.setProperty("--brand-color", org.brandColor);
+      }
+      if (org.logoUrl) {
+        document.querySelectorAll(".brand-logo").forEach((el) => { el.src = org.logoUrl; });
+      }
+    })
+    .catch(() => {});
+}
+
 function getAuthToken() {
   return localStorage.getItem("nyxAuthToken") || "";
 }

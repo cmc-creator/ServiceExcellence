@@ -729,11 +729,21 @@ document.getElementById("exportCertsBtn").addEventListener("click", () => {
 // ============================================================
 // ANALYTICS TAB
 // ============================================================
+let _completionChartInst = null;
+let _passFailChartInst = null;
+let _trendsChartInst = null;
+
+function destroyChart(ref) {
+  if (ref) { try { ref.destroy(); } catch { /* ignore */ } }
+  return null;
+}
+
 async function loadAnalytics() {
-  const [completion, events, trends] = await Promise.all([
+  const [completion, events, trends, deptData] = await Promise.all([
     api("/api/analytics/completion"),
     api("/api/analytics/events/top"),
     api("/api/analytics/trends"),
+    api("/api/analytics/by-department").catch(() => []),
   ]);
 
   analyticsCompletion = completion || null;
@@ -747,12 +757,54 @@ async function loadAnalytics() {
     document.getElementById("anFailed").textContent = completion.failCount;
   }
 
+  // --- Completion donut chart ---
+  const completionCanvas = document.getElementById("completionChart");
+  _completionChartInst = destroyChart(_completionChartInst);
+  if (completionCanvas && completion) {
+    const notCompleted = completion.totalEnrollments - completion.completedEnrollments;
+    _completionChartInst = new Chart(completionCanvas, {
+      type: "doughnut",
+      data: {
+        labels: ["Completed", "Not Completed"],
+        datasets: [{ data: [completion.completedEnrollments, notCompleted], backgroundColor: ["#22c55e", "rgba(255,255,255,0.12)"], borderWidth: 0 }],
+      },
+      options: {
+        cutout: "68%", plugins: { legend: { position: "bottom", labels: { color: "rgba(255,255,255,0.7)", font: { size: 12 } } } },
+        responsive: true, maintainAspectRatio: true,
+      },
+    });
+  }
+
+  // --- Pass/Fail bar chart ---
+  const passFailCanvas = document.getElementById("passFailChart");
+  _passFailChartInst = destroyChart(_passFailChartInst);
+  if (passFailCanvas && completion) {
+    _passFailChartInst = new Chart(passFailCanvas, {
+      type: "bar",
+      data: {
+        labels: ["Passed", "Failed"],
+        datasets: [{ data: [completion.passCount, completion.failCount], backgroundColor: ["#22c55e", "#ef4444"], borderRadius: 6, borderWidth: 0 }],
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { ticks: { color: "rgba(255,255,255,0.6)", font: { size: 11 } }, grid: { color: "rgba(255,255,255,0.07)" } },
+          x: { ticks: { color: "rgba(255,255,255,0.6)", font: { size: 12 } }, grid: { display: false } },
+        },
+        responsive: true, maintainAspectRatio: true,
+      },
+    });
+  }
+
+  // --- Event bars (custom HTML, unchanged) ---
   const chart = document.getElementById("eventChart");
   const noMsg = document.getElementById("noEvents");
   if (!events || events.length === 0) {
     noMsg.classList.remove("hidden");
     chart.classList.add("hidden");
   } else {
+    noMsg.classList.add("hidden");
+    chart.classList.remove("hidden");
     const max = Math.max(...events.map((e) => e.count), 1);
     chart.innerHTML = "";
     events.forEach((e) => {
@@ -768,20 +820,49 @@ async function loadAnalytics() {
     });
   }
 
-  // Trends table
+  // --- Trends line chart ---
   const trendsSection = document.getElementById("trendsSection");
-  const trendsTbody = document.getElementById("trendsTableBody");
+  const trendsCanvas = document.getElementById("trendsChart");
+  _trendsChartInst = destroyChart(_trendsChartInst);
   if (trends && trends.length) {
     trendsSection.classList.remove("hidden");
-    trendsTbody.innerHTML = "";
-    [...trends].reverse().forEach((t) => {
-      const [year, month] = t.month.split("-");
-      const label = new Date(parseInt(year), parseInt(month) - 1, 1)
-        .toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    if (trendsCanvas) {
+      const labels = trends.map((t) => {
+        const [year, month] = t.month.split("-");
+        return new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+      });
+      _trendsChartInst = new Chart(trendsCanvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{ label: "Completions", data: trends.map((t) => t.count), borderColor: "#818cf8", backgroundColor: "rgba(129,140,248,0.15)", tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: "#818cf8" }],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { color: "rgba(255,255,255,0.6)", font: { size: 11 } }, grid: { color: "rgba(255,255,255,0.07)" } },
+            x: { ticks: { color: "rgba(255,255,255,0.6)", font: { size: 11 } }, grid: { display: false } },
+          },
+          responsive: true, maintainAspectRatio: true,
+        },
+      });
+    }
+  }
+
+  // --- Department breakdown table ---
+  const deptTbody = document.getElementById("deptTableBody");
+  const noDeptMsg = document.getElementById("noDeptData");
+  if (deptData && deptData.length && deptTbody) {
+    noDeptMsg?.classList.add("hidden");
+    deptTbody.innerHTML = "";
+    deptData.forEach((d) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${label}</td><td>${t.count}</td>`;
-      trendsTbody.appendChild(tr);
+      const rateCls = d.rate >= 80 ? "s-passed" : d.rate >= 50 ? "s-in-progress" : "s-failed";
+      tr.innerHTML = `<td>${sanitize(d.department)}</td><td>${d.total}</td><td>${d.completed}</td><td><span class="attempt-status ${rateCls}">${d.rate}%</span></td>`;
+      deptTbody.appendChild(tr);
     });
+  } else if (noDeptMsg) {
+    noDeptMsg.classList.remove("hidden");
   }
 }
 
@@ -805,6 +886,52 @@ async function loadSettings() {
   const saveBtn = document.getElementById("saveSettingsBtn");
   const statusEl = document.getElementById("settingsStatus");
   if (nameInput && settings) nameInput.value = settings.name || "";
+
+  // Branding fields
+  const logoInput = document.getElementById("settingsLogoUrl");
+  const colorPicker = document.getElementById("settingsBrandColor");
+  const colorHex = document.getElementById("settingsBrandColorHex");
+  const saveBrandingBtn = document.getElementById("saveBrandingBtn");
+  const brandingStatus = document.getElementById("brandingStatus");
+
+  if (logoInput && settings) logoInput.value = settings.logoUrl || "";
+  if (colorPicker && settings?.brandColor) {
+    colorPicker.value = settings.brandColor;
+    if (colorHex) colorHex.value = settings.brandColor;
+  } else if (colorHex) {
+    colorHex.value = "";
+  }
+
+  colorPicker?.addEventListener("input", () => { if (colorHex) colorHex.value = colorPicker.value; });
+  colorHex?.addEventListener("input", () => {
+    const v = colorHex.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(v) && colorPicker) colorPicker.value = v;
+  });
+
+  if (saveBrandingBtn) {
+    saveBrandingBtn.onclick = async () => {
+      const logoUrl = logoInput?.value.trim() || null;
+      const brandColor = colorHex?.value.trim() || null;
+      if (brandColor && !/^#[0-9a-fA-F]{6}$/.test(brandColor)) {
+        brandingStatus.textContent = "Brand color must be a valid hex, e.g. #4f46e5";
+        brandingStatus.className = "form-status is-error";
+        return;
+      }
+      saveBrandingBtn.disabled = true;
+      brandingStatus.textContent = "Saving...";
+      brandingStatus.className = "form-status";
+      try {
+        await api("/api/admin/settings", { method: "PATCH", body: { logoUrl, brandColor } });
+        brandingStatus.textContent = "Branding saved.";
+        showToast("Branding updated.", "success");
+      } catch (err) {
+        brandingStatus.textContent = err.message || "Failed to save.";
+        brandingStatus.className = "form-status is-error";
+      } finally {
+        saveBrandingBtn.disabled = false;
+      }
+    };
+  }
 
   saveBtn.onclick = async () => {
     const name = nameInput.value.trim();
@@ -845,7 +972,7 @@ async function loadSettings() {
         <span class="toggle-text ${c.isActive ? "text-green" : "text-muted"}">${c.isActive ? "Active" : "Inactive"}</span>
       </label></td>
       <td><div class="action-cell">
-        <button class="btn-action btn-action-edit course-edit-btn" data-id="${sanitize(c.id)}" data-title="${sanitize(c.title)}" data-pass="${c.passPercent}">Edit</button>
+        <button class="btn-action btn-action-edit course-edit-btn" data-id="${sanitize(c.id)}" data-title="${sanitize(c.title)}" data-pass="${c.passPercent}" data-opens="${c.opensAt ? new Date(c.opensAt).toISOString().slice(0,16) : ''}" data-closes="${c.closesAt ? new Date(c.closesAt).toISOString().slice(0,16) : ''}">Edit</button>
         <button class="btn-action btn-action-delete course-delete-btn" data-id="${sanitize(c.id)}" data-title="${sanitize(c.title)}">Delete</button>
       </div></td>
     `;
@@ -875,6 +1002,8 @@ async function loadSettings() {
       document.getElementById("editCourseId").value = btn.dataset.id;
       document.getElementById("ecTitle").value = btn.dataset.title;
       document.getElementById("ecPassPercent").value = btn.dataset.pass;
+      document.getElementById("ecOpensAt").value = btn.dataset.opens || "";
+      document.getElementById("ecClosesAt").value = btn.dataset.closes || "";
       editCourseForm.classList.remove("hidden");
       editCourseStatus.textContent = "";
       editCourseStatus.className = "form-status";
@@ -934,17 +1063,24 @@ async function loadSettings() {
       return;
     }
 
+    const opensAtVal = document.getElementById("acOpensAt")?.value;
+    const closesAtVal = document.getElementById("acClosesAt")?.value;
+    const opensAt = opensAtVal ? new Date(opensAtVal).toISOString() : null;
+    const closesAt = closesAtVal ? new Date(closesAtVal).toISOString() : null;
+
     saveAddCourseBtn.disabled = true;
     addCourseStatus.textContent = "Creating...";
     addCourseStatus.className = "form-status";
     try {
-      await api("/api/admin/courses", { method: "POST", body: { code, title, version, passPercent } });
+      await api("/api/admin/courses", { method: "POST", body: { code, title, version, passPercent, opensAt, closesAt } });
       showToast("Course created.", "success");
       addCourseForm.classList.add("hidden");
       document.getElementById("acCode").value = "";
       document.getElementById("acTitle").value = "";
       document.getElementById("acVersion").value = "";
       document.getElementById("acPassPercent").value = "80";
+      if (document.getElementById("acOpensAt")) document.getElementById("acOpensAt").value = "";
+      if (document.getElementById("acClosesAt")) document.getElementById("acClosesAt").value = "";
       addCourseStatus.textContent = "";
       // Reload the courses table
       await loadSettings();
@@ -1351,12 +1487,16 @@ document.getElementById("saveEditCourseBtn").addEventListener("click", async () 
     editCourseStatus.className = "form-status is-error";
     return;
   }
+  const opensAtVal = document.getElementById("ecOpensAt")?.value;
+  const closesAtVal = document.getElementById("ecClosesAt")?.value;
+  const opensAt = opensAtVal ? new Date(opensAtVal).toISOString() : null;
+  const closesAt = closesAtVal ? new Date(closesAtVal).toISOString() : null;
   const saveBtn = document.getElementById("saveEditCourseBtn");
   saveBtn.disabled = true;
   editCourseStatus.textContent = "Saving...";
   editCourseStatus.className = "form-status";
   try {
-    await api(`/api/admin/courses/${id}`, { method: "PATCH", body: { title, passPercent } });
+    await api(`/api/admin/courses/${id}`, { method: "PATCH", body: { title, passPercent, opensAt, closesAt } });
     showToast("Course updated.", "success");
     editCourseForm.classList.add("hidden");
     editCourseStatus.textContent = "";

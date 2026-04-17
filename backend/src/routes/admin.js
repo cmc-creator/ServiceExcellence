@@ -208,6 +208,8 @@ router.post("/courses", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
     title: z.string().min(2),
     version: z.string().min(1),
     passPercent: z.number().int().min(1).max(100).default(80),
+    opensAt: z.string().datetime().nullable().optional(),
+    closesAt: z.string().datetime().nullable().optional(),
   });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) {
@@ -217,6 +219,8 @@ router.post("/courses", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
   const course = await db.course.create({
     data: {
       ...parsed.data,
+      opensAt: parsed.data.opensAt ? new Date(parsed.data.opensAt) : null,
+      closesAt: parsed.data.closesAt ? new Date(parsed.data.closesAt) : null,
       organizationId: req.user.organizationId,
     },
   });
@@ -552,19 +556,29 @@ router.delete("/users/:id", requireRole(["OWNER"]), async (req, res) => {
 router.get("/settings", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
   const org = await db.organization.findUnique({
     where: { id: req.user.organizationId },
-    select: { id: true, name: true, slug: true },
+    select: { id: true, name: true, slug: true, logoUrl: true, brandColor: true },
   });
   return res.json(org);
 });
 
 router.patch("/settings", requireRole(["OWNER"]), async (req, res) => {
-  const schema = z.object({ name: z.string().min(2) });
+  const schema = z.object({
+    name: z.string().min(2).optional(),
+    logoUrl: z.string().url().nullable().optional(),
+    brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
+  }).refine((d) => d.name || d.logoUrl !== undefined || d.brandColor !== undefined, {
+    message: "At least one field is required.",
+  });
   const parsed = schema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  const data = {};
+  if (parsed.data.name) data.name = parsed.data.name;
+  if (parsed.data.logoUrl !== undefined) data.logoUrl = parsed.data.logoUrl;
+  if (parsed.data.brandColor !== undefined) data.brandColor = parsed.data.brandColor;
   const org = await db.organization.update({
     where: { id: req.user.organizationId },
-    data: { name: parsed.data.name },
-    select: { id: true, name: true, slug: true },
+    data,
+    select: { id: true, name: true, slug: true, logoUrl: true, brandColor: true },
   });
   return res.json(org);
 });
@@ -588,10 +602,15 @@ router.patch("/courses/:id", requireRole(["OWNER", "ADMIN"]), async (req, res) =
     title: z.string().min(2).optional(),
     isActive: z.boolean().optional(),
     passPercent: z.number().int().min(1).max(100).optional(),
+    opensAt: z.string().datetime().nullable().optional(),
+    closesAt: z.string().datetime().nullable().optional(),
   });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-  const updated = await db.course.update({ where: { id: req.params.id }, data: parsed.data });
+  const updateData = { ...parsed.data };
+  if (parsed.data.opensAt !== undefined) updateData.opensAt = parsed.data.opensAt ? new Date(parsed.data.opensAt) : null;
+  if (parsed.data.closesAt !== undefined) updateData.closesAt = parsed.data.closesAt ? new Date(parsed.data.closesAt) : null;
+  const updated = await db.course.update({ where: { id: req.params.id }, data: updateData });
   return res.json(updated);
 });
 

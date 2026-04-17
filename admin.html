@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css">
   <link rel="stylesheet" href="admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="blob blob-a"></div>
@@ -385,6 +386,17 @@
           </div>
         </div>
 
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;">
+          <div class="admin-form-card" style="padding:20px;">
+            <p style="font-size:13px;font-weight:600;opacity:0.55;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;">Completion Rate</p>
+            <canvas id="completionChart" height="180"></canvas>
+          </div>
+          <div class="admin-form-card" style="padding:20px;">
+            <p style="font-size:13px;font-weight:600;opacity:0.55;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;">Pass / Fail Attempts</p>
+            <canvas id="passFailChart" height="180"></canvas>
+          </div>
+        </div>
+
         <div class="section-head" style="margin-top:40px;">
           <p class="section-kicker">Event Breakdown</p>
           <h2>Top Training Events</h2>
@@ -397,12 +409,23 @@
             <p class="section-kicker">Over Time</p>
             <h2>Monthly Completions</h2>
           </div>
+          <div class="admin-form-card" style="padding:20px;">
+            <canvas id="trendsChart" style="max-height:220px;"></canvas>
+          </div>
+        </div>
+
+        <div style="margin-top:40px;">
+          <div class="section-head">
+            <p class="section-kicker">By Team</p>
+            <h2>Department Breakdown</h2>
+          </div>
           <div class="table-wrap">
             <table class="history-table">
-              <thead><tr><th>Month</th><th>Completions</th></tr></thead>
-              <tbody id="trendsTableBody"></tbody>
+              <thead><tr><th>Department</th><th>Enrolled</th><th>Completed</th><th>Rate</th></tr></thead>
+              <tbody id="deptTableBody"></tbody>
             </table>
           </div>
+          <p class="no-data hidden" id="noDeptData">No department data yet.</p>
         </div>
       </section>
 
@@ -519,6 +542,25 @@
           <p class="form-status" id="settingsStatus"></p>
         </div>
 
+        <div class="admin-form-card" style="max-width:480px;margin-top:24px;">
+          <h3>Branding</h3>
+          <div class="form-field">
+            <label for="settingsLogoUrl">Logo URL (optional)</label>
+            <input id="settingsLogoUrl" type="url" class="admin-input" placeholder="https://example.com/logo.png">
+          </div>
+          <div class="form-field" style="margin-bottom:20px;">
+            <label for="settingsBrandColor">Brand Color</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input id="settingsBrandColor" type="color" style="width:48px;height:36px;padding:2px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:transparent;cursor:pointer;">
+              <input id="settingsBrandColorHex" type="text" class="admin-input" placeholder="#4f46e5" style="max-width:120px;">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-solid btn-sm" id="saveBrandingBtn" type="button">Save Branding</button>
+          </div>
+          <p class="form-status" id="brandingStatus"></p>
+        </div>
+
         <div class="section-head" style="margin-top:40px;">
           <p class="section-kicker">Course Catalogue</p>
           <h2>Manage Courses</h2>
@@ -546,6 +588,14 @@
             <label for="acPassPercent">Pass % (0-100)</label>
             <input id="acPassPercent" type="number" class="admin-input" min="0" max="100" value="80" style="max-width:100px;">
           </div>
+          <div class="form-field">
+            <label for="acOpensAt">Opens At (optional)</label>
+            <input id="acOpensAt" type="datetime-local" class="admin-input" style="max-width:240px;">
+          </div>
+          <div class="form-field">
+            <label for="acClosesAt">Closes At (optional)</label>
+            <input id="acClosesAt" type="datetime-local" class="admin-input" style="max-width:240px;">
+          </div>
           <div class="form-actions">
             <button class="btn-solid btn-sm" id="saveAddCourseBtn" type="button">Create Course</button>
             <button class="btn-ghost btn-sm" id="cancelAddCourseBtn" type="button">Cancel</button>
@@ -563,6 +613,14 @@
           <div class="form-field">
             <label for="ecPassPercent">Pass % (0-100)</label>
             <input id="ecPassPercent" type="number" class="admin-input" min="0" max="100" style="max-width:100px;">
+          </div>
+          <div class="form-field">
+            <label for="ecOpensAt">Opens At (optional)</label>
+            <input id="ecOpensAt" type="datetime-local" class="admin-input" style="max-width:240px;">
+          </div>
+          <div class="form-field">
+            <label for="ecClosesAt">Closes At (optional)</label>
+            <input id="ecClosesAt" type="datetime-local" class="admin-input" style="max-width:240px;">
           </div>
           <div class="form-actions">
             <button class="btn-solid btn-sm" id="saveEditCourseBtn" type="button">Save Changes</button>

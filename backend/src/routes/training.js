@@ -3,6 +3,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "../lib/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { sendEmail } from "../lib/email.js";
 
 const router = express.Router();
 
@@ -72,6 +73,17 @@ router.post("/start", requireAuth, async (req, res) => {
   });
   if (!course) {
     return res.status(404).json({ error: "Course not found" });
+  }
+
+  // Enforce open/close schedule
+  const now = new Date();
+  if (course.opensAt && now < course.opensAt) {
+    const opens = course.opensAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    return res.status(403).json({ error: `This course opens on ${opens}. Check back then.` });
+  }
+  if (course.closesAt && now > course.closesAt) {
+    const closed = course.closesAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    return res.status(403).json({ error: `This course closed on ${closed}.` });
   }
 
   const learner = await db.learner.upsert({
@@ -212,6 +224,24 @@ router.post("/complete", requireAuth, async (req, res) => {
         certificateNo: `NYX-${nanoid(10).toUpperCase()}`,
       },
     });
+
+    // Send congratulatory email with certificate link (non-blocking)
+    try {
+      const learner = await db.learner.findUnique({ where: { id: attempt.learnerId } });
+      if (learner?.email) {
+        const APP_URL = (process.env.APP_URL || "").replace(/\/$/, "");
+        const certUrl = APP_URL ? `${APP_URL}/certificate.html?id=${encodeURIComponent(certificate.id)}` : null;
+        sendEmail({
+          to: learner.email,
+          subject: `Congratulations! You completed ${attempt.course.title}`,
+          html: `<p>Hi ${learner.fullName},</p>
+<p>You have successfully completed <strong>${attempt.course.title}</strong> with a score of <strong>${parsed.data.scorePercent}%</strong>.</p>
+<p>Your certificate number is <strong>${certificate.certificateNo}</strong>.</p>
+${certUrl ? `<p><a href="${certUrl}">View your certificate online</a></p>` : ""}
+<p>Well done!</p>`,
+        }).catch(() => null); // fire-and-forget; do not block the response
+      }
+    } catch { /* non-critical */ }
   }
 
   return res.json({
@@ -428,7 +458,7 @@ router.get("/public/config/:organizationSlug", async (req, res) => {
   });
 
   return res.json({
-    organization: { name: org.name, slug: org.slug },
+    organization: { name: org.name, slug: org.slug, logoUrl: org.logoUrl, brandColor: org.brandColor },
     activeCourse: activeCourse
       ? { code: activeCourse.code, title: activeCourse.title, version: activeCourse.version }
       : null,

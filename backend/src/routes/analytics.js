@@ -72,4 +72,31 @@ router.get("/trends", async (req, res) => {
   return res.json(trends);
 });
 
+router.get("/by-department", async (req, res) => {
+  const orgId = req.user.organizationId;
+  const enrollments = await db.enrollment.findMany({
+    where: { organizationId: orgId },
+    select: { completedAt: true, learner: { select: { department: true } } },
+  });
+
+  const deptMap = {};
+  for (const e of enrollments) {
+    const dept = e.learner?.department || "Unassigned";
+    if (!deptMap[dept]) deptMap[dept] = { total: 0, completed: 0 };
+    deptMap[dept].total++;
+    if (e.completedAt) deptMap[dept].completed++;
+  }
+
+  const rows = Object.entries(deptMap)
+    .map(([department, stats]) => ({
+      department,
+      total: stats.total,
+      completed: stats.completed,
+      rate: stats.total ? Number(((stats.completed / stats.total) * 100).toFixed(1)) : 0,
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  return res.json(rows);
+});
+
 export default router;
