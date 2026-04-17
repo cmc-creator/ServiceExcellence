@@ -286,6 +286,8 @@ main,
 .section-head h2 {
   margin-top: 8px;
   font-size: clamp(1.5rem, 3vw, 2.4rem);
+  text-wrap: balance;
+  text-align: center;
 }
 
 .card-grid {
@@ -330,9 +332,10 @@ main,
   padding: 4px 8px;
   border-radius: 999px;
   font-size: 0.76rem;
-  color: #20180f;
+  color: #1a1200;
   background: linear-gradient(100deg, var(--brand-gold), #ffd08f);
-  font-weight: 700;
+  font-weight: 800;
+  -webkit-font-smoothing: auto;
 }
 
 .final-cta {
