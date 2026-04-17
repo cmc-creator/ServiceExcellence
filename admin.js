@@ -628,8 +628,29 @@ async function loadCertificates() {
       <td>${sanitize(c.course?.title || c.courseId)}</td>
       <td>${fmt(c.issuedAt)}</td>
       <td><a class="cert-view-link" href="certificate.html?id=${sanitize(c.id)}" target="_blank">View</a></td>
+      <td><button class="btn-action btn-action-secondary cert-email-btn" data-id="${sanitize(c.id)}" data-email="${sanitize(c.learner?.email || "")}">Email</button></td>
     `;
     tbody.appendChild(tr);
+  });
+
+  // Wire email buttons
+  tbody.querySelectorAll(".cert-email-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      const recipientEmail = btn.dataset.email;
+      if (!confirm(`Email this certificate to ${recipientEmail || "the learner"}?`)) return;
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+      try {
+        const res = await api(`/api/admin/certificates/${id}/email`, { method: "POST" });
+        showToast(res.message || "Certificate emailed.", "success");
+        btn.textContent = "Sent";
+      } catch (err) {
+        showToast(err.message || "Failed to send email.", "error");
+        btn.disabled = false;
+        btn.textContent = "Email";
+      }
+    });
   });
 }
 

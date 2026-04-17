@@ -53,6 +53,8 @@ if (searchParams.get("session") === "required") {
   updateStatus("Please sign in to continue your training session.");
 } else if (searchParams.get("session") === "expired") {
   updateStatus("Your session has expired. Please sign in again.");
+} else if (searchParams.get("reset") === "success") {
+  updateStatus("Password updated. Please sign in with your new credentials.");
 }
 
 function setFieldError(fieldName, message) {

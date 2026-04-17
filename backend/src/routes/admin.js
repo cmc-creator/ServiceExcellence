@@ -255,6 +255,30 @@ router.get("/certificates/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), asyn
   return res.json(cert);
 });
 
+router.post("/certificates/:id/email", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const cert = await db.certificate.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+    include: { learner: true, course: true },
+  });
+  if (!cert) return res.status(404).json({ error: "Certificate not found" });
+
+  const APP_URL = (process.env.APP_URL || "").replace(/\/$/, "");
+  const certUrl = APP_URL ? `${APP_URL}/certificate.html?id=${encodeURIComponent(cert.id)}` : null;
+
+  const sent = await sendEmail({
+    to: cert.learner.email,
+    subject: `Your certificate for ${cert.course.title}`,
+    html: `<p>Hi ${cert.learner.fullName},</p>
+<p>Congratulations on completing <strong>${cert.course.title}</strong>!</p>
+<p>Your certificate number is <strong>${cert.certificateNo}</strong>.</p>
+${certUrl ? `<p><a href="${certUrl}">View your certificate online</a></p>` : ""}
+<p>Thank you for completing your training.</p>`,
+  });
+
+  if (!sent) return res.status(503).json({ error: "Email service not configured. Check GMAIL_USER and GMAIL_APP_PASSWORD environment variables." });
+  return res.json({ message: `Certificate emailed to ${cert.learner.email}.` });
+});
+
 router.patch("/learners/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
   const learner = await db.learner.findFirst({
     where: { id: req.params.id, organizationId: req.user.organizationId },
