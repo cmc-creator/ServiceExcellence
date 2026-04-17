@@ -7,6 +7,15 @@ const token = localStorage.getItem("nyxAuthToken") || "";
 const storedName = localStorage.getItem("nyxLearnerName") || "Admin";
 const storedRole = localStorage.getItem("nyxUserRole") || "";
 
+// Decode org slug from JWT payload for forgot-password calls
+let orgSlug = localStorage.getItem("nyxOrgSlug") || "";
+if (!orgSlug && token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    orgSlug = payload.organizationSlug || "";
+  } catch { /* non-critical */ }
+}
+
 const ADMIN_ROLES = ["OWNER", "ADMIN", "MANAGER"];
 
 const loadingState = document.getElementById("loadingState");
@@ -120,11 +129,48 @@ function renderLearnerRows(learners) {
       <td>
         <div class="action-cell">
           <button class="btn-action btn-action-edit" data-id="${sanitize(l.id)}" data-name="${sanitize(l.fullName)}" data-email="${sanitize(l.email)}" data-emp="${sanitize(l.employeeId || "")}" data-dept="${sanitize(l.department || "")}" data-rt="${sanitize(l.roleTrack || "")}">Edit</button>
+          <button class="btn-action btn-action-secondary learner-reset-btn" data-id="${sanitize(l.id)}" data-email="${sanitize(l.email)}">Reset Link</button>
           <button class="btn-action btn-action-delete" data-id="${sanitize(l.id)}">Delete</button>
         </div>
       </td>
     `;
     tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".learner-reset-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const learnerEmail = btn.dataset.email;
+      if (!orgSlug) {
+        showToast("Cannot determine organization slug. Sign out and back in.", "error");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+      try {
+        const res = await fetch(`${apiBase}/api/auth/forgot-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: learnerEmail, organizationSlug: orgSlug }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.resetToken) {
+          // Email not configured - build URL and copy to clipboard
+          const resetUrl = `${location.origin}${location.pathname.replace("admin.html", "")}reset-password.html?token=${encodeURIComponent(data.resetToken)}&apiBase=${encodeURIComponent(apiBase)}`;
+          try {
+            await navigator.clipboard.writeText(resetUrl);
+            showToast(`Reset link copied to clipboard for ${learnerEmail}.`, "success");
+          } catch {
+            prompt("Copy this reset link and share it securely:", resetUrl);
+          }
+        } else {
+          showToast(`Password reset email sent to ${learnerEmail}.`, "success");
+        }
+      } catch (err) {
+        showToast(err.message || "Failed to generate reset link.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Reset Link";
+      }
+    });
   });
   tbody.querySelectorAll(".btn-action-edit[data-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -519,8 +565,8 @@ async function loadEnrollments() {
     allCourses = [...seen.values()].map((c) => ({ id: c.id, title: c.title }));
   }
 
-  // Populate course selects (enrollment form + bulk enroll form)
-  ["enrCourse", "bulkEnrCourse"].forEach((selId) => {
+  // Populate course selects (enrollment form + bulk enroll form + bulk due date form)
+  ["enrCourse", "bulkEnrCourse", "bddCourse"].forEach((selId) => {
     const sel = document.getElementById(selId);
     if (!sel) return;
     sel.innerHTML = '<option value="">Select course...</option>';
@@ -978,9 +1024,15 @@ async function loadUsers() {
   const isOwner = storedRole === "OWNER";
   rows.forEach((u) => {
     const rolePill = `<span class="role-pill role-${u.role.toLowerCase()}">${u.role}</span>`;
+    const statusPillHtml = u.isActive
+      ? `<span class="attempt-status s-passed">Active</span>`
+      : `<span class="attempt-status s-failed">Inactive</span>`;
+    const toggleLabel = u.isActive ? "Deactivate" : "Activate";
+    const toggleCls = u.isActive ? "btn-action-delete" : "btn-action-secondary";
     const actions = isOwner
       ? `<div class="action-cell">
           <button class="btn-action btn-action-edit" data-id="${sanitize(u.id)}" data-name="${sanitize(u.fullName)}" data-email="${sanitize(u.email)}" data-role="${sanitize(u.role)}">Edit</button>
+          <button class="btn-action ${toggleCls} user-toggle-btn" data-id="${sanitize(u.id)}" data-active="${u.isActive}">${toggleLabel}</button>
           <button class="btn-action btn-action-delete" data-id="${sanitize(u.id)}">Delete</button>
         </div>`
       : `<span style="opacity:0.4;font-size:12px;">View only</span>`;
@@ -989,6 +1041,7 @@ async function loadUsers() {
       <td>${sanitize(u.fullName)}</td>
       <td>${sanitize(u.email)}</td>
       <td>${rolePill}</td>
+      <td>${statusPillHtml}</td>
       <td>${fmt(u.createdAt)}</td>
       <td>${actions}</td>
     `;
@@ -1021,6 +1074,24 @@ async function loadUsers() {
         showToast(err.message || "Failed to delete user.", "error");
         btn.textContent = "Delete";
         btn.disabled = false;
+      }
+    });
+  });
+  tbody.querySelectorAll(".user-toggle-btn[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const isActive = btn.dataset.active === "true";
+      const action = isActive ? "deactivate" : "activate";
+      if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} this user?`)) return;
+      btn.disabled = true;
+      btn.textContent = isActive ? "Deactivating..." : "Activating...";
+      try {
+        await api(`/api/admin/users/${btn.dataset.id}/toggle-active`, { method: "PATCH" });
+        showToast(`User ${action}d.`, "success");
+        await loadUsers();
+      } catch (err) {
+        showToast(err.message || `Failed to ${action} user.`, "error");
+        btn.disabled = false;
+        btn.textContent = isActive ? "Deactivate" : "Activate";
       }
     });
   });
@@ -1105,6 +1176,78 @@ saveEditUserBtn.addEventListener("click", async () => {
     saveEditUserBtn.disabled = false;
   }
 });
+
+// ============================================================
+// SEND OVERDUE REMINDERS
+// ============================================================
+document.getElementById("sendRemindersBtn")?.addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  if (!confirm("Send overdue reminder emails to all learners with a past due date?")) return;
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+  try {
+    const res = await api("/api/admin/reminders/send", { method: "POST" });
+    showToast(res.message || `Sent ${res.sent} reminder(s).`, "success");
+  } catch (err) {
+    showToast(err.message || "Failed to send reminders.", "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Send Overdue Reminders";
+  }
+});
+
+// ============================================================
+// BULK DUE DATE FORM
+// ============================================================
+(function initBulkDueDate() {
+  const showBtn = document.getElementById("showBulkDueDateBtn");
+  const formCard = document.getElementById("bulkDueDateForm");
+  const cancelBtn = document.getElementById("cancelBulkDueDateBtn");
+  const saveBtn = document.getElementById("saveBulkDueDateBtn");
+  const courseSelect = document.getElementById("bddCourse");
+  const dateInput = document.getElementById("bddDate");
+  const incompleteOnly = document.getElementById("bddIncompleteOnly");
+  const statusEl = document.getElementById("bulkDueDateStatus");
+
+  if (!showBtn || !formCard) return;
+
+  showBtn.addEventListener("click", () => {
+    formCard.classList.remove("hidden");
+    showBtn.style.display = "none";
+  });
+
+  cancelBtn?.addEventListener("click", () => {
+    formCard.classList.add("hidden");
+    showBtn.style.display = "";
+    if (statusEl) statusEl.textContent = "";
+  });
+
+  saveBtn?.addEventListener("click", async () => {
+    const courseId = courseSelect?.value;
+    if (!courseId) {
+      if (statusEl) { statusEl.textContent = "Please select a course."; statusEl.className = "form-status is-error"; }
+      return;
+    }
+    const rawDate = dateInput?.value;
+    const dueDate = rawDate ? new Date(rawDate).toISOString() : null;
+    saveBtn.disabled = true;
+    if (statusEl) { statusEl.textContent = "Updating..."; statusEl.className = "form-status"; }
+    try {
+      const res = await api("/api/admin/enrollments/bulk-due-date", {
+        method: "PATCH",
+        body: { courseId, dueDate, incompleteOnly: incompleteOnly?.checked ?? true },
+      });
+      showToast(`Updated ${res.updated} enrollment(s).`, "success");
+      formCard.classList.add("hidden");
+      showBtn.style.display = "";
+      if (statusEl) statusEl.textContent = "";
+    } catch (err) {
+      if (statusEl) { statusEl.textContent = err.message || "Failed to update due dates."; statusEl.className = "form-status is-error"; }
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+})();
 
 // ============================================================
 // CSV IMPORT

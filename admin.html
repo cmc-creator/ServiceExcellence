@@ -211,10 +211,40 @@
             <p class="section-kicker">Course Access</p>
             <h2>Enrollments</h2>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-ghost btn-sm" id="sendRemindersBtn" type="button">Send Overdue Reminders</button>
+            <button class="btn-ghost btn-sm" id="showBulkDueDateBtn" type="button">Bulk Update Due Date</button>
             <button class="btn-ghost btn-sm" id="showBulkEnrollBtn" type="button">Bulk Enroll</button>
             <button class="btn-solid btn-sm" id="showAddEnrollmentBtn" type="button">+ Enroll Learner</button>
           </div>
+        </div>
+
+        <!-- Bulk due date form -->
+        <div class="admin-form-card hidden" id="bulkDueDateForm">
+          <h3>Bulk Update Due Date</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="bddCourse">Course</label>
+              <select id="bddCourse" class="admin-input">
+                <option value="">Select course...</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="bddDate">New Due Date</label>
+              <input id="bddDate" type="date" class="admin-input">
+            </div>
+          </div>
+          <div style="margin:12px 0 8px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="bddIncompleteOnly" checked>
+              Only update incomplete enrollments
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn-solid btn-sm" id="saveBulkDueDateBtn" type="button">Update</button>
+            <button class="btn-ghost btn-sm" id="cancelBulkDueDateBtn" type="button">Cancel</button>
+          </div>
+          <p class="form-status" id="bulkDueDateStatus"></p>
         </div>
 
         <!-- Enroll form -->
@@ -459,6 +489,7 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>

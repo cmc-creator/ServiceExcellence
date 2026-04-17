@@ -171,6 +171,37 @@ router.post("/enrollments/bulk", requireRole(["OWNER", "ADMIN", "MANAGER"]), asy
   return res.json(results);
 });
 
+// ─── Enrollment bulk due-date update ────────────────────────────────────────
+
+router.patch("/enrollments/bulk-due-date", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const schema = z.object({
+    courseId: z.string(),
+    dueDate: z.string().datetime().nullable(),
+    incompleteOnly: z.boolean().default(true),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const orgId = req.user.organizationId;
+  const { courseId, dueDate, incompleteOnly } = parsed.data;
+
+  const course = await db.course.findFirst({ where: { id: courseId, organizationId: orgId } });
+  if (!course) return res.status(404).json({ error: "Course not found" });
+
+  const where = {
+    organizationId: orgId,
+    courseId,
+    ...(incompleteOnly ? { completedAt: null } : {}),
+  };
+
+  const result = await db.enrollment.updateMany({
+    where,
+    data: { dueDate: dueDate ? new Date(dueDate) : null },
+  });
+
+  return res.json({ updated: result.count });
+});
+
 router.post("/courses", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
   const schema = z.object({
     code: z.string().min(2),
@@ -411,7 +442,7 @@ const userUpdateSchema = z.object({
 router.get("/users", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
   const users = await db.user.findMany({
     where: { organizationId: req.user.organizationId },
-    select: { id: true, fullName: true, email: true, role: true, createdAt: true },
+    select: { id: true, fullName: true, email: true, role: true, isActive: true, createdAt: true },
     orderBy: { createdAt: "asc" },
   });
   return res.json(users);
@@ -445,6 +476,22 @@ router.post("/users", requireRole(["OWNER"]), async (req, res) => {
     select: { id: true, fullName: true, email: true, role: true, createdAt: true },
   });
   return res.status(201).json(user);
+});
+
+router.patch("/users/:id/toggle-active", requireRole(["OWNER"]), async (req, res) => {
+  if (req.params.id === req.user.sub) {
+    return res.status(400).json({ error: "You cannot deactivate your own account." });
+  }
+  const target = await db.user.findFirst({
+    where: { id: req.params.id, organizationId: req.user.organizationId },
+  });
+  if (!target) return res.status(404).json({ error: "User not found" });
+  const updated = await db.user.update({
+    where: { id: req.params.id },
+    data: { isActive: !target.isActive },
+    select: { id: true, fullName: true, email: true, role: true, isActive: true, createdAt: true },
+  });
+  return res.json(updated);
 });
 
 router.patch("/users/:id", requireRole(["OWNER"]), async (req, res) => {
@@ -565,6 +612,48 @@ router.delete("/courses/:id", requireRole(["OWNER", "ADMIN"]), async (req, res) 
 
   await db.course.delete({ where: { id: req.params.id } });
   return res.status(204).send();
+});
+
+// ─── Ad-hoc overdue reminders (admin-triggered) ─────────────────────────────
+
+router.post("/reminders/send", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const today = new Date();
+  const overdue = await db.enrollment.findMany({
+    where: {
+      organizationId: req.user.organizationId,
+      completedAt: null,
+      dueDate: { not: null, lt: today },
+    },
+    include: { learner: true, course: true },
+  });
+
+  if (!overdue.length) {
+    return res.json({ processed: 0, sent: 0, failed: 0, message: "No overdue enrollments found." });
+  }
+
+  let sent = 0;
+  let failed = 0;
+  for (const enrollment of overdue) {
+    const dueDateStr = new Date(enrollment.dueDate).toLocaleDateString("en-US", {
+      month: "long", day: "numeric", year: "numeric",
+    });
+    const overdueDays = Math.floor((today - new Date(enrollment.dueDate)) / (1000 * 60 * 60 * 24));
+    const ok = await sendEmail({
+      to: enrollment.learner.email,
+      subject: `Action required: Complete your ${enrollment.course.title} training`,
+      html: `<p>Hi ${enrollment.learner.fullName},</p>
+<p>Your <strong>${enrollment.course.title}</strong> training was due on <strong>${dueDateStr}</strong> and is now <strong>${overdueDays} day${overdueDays !== 1 ? "s" : ""} overdue</strong>.</p>
+<p>Please log in and complete this course as soon as possible.</p>`,
+    });
+    if (ok) sent++; else failed++;
+  }
+
+  return res.json({
+    processed: overdue.length,
+    sent,
+    failed,
+    message: `Sent ${sent} reminder${sent !== 1 ? "s" : ""} to overdue learners.`,
+  });
 });
 
 // ─── Enrollment reminder email ────────────────────────────────────────────────
