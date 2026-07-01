@@ -96,29 +96,12 @@ const API_BASE =
   window.NYX_API_BASE ||
   "";
 
+const REQUIRE_LOGIN = localStorage.getItem("nyxRequireLogin") === "true";
+
 const ORG_SLUG =
   localStorage.getItem("nyxOrgSlug") ||
   window.NYX_ORG_SLUG ||
   "destiny-springs-healthcare";
-
-let activeCourseConfig = null;
-
-// Apply org branding from public config (non-blocking)
-if (API_BASE && ORG_SLUG) {
-  fetch(`${API_BASE}/api/training/public/config/${ORG_SLUG}`)
-    .then((r) => r.ok ? r.json() : null)
-    .then((data) => {
-      const org = data?.organization;
-      if (!org) return;
-      if (org.brandColor) {
-        document.documentElement.style.setProperty("--brand-color", org.brandColor);
-      }
-      if (org.logoUrl) {
-        document.querySelectorAll(".brand-logo").forEach((el) => { el.src = org.logoUrl; });
-      }
-    })
-    .catch(() => {});
-}
 
 function getAuthToken() {
   return localStorage.getItem("nyxAuthToken") || "";
@@ -134,47 +117,25 @@ function buildAuthHeaders(extraHeaders = {}) {
 }
 
 function clearSessionAndRedirect() {
-  ["nyxAuthToken", "nyxUserRole", "nyxLearnerEmail", "nyxLearnerName",
-    "nyxApiBase", "nyxOrgSlug", "nyxRoleConfigs", "nyxSoundEnabled",
-    "nyxSeasonalAchievements", "nyxBrandMode"].forEach((k) => localStorage.removeItem(k));
-  window.location.href = "../login.html";
+  const hadToken = Boolean(localStorage.getItem("nyxAuthToken"));
+  localStorage.removeItem("nyxAuthToken");
+  localStorage.removeItem("nyxUserRole");
+  localStorage.removeItem("nyxLearnerEmail");
+  localStorage.removeItem("nyxLearnerName");
+
+  if (REQUIRE_LOGIN || hadToken) {
+    window.location.href = "../login.html";
+    return;
+  }
+
+  showToast("Session cleared. Continuing in standalone mode.", "info", 2500);
 }
 
 function requireAuthenticatedSession() {
+  if (!REQUIRE_LOGIN) return true;
   if (getAuthToken()) return true;
   window.location.href = "../login.html?session=required";
   return false;
-}
-
-function checkJwtExpiry() {
-  const token = getAuthToken();
-  if (!token) return;
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    if (!payload.exp) return;
-    const remainingSec = payload.exp - Math.floor(Date.now() / 1000);
-    if (remainingSec <= 0) {
-      clearSessionAndRedirect();
-      return;
-    }
-    if (remainingSec < 1800) {
-      const mins = Math.ceil(remainingSec / 60);
-      const existing = document.getElementById("sessionExpiryBanner");
-      if (existing) return;
-      const banner = document.createElement("div");
-      banner.id = "sessionExpiryBanner";
-      banner.textContent = `\u26a0 Session expires in ${mins} minute${mins !== 1 ? "s" : ""}. Submit your training soon.`;
-      Object.assign(banner.style, {
-        position: "fixed", top: "0", left: "0", right: "0", zIndex: "9999",
-        background: "rgba(255,107,107,0.92)", color: "#fff",
-        fontFamily: "Outfit, sans-serif", fontSize: "13px", fontWeight: "600",
-        textAlign: "center", padding: "8px 16px", backdropFilter: "blur(8px)",
-      });
-      document.body.prepend(banner);
-    }
-  } catch {
-    // non-critical
-  }
 }
 
 async function apiRequest(path, options = {}) {
@@ -203,12 +164,15 @@ async function apiRequest(path, options = {}) {
 }
 
 function getLearnerIdentity() {
-  const email = localStorage.getItem("nyxLearnerEmail");
-  if (!email) {
-    clearSessionAndRedirect();
-    throw new Error("No authenticated learner email found.");
-  }
-  const name = localStorage.getItem("nyxLearnerName") || "Learner";
+  const cachedEmail = localStorage.getItem("nyxLearnerEmail");
+  const cachedName = localStorage.getItem("nyxLearnerName");
+
+  const email = cachedEmail || `learner-${crypto.randomUUID().slice(0, 8)}@example.local`;
+  const name = cachedName || "Training Learner";
+
+  localStorage.setItem("nyxLearnerEmail", email);
+  localStorage.setItem("nyxLearnerName", name);
+
   return { email, name };
 }
 
@@ -219,8 +183,8 @@ async function startBackendAttempt() {
 
   const payload = {
     organizationSlug: ORG_SLUG,
-    courseCode: activeCourseConfig ? activeCourseConfig.code : "SE-COC-ANNUAL",
-    courseVersion: activeCourseConfig ? activeCourseConfig.version : "2026.1",
+    courseCode: "SE-COC-ANNUAL",
+    courseVersion: "2026.1",
     learnerEmail: identity.email,
     learnerName: identity.name,
     roleTrack: getCurrentRoleName(),
@@ -290,15 +254,8 @@ function saveRoleConfigs() {
   localStorage.setItem(ROLE_CONFIG_KEY, JSON.stringify(roleConfigs));
 }
 
-async function loadActiveCourseConfig() {
-  const data = await apiRequest(`/api/training/public/config/${ORG_SLUG}`);
-  if (data?.activeCourse) {
-    return { code: data.activeCourse.code, version: data.activeCourse.version };
-  }
-  return { code: "SE-COC-ANNUAL", version: "2026.1" };
-}
-
 async function loadRoleConfigsFromBackend() {
+  const rows = await apiRequest(`/api/training/public/roles/${ORG_SLUG}`);
   if (!Array.isArray(rows) || rows.length === 0) {
     return false;
   }
@@ -1967,32 +1924,21 @@ function submitCompletion() {
   state.finalized = true;
   trackEvent("submitted-completion", { assessmentPercent: assessmentPct, successStatus });
 
-  apiRequest("/api/training/complete", {
-    method: "POST",
-    body: {
-      attemptId: state.attemptId,
-      scorePercent: assessmentPct,
-      scoreRaw: state.assessmentCorrect,
-      scoreMax: finalAssessment.length,
-      attested: true,
-    },
-  }).then((result) => {
+  Promise.resolve(
+    apiRequest("/api/training/complete", {
+      method: "POST",
+      body: {
+        attemptId: state.attemptId,
+        scorePercent: assessmentPct,
+        scoreRaw: state.assessmentCorrect,
+        scoreMax: finalAssessment.length,
+        attested: true,
+      },
+    })
+  ).finally(() => {
     submissionStatus.textContent = scorm.initialized
       ? "Completion submitted to LMS successfully."
       : "Completion saved locally. LMS was not connected in this session.";
-    const dashBtn = document.getElementById("dashboardBtn");
-    if (dashBtn) dashBtn.style.display = "";
-    if (result?.passed && result?.certificateId) {
-      const certBtn = document.getElementById("viewCertBtn");
-      if (certBtn) {
-        certBtn.href = `../certificate.html?id=${encodeURIComponent(result.certificateId)}`;
-        certBtn.style.display = "";
-      }
-    }
-  }).catch(() => {
-    submissionStatus.textContent = "Completion saved locally. LMS was not connected in this session.";
-    const dashBtn = document.getElementById("dashboardBtn");
-    if (dashBtn) dashBtn.style.display = "";
   });
 }
 
@@ -2240,9 +2186,6 @@ async function bootstrap() {
   if (!requireAuthenticatedSession()) {
     return;
   }
-
-  checkJwtExpiry();
-  activeCourseConfig = await loadActiveCourseConfig();
 
   roleConfigs = loadRoleConfigs();
   const loadedFromBackend = await loadRoleConfigsFromBackend();

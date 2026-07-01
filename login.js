@@ -20,6 +20,26 @@ const fieldRefs = {
 const revealNodes = document.querySelectorAll(".reveal");
 const searchParams = new URLSearchParams(window.location.search);
 
+const DEFAULT_API_BASE = window.NYX_API_BASE || "https://backend-three-rho-40.vercel.app";
+
+function resolveApiBaseDefault() {
+  const stored = localStorage.getItem("nyxApiBase");
+  if (stored) return stored;
+
+  return DEFAULT_API_BASE;
+}
+
+function applyInitialFormDefaults() {
+  apiBaseInput.value = resolveApiBaseDefault();
+
+  const storedOrg = localStorage.getItem("nyxOrgSlug");
+  if (storedOrg) {
+    orgInput.value = storedOrg;
+  }
+}
+
+applyInitialFormDefaults();
+
 const revealObserver = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {
@@ -51,10 +71,6 @@ function updateStatus(message, isError = false) {
 
 if (searchParams.get("session") === "required") {
   updateStatus("Please sign in to continue your training session.");
-} else if (searchParams.get("session") === "expired") {
-  updateStatus("Your session has expired. Please sign in again.");
-} else if (searchParams.get("reset") === "success") {
-  updateStatus("Password updated. Please sign in with your new credentials.");
 }
 
 function setFieldError(fieldName, message) {
@@ -174,9 +190,9 @@ form.addEventListener("submit", async (event) => {
       localStorage.setItem("nyxUserRole", result.user.role);
     }
 
-    updateStatus("Login successful. Opening your dashboard...");
+    updateStatus("Login successful. Opening training platform...");
     window.setTimeout(() => {
-      window.location.href = "dashboard.html";
+      window.location.href = "training-tool/index.html";
     }, 550);
   } catch (error) {
     updateStatus(error.message || "Unable to sign in", true);
