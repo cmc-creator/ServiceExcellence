@@ -19,11 +19,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 
 - Luxury glassmorphism visual style with animated effects
 - Five built-in annual modules:
-  - De-escalation and crisis response
-  - Abuse/neglect recognition and reporting
-  - HIPAA/privacy refresh
-  - Professional boundaries and conduct
-  - Documentation essentials
+  - Suicide risk screening and observation levels
+  - Trauma-informed care in acute interactions
+  - Medication safety and high-risk alerts
+  - Workplace violence prevention and staff safety
+  - Legal holds, patient rights, and consent boundaries
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round

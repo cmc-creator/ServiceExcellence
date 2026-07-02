@@ -74,11 +74,11 @@ const defaultRoleConfigs = [
     persona: "clinical",
     departments: ["Nursing", "Behavioral Health"],
     enabledModules: [
-      "deescalation",
-      "abuse-neglect",
-      "hipaa-privacy",
-      "boundaries-conduct",
-      "documentation-essentials",
+      "suicide-observation",
+      "trauma-informed",
+      "medication-safety",
+      "workplace-violence",
+      "legal-rights-consent",
     ],
   },
   {
@@ -87,11 +87,11 @@ const defaultRoleConfigs = [
     persona: "nonclinical",
     departments: ["Admissions", "Support Services"],
     enabledModules: [
-      "deescalation",
-      "abuse-neglect",
-      "hipaa-privacy",
-      "boundaries-conduct",
-      "documentation-essentials",
+      "suicide-observation",
+      "trauma-informed",
+      "medication-safety",
+      "workplace-violence",
+      "legal-rights-consent",
     ],
   },
   {
@@ -100,21 +100,21 @@ const defaultRoleConfigs = [
     persona: "leadership",
     departments: ["Management", "Operations"],
     enabledModules: [
-      "deescalation",
-      "abuse-neglect",
-      "hipaa-privacy",
-      "boundaries-conduct",
-      "documentation-essentials",
+      "suicide-observation",
+      "trauma-informed",
+      "medication-safety",
+      "workplace-violence",
+      "legal-rights-consent",
     ],
   },
 ];
 
 const MODULE_LIBRARY = [
-  { id: "deescalation", title: "De-escalation and Crisis Response" },
-  { id: "abuse-neglect", title: "Abuse or Neglect Recognition and Reporting" },
-  { id: "hipaa-privacy", title: "HIPAA and Privacy Refresh" },
-  { id: "boundaries-conduct", title: "Professional Boundaries and Conduct" },
-  { id: "documentation-essentials", title: "Documentation Essentials" },
+  { id: "suicide-observation", title: "Suicide Risk Screening and Observation Levels" },
+  { id: "trauma-informed", title: "Trauma-Informed Care in Acute Interactions" },
+  { id: "medication-safety", title: "Medication Safety and High-Risk Alerts" },
+  { id: "workplace-violence", title: "Workplace Violence Prevention and Staff Safety" },
+  { id: "legal-rights-consent", title: "Legal Holds, Patient Rights, and Consent Boundaries" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -726,14 +726,14 @@ const easterEggs = [
 
 // Secret Bonus Scenario
 const bonusScenario = {
-  title: "Secret Bonus: The Unexpected Moment",
-  category: "Challenge - Complex Ethics",
+  title: "Secret Bonus: Rights Under Pressure",
+  category: "Challenge - Legal and Safety Balance",
   roles: ["clinical", "nonclinical", "leadership"],
-  prompt: "You notice a colleague has been under stress. They mention personal struggles affecting work. Best response?",
+  prompt: "A patient on legal hold refuses medication, is escalating, and asks for rights information immediately. Best first move?",
   choices: [
-    { text: "Refer to EAP confidentially and check on them later.", score: 20, good: true, feedback: "Perfect. Leadership looks like caring while maintaining boundaries." },
-    { text: "Tell your manager immediately.", score: 10, good: false, feedback: "Loyalty matters. Direct report might have handled this first." },
-    { text: "Mind your own business.", score: 0, good: false, feedback: "Compassion is part of the culture." },
+    { text: "Initiate immediate safety support, explain rights in plain language, and escalate per legal-hold protocol.", score: 20, good: true, feedback: "Excellent. This protects safety while honoring rights and legal process." },
+    { text: "Delay rights discussion until behavior fully settles to avoid disruption.", score: 8, good: false, feedback: "Delaying core rights communication can increase legal and trust risk." },
+    { text: "Document refusal only and leave legal clarification to next shift.", score: 2, good: false, feedback: "Ownership and timely escalation are required now, not later." },
   ],
 };
 
@@ -749,112 +749,112 @@ const roleLessonIntros = {
 const roleDepartmentSpotlights = {
   clinical: [
     {
-      title: "Nursing Example",
+      title: "Suicide Risk Screening Example",
       points: [
-        "During intake stress, acknowledge family frustration before discussing throughput.",
-        "Use calm tone and clear next-step timing to reduce escalation risk.",
+        "Use direct risk questions and document verbatim statements indicating self-harm concern.",
+        "Assign and communicate observation level using read-back before handoff.",
       ],
     },
     {
-      title: "Abuse or Neglect Reporting Example",
+      title: "Trauma-Informed Interaction Example",
       points: [
-        "If neglect is suspected, secure immediate patient safety before continuing routine tasks.",
-        "Document objective observations and direct statements, then initiate mandatory reporting without delay.",
+        "Explain procedures before touch or movement to reduce perceived threat.",
+        "Offer bounded choices where safe to maintain patient agency.",
       ],
     },
     {
-      title: "Clinical Privacy Example",
+      title: "Medication Alert Example",
       points: [
-        "Discuss patient details only in private settings with care-relevant staff.",
-        "Avoid hallway updates that expose sensitive psychiatric information.",
+        "On high-risk alerts, stop administration and verify identifiers, allergies, and active orders.",
+        "Escalate reconciliation discrepancies immediately with prescriber and pharmacy.",
       ],
     },
     {
-      title: "Nursing Unit Conduct Example",
+      title: "Workplace Safety Example",
       points: [
-        "Stop disrespectful language immediately and redirect to professional communication.",
-        "Document repeated behavior concerns through approved reporting channels.",
+        "At first threat indicator, position for safety and activate team response pathway.",
+        "Avoid solo confrontation in escalating environments.",
       ],
     },
     {
-      title: "Documentation and Handoff Example",
+      title: "Legal Hold and Consent Example",
       points: [
-        "Document high-risk indicators immediately using factual, objective language.",
-        "Use closed-loop read-back for suicide risk triggers and observation level changes.",
+        "Confirm hold status and communicate rights in plain language during care.",
+        "Document legal rationale for urgent non-consent interventions.",
       ],
     },
   ],
   nonclinical: [
     {
-      title: "Admissions Example",
+      title: "Suicide-Risk Escalation Example",
       points: [
-        "Set clear expectations for wait times and check back proactively.",
-        "Use empathy statements before process explanations.",
+        "If a caller or visitor reports self-harm concern, route to immediate safety pathway.",
+        "Do not defer high-risk language to routine queue processing.",
       ],
     },
     {
-      title: "Support Services Reporting Example",
+      title: "Trauma-Informed Frontline Example",
       points: [
-        "If you witness possible rough handling or neglect cues, notify a supervisor and follow reporting pathway immediately.",
-        "Record what you saw or heard factually; avoid assumptions or private investigations.",
+        "Use calm language and explain what will happen next in simple, predictable steps.",
+        "Offer safe choices like seating location or callback timing when possible.",
       ],
     },
     {
-      title: "Front Desk Privacy Example",
+      title: "Medication Communication Example",
       points: [
-        "Verify caller authorization before confirming patient presence.",
-        "Share only minimum necessary details aligned to policy.",
+        "Route medication concern flags immediately to licensed clinical team.",
+        "Capture exact concern details in handoff note without interpretation.",
       ],
     },
     {
-      title: "EVS and Support Services Conduct Example",
+      title: "Workplace Threat Reporting Example",
       points: [
-        "Maintain respectful language in all shared spaces, even under pressure.",
-        "Report recurring disrespectful conduct through the same channels as clinical teams.",
+        "Treat verbal threats as reportable safety events before physical escalation occurs.",
+        "Use the established internal emergency contact flow immediately.",
       ],
     },
     {
-      title: "Documentation and Handoff Example",
+      title: "Rights and Consent Routing Example",
       points: [
-        "Capture requests and updates in the system immediately, not at end of shift.",
-        "Transfer requests with accurate context and confirm receiving team action ownership.",
+        "If rights questions arise on hold status, connect the patient/family to the designated rights process promptly.",
+        "Document who was contacted and when to maintain legal traceability.",
       ],
     },
   ],
   leadership: [
     {
-      title: "Leadership Rounding Example",
+      title: "Suicide-Risk Governance Example",
       points: [
-        "Coach staff in real time on empathy language and service recovery behaviors.",
-        "Reinforce expectation: ownership first, excuses never first.",
+        "Audit observation-level consistency and near-miss reporting frequency.",
+        "Coach immediate escalation behavior for any self-harm cues.",
       ],
     },
     {
-      title: "Abuse or Neglect Governance Example",
+      title: "Trauma-Informed Leadership Example",
       points: [
-        "Do not delay escalation because of hierarchy, tenure, or reputational concern.",
-        "Ensure protective actions, mandated notifications, and follow-up documentation are completed and closed.",
+        "Model language that stabilizes rather than controls during acute moments.",
+        "Measure team adherence to transparent next-step communication.",
       ],
     },
     {
-      title: "Leadership Privacy Oversight",
+      title: "Medication Safety Oversight",
       points: [
-        "Audit high-risk communication zones and correct privacy drift quickly.",
-        "Ensure minimum-necessary rules are practiced, not just documented.",
+        "Track high-risk alert response times and reconciliation closure reliability.",
+        "Escalate repeated override patterns as safety events.",
       ],
     },
     {
-      title: "Leadership Conduct Example",
+      title: "Violence Prevention Leadership Example",
       points: [
-        "Address policy violations consistently across all departments.",
-        "Model visible accountability to set culture standards.",
+        "Run regular workplace-threat drills and post-event debriefs.",
+        "Require objective reporting for all threat indicators, not only physical incidents.",
       ],
     },
     {
-      title: "Documentation and Reliability Leadership Example",
+      title: "Legal Rights and Consent Governance",
       points: [
-        "Require timely objective charting and handoff read-back norms in daily operations.",
-        "Monitor misses and coach teams on prevention patterns.",
+        "Verify rights communications are documented and understandable to patients/families.",
+        "Ensure emergency-consent decisions include clear legal and clinical rationale.",
       ],
     },
   ],
@@ -862,28 +862,28 @@ const roleDepartmentSpotlights = {
 
 const TRAINING_CATEGORIES = {
   communication: {
-    label: "De-escalation and Crisis Response",
-    retryModule: "Revisit Lesson 1 and Scenario 1 for first-minute de-escalation response structure.",
+    label: "Trauma-Informed Care in Acute Interactions",
+    retryModule: "Revisit Lesson 2 and trauma-informed scenarios for language and choice framing.",
   },
   conduct: {
-    label: "Professional Boundaries and Conduct",
-    retryModule: "Review Lesson 4 and conduct scenarios for policy-consistent boundary decisions.",
+    label: "Legal Holds, Patient Rights, and Consent Boundaries",
+    retryModule: "Review Lesson 5 and legal-rights scenarios for hold status and consent boundaries.",
   },
   privacy: {
-    label: "HIPAA and Privacy Refresh",
-    retryModule: "Repeat Lesson 3 and privacy scenarios, focusing on authorization and minimum-necessary checks.",
+    label: "Medication Safety and High-Risk Alerts",
+    retryModule: "Repeat Lesson 3 and medication-alert scenarios focused on verification and escalation.",
   },
   reporting: {
-    label: "Reporting and Escalation",
-    retryModule: "Re-run Lesson 4 and reporting prompts to practice factual escalation.",
+    label: "Workplace Violence Prevention and Staff Safety",
+    retryModule: "Re-run Lesson 4 and workplace-violence prompts to practice protective escalation.",
   },
   safety: {
-    label: "Documentation Essentials and Handoff Reliability",
-    retryModule: "Revisit Lesson 5 and handoff scenarios with closed-loop documentation and read-back.",
+    label: "Suicide Risk Screening and Observation Levels",
+    retryModule: "Revisit Lesson 1 and suicide-risk scenarios to reinforce screening and observation assignment.",
   },
   abuseNeglect: {
-    label: "Abuse or Neglect Recognition",
-    retryModule: "Repeat incident-recognition scenarios and reporting steps for immediate response confidence.",
+    label: "Critical Safety Escalation",
+    retryModule: "Repeat high-risk escalation scenarios to strengthen urgent safety decision-making.",
   },
   knowledgeCheck: {
     label: "Knowledge Check Mastery",
@@ -927,7 +927,7 @@ const roleFeedbackSnippets = {
     },
     abuseNeglect: {
       good: "Clinical lens: immediate safety check plus reporting is the correct protective sequence.",
-      bad: "Clinical lens: suspected abuse or neglect requires urgent documentation and escalation.",
+      bad: "Clinical lens: critical-safety concerns require urgent documentation and escalation.",
     },
     knowledgeCheck: {
       good: "Clinical lens: solid retention of high-risk decision points.",
@@ -957,7 +957,7 @@ const roleFeedbackSnippets = {
     },
     abuseNeglect: {
       good: "Access-point lens: your response balanced immediate support with proper escalation.",
-      bad: "Access-point lens: potential abuse or neglect must never stay informal or undocumented.",
+      bad: "Access-point lens: critical-safety concerns must never stay informal or undocumented.",
     },
     knowledgeCheck: {
       good: "Access-point lens: strong recall across policy and communication expectations.",
@@ -987,7 +987,7 @@ const roleFeedbackSnippets = {
     },
     abuseNeglect: {
       good: "Leadership lens: this protects vulnerable patients and sets a clear reporting standard.",
-      bad: "Leadership lens: delayed action on suspected abuse or neglect is unacceptable risk.",
+      bad: "Leadership lens: delayed action on critical-safety concerns is unacceptable risk.",
     },
     knowledgeCheck: {
       good: "Leadership lens: strong decision consistency across governance topics.",
@@ -1002,7 +1002,7 @@ const adaptiveHintBank = {
   privacy: "Hint: Ask who is authorized, what is necessary, and where the conversation should occur.",
   reporting: "Hint: If facts suggest risk, document and escalate now, not later.",
   safety: "Hint: Look for read-back, risk confirmation, and explicit task ownership.",
-  abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and mandatory reporting pathways.",
+  abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and urgent escalation pathways.",
   knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
 };
 
@@ -1095,11 +1095,11 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
   const abuseNeglectThreshold = getRoleMasteryThreshold("abuseNeglect");
   const abuseNeglectPct = getCategoryPercent("abuseNeglect");
   const abuseNeglectClause = abuseNeglectPct === null
-    ? `Complete abuse or neglect practice items to establish the ${abuseNeglectThreshold}% mastery target.`
-    : `Abuse or neglect mastery finished at ${abuseNeglectPct}% against a ${abuseNeglectThreshold}% target.`;
+    ? `Complete critical-safety practice items to establish the ${abuseNeglectThreshold}% mastery target.`
+    : `Critical-safety mastery finished at ${abuseNeglectPct}% against a ${abuseNeglectThreshold}% target.`;
 
   if (pass && recommendations.length === 0) {
-    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a quarterly 10-minute refresh focused on incident recognition and reporting consistency.`;
+    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a quarterly 10-minute refresh focused on suicide risk, violence prevention, and legal-rights consistency.`;
   }
   if (pass && recommendations.length > 0) {
     return `${roleName}: you passed, and targeted reinforcement is recommended in ${recommendations.map((item) => item.label).join(", ")}. ${abuseNeglectClause} Re-run those modules this week for stronger retention.`;
@@ -1109,283 +1109,283 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
 
 const coreLessons = [
   {
-    moduleId: "deescalation",
+    moduleId: "suicide-observation",
     spotlightIndex: 0,
-    title: "Lesson 1: De-escalation and Crisis Response",
-    body: "Early interactions in psychiatric acute inpatient care set tone for safety and trust. In escalated moments, use calm acknowledgment, immediate safety orientation, and one concrete next step with timing.",
-    check: "A family member says, 'No one tells us anything and this is getting out of control.' What is the strongest first response?",
+    title: "Lesson 1: Suicide Risk Screening and Observation Levels",
+    body: "Suicide-risk prevention depends on rapid screening, clear risk language, and accurate observation-level assignment. Small misses in documentation or handoff can create major safety exposure.",
+    check: "A patient states, 'I don't want to wake up tomorrow.' What is the strongest immediate response?",
     answers: [
-      { text: "Acknowledge the frustration, apologize for uncertainty, and commit to an update time in the next 10 minutes.", good: true, score: 8 },
-      { text: "Provide full unit policy details before discussing their concern so expectations are clear.", good: false, score: 3 },
-      { text: "Tell them the care team is busy and ask them to wait until rounds finish.", good: false, score: 1 },
+      { text: "Initiate structured suicide-risk screening now, secure immediate safety, and notify licensed clinical leadership.", good: true, score: 8 },
+      { text: "Reassure the patient and continue routine workflow unless behavior escalates.", good: false, score: 2 },
+      { text: "Document the comment for next shift to evaluate later.", good: false, score: 1 },
     ],
-    why: "Calm acknowledgment plus a clear next step lowers tension and protects safety.",
-    categoryKey: "communication",
-    recap: "Checkpoint: de-escalation reliability = acknowledge, orient to safety, and give a timed next step.",
-  },
-  {
-    moduleId: "abuse-neglect",
-    spotlightIndex: 1,
-    title: "Lesson 2: Abuse or Neglect Recognition and Reporting",
-    body: "Use the SAFE response model: Secure immediate safety, Assess urgency and reporting threshold, capture Facts objectively, and Escalate through mandatory pathways now. Potential abuse or neglect concerns are time-sensitive and must not be handled informally.",
-    check: "A patient reports possible neglect by a caregiver and appears fearful. What is the strongest immediate action?",
-    answers: [
-      { text: "Ensure immediate safety, document objective facts, and report through mandatory pathways without delay.", good: true, score: 8 },
-      { text: "Collect informal coworker opinions first to avoid overreacting.", good: false, score: 2 },
-      { text: "Wait for the next shift lead so one person can decide later.", good: false, score: 1 },
-    ],
-    why: "Prompt transparent reporting is a patient-safety and compliance expectation.",
-    categoryKey: "abuseNeglect",
-    recap: "Checkpoint: suspected abuse or neglect requires immediate safety action plus formal reporting.",
-  },
-  {
-    moduleId: "hipaa-privacy",
-    spotlightIndex: 2,
-    title: "Lesson 3: HIPAA and Privacy Refresh",
-    body: "Privacy discipline means sharing only what is necessary for the current task, with authorized individuals, in an appropriate setting. Urgency and familiarity do not replace authorization.",
-    check: "Which response best reflects HIPAA-aligned minimum-necessary practice?",
-    answers: [
-      { text: "Share only information required for the specific task with authorized personnel.", good: true, score: 8 },
-      { text: "Share enough context with nearby team members so they can help if needed.", good: false, score: 2 },
-      { text: "Confirm caller confidence, then disclose limited details to keep the interaction moving.", good: false, score: 1 },
-    ],
-    why: "Minimum necessary protects patients and reduces compliance risk.",
-    categoryKey: "privacy",
-    recap: "Checkpoint: always validate authorization and purpose before sharing protected information.",
-  },
-  {
-    moduleId: "boundaries-conduct",
-    spotlightIndex: 3,
-    title: "Lesson 4: Professional Boundaries and Conduct",
-    body: "Professional standards apply in high-stress moments, not only during audits. Consistent language, non-retaliation, and accountable behavior protect both team culture and patient outcomes.",
-    check: "You hear a repeated disrespectful comment about a patient in a shared workspace. Best response?",
-    answers: [
-      { text: "Address it respectfully in the moment, then document and report if the pattern continues.", good: true, score: 8 },
-      { text: "Handle it privately with peers only to avoid escalating unit tension.", good: false, score: 3 },
-      { text: "Ignore it unless a formal complaint is filed by a patient.", good: false, score: 0 },
-    ],
-    why: "Respect and accountability require action, not passive observation.",
-    categoryKey: "conduct",
-    recap: "Checkpoint: conduct standards are enforced in real time, with documentation when patterns persist.",
-  },
-  {
-    moduleId: "documentation-essentials",
-    spotlightIndex: 4,
-    title: "Lesson 5: Documentation Essentials",
-    body: "Documentation should be timely, objective, and complete enough for immediate continuity. High-reliability handoffs use closed-loop communication: state key risk facts, confirm understanding, and verify next actions.",
-    check: "What creates the strongest documentation and handoff standard?",
-    answers: [
-      { text: "Prompt objective charting plus closed-loop read-back on risks and next actions.", good: true, score: 8 },
-      { text: "Verbal summary now and finish charting when time allows.", good: false, score: 2 },
-      { text: "Quick transfer of accountability with details to be filled in later by receiving staff.", good: false, score: 1 },
-    ],
-    why: "Accurate timely documentation and read-back prevent omissions and reduce harm.",
+    why: "Immediate screening plus protective escalation is the safest and policy-aligned sequence.",
     categoryKey: "safety",
-    recap: "Checkpoint: documentation essentials include timely facts, risk visibility, and closed-loop handoffs.",
+    recap: "Checkpoint: suicide-risk response requires immediate screening, safety action, and observation-level clarity.",
+  },
+  {
+    moduleId: "trauma-informed",
+    spotlightIndex: 1,
+    title: "Lesson 2: Trauma-Informed Care in Acute Interactions",
+    body: "Trauma-informed care means avoiding coercive language, offering safe choices, and explaining what happens next. Even brief interactions can either stabilize or re-trigger a patient.",
+    check: "A patient becomes guarded during intake and says, 'No one listens anyway.' Best first response?",
+    answers: [
+      { text: "Acknowledge their experience, offer two safe next-step choices, and explain the immediate care plan clearly.", good: true, score: 8 },
+      { text: "Use direct commands to keep the process moving quickly.", good: false, score: 2 },
+      { text: "Pause the conversation until the patient appears fully cooperative.", good: false, score: 1 },
+    ],
+    why: "Validation and structured choice reduce escalation and strengthen therapeutic trust.",
+    categoryKey: "communication",
+    recap: "Checkpoint: trauma-informed care = validate, offer safe choices, and orient to next steps.",
+  },
+  {
+    moduleId: "medication-safety",
+    spotlightIndex: 2,
+    title: "Lesson 3: Medication Safety and High-Risk Alerts",
+    body: "Medication safety requires verification discipline, reconciliation awareness, and immediate response to high-risk alerts. Assumptions around prior orders and verbal shortcuts increase harm risk.",
+    check: "An order appears inconsistent with current status and triggers a high-risk alert. What should you do first?",
+    answers: [
+      { text: "Hold administration, verify identifiers/order details, and escalate through medication safety workflow immediately.", good: true, score: 8 },
+      { text: "Proceed if the order resembles previous dosing patterns for this patient.", good: false, score: 2 },
+      { text: "Administer now and file a clarification note after rounds.", good: false, score: 1 },
+    ],
+    why: "Alert-triggered discrepancies require stop-verify-escalate behavior before administration.",
+    categoryKey: "privacy",
+    recap: "Checkpoint: high-risk med alerts demand immediate verification and escalation, not deferred cleanup.",
+  },
+  {
+    moduleId: "workplace-violence",
+    spotlightIndex: 3,
+    title: "Lesson 4: Workplace Violence Prevention and Staff Safety",
+    body: "Violence prevention relies on early indicator recognition, team positioning, and rapid activation of protective response plans. Delay often increases risk for staff and patients.",
+    check: "A visitor begins pacing, clenching fists, and making escalating threats at the desk. Best immediate action?",
+    answers: [
+      { text: "Activate threat-response protocol, request support, create safety distance, and use calm directive language.", good: true, score: 8 },
+      { text: "Continue normal workflow while monitoring to avoid provoking the visitor.", good: false, score: 2 },
+      { text: "Confront the visitor alone to resolve the issue quickly.", good: false, score: 1 },
+    ],
+    why: "Early coordinated protective action lowers injury risk and restores control faster.",
+    categoryKey: "reporting",
+    recap: "Checkpoint: workplace violence prevention requires early activation, safe positioning, and team escalation.",
+  },
+  {
+    moduleId: "legal-rights-consent",
+    spotlightIndex: 4,
+    title: "Lesson 5: Legal Holds, Patient Rights, and Consent Boundaries",
+    body: "Legal status determines what can and cannot be done without consent. Teams must communicate rights clearly, document legal basis accurately, and avoid overreach in urgent situations.",
+    check: "Which action best aligns with legal-hold and consent-boundary expectations?",
+    answers: [
+      { text: "Confirm legal status, explain rights in plain language, and document rationale for any non-consent intervention.", good: true, score: 8 },
+      { text: "Use standard consent assumptions for speed during high-volume periods.", good: false, score: 2 },
+      { text: "Delay rights explanation until discharge planning.", good: false, score: 1 },
+    ],
+    why: "Rights communication and legal-documentation accuracy protect patients and staff.",
+    categoryKey: "conduct",
+    recap: "Checkpoint: legal-hold care requires clear rights communication, consent boundaries, and defensible documentation.",
   },
 ];
 
 const scenarios = [
   {
-    title: "Scenario 1: Waiting Room Heat",
-    category: "Communication - De-escalation",
+    title: "Scenario 1: Suicide Cue During Intake",
+    category: "Suicide Risk - Initial Screening",
     roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "In intake, a family member raises their voice: 'No one has updated us in over an hour.' Several patients are watching. What should you do first?",
+    prompt: "During intake, a patient says, 'I don't feel safe with myself tonight.' What is the strongest first action?",
     choices: [
-      { text: "Acknowledge their frustration, apologize for the uncertainty, and commit to a specific update window.", score: 16, good: true, feedback: "Strong first-minute de-escalation and ownership response." },
-      { text: "Explain current patient acuity and staffing constraints so they understand why the delay happened.", score: 7, good: false, feedback: "Useful context, but this should follow acknowledgment and next-step clarity." },
-      { text: "Ask them to return to seating and wait for the next available update.", score: 3, good: false, feedback: "This may contain the moment, but it does not actively recover trust." },
-    ],
-    categoryKey: "communication",
-    recap: "Scenario recap: emotional acknowledgment plus specific timing is the most reliable de-escalation opener.",
-  },
-  {
-    title: "Scenario 2: Hallway Confidentiality",
-    category: "Privacy - Protected Information",
-    roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "You hear team members discussing sensitive psychiatric details in a hallway near visitors and contractors. What should you do now?",
-    choices: [
-      { text: "Interrupt respectfully, relocate the conversation, and reinforce minimum-necessary communication expectations.", score: 18, good: true, feedback: "Correct. Immediate intervention prevents further disclosure risk." },
-      { text: "Send a private message to one person and address it during the next team huddle.", score: 8, good: false, feedback: "Helpful follow-up, but it misses immediate containment of the active privacy risk." },
-      { text: "Avoid intervening and document only if a complaint is filed.", score: 1, good: false, feedback: "Waiting for complaint allows avoidable exposure to continue." },
-    ],
-    categoryKey: "privacy",
-    recap: "Scenario recap: active privacy risk requires immediate intervention, not delayed reminders.",
-  },
-  {
-    title: "Scenario 3: Clinical Handoff Gaps",
-    category: "Safety - Handoff Reliability",
-    roles: ["clinical"],
-    prompt: "During change-of-shift, you discover a missed note on new self-harm risk indicators and an incomplete observation-level update. Best immediate action?",
-    choices: [
-      { text: "Correct documentation now, notify receiving staff immediately, and complete read-back on risk and observation level.", score: 18, good: true, feedback: "Right move for immediate safety and continuity." },
-      { text: "Flag the chart for review and cover the gap in the next interdisciplinary huddle.", score: 7, good: false, feedback: "Reasonable follow-up, but immediate closed-loop communication is required now." },
-      { text: "Send a summary message to the charge nurse and continue current assignments.", score: 4, good: false, feedback: "One-way messaging is not enough for high-risk handoff correction." },
+      { text: "Begin structured risk screening immediately, notify clinical lead, and maintain direct observation pending plan.", score: 16, good: true, feedback: "Correct. Immediate screening and protective observation are required." },
+      { text: "Offer reassurance and continue intake paperwork before escalating.", score: 6, good: false, feedback: "Reassurance alone is insufficient for active safety concerns." },
+      { text: "Document concern for later team review at shift huddle.", score: 2, good: false, feedback: "Delayed review can leave immediate risk unmanaged." },
     ],
     categoryKey: "safety",
-    recap: "Scenario recap: urgent handoff risks demand immediate documentation correction and read-back.",
+    recap: "Scenario recap: suicide cues require immediate screening, protective observation, and escalation.",
   },
   {
-    title: "Scenario 4: Front Desk Data Request",
-    category: "Privacy - Authorization Check",
-    roles: ["nonclinical"],
-    prompt: "A caller requests confirmation that a patient is admitted and says they are immediate family. What should happen first?",
+    title: "Scenario 2: Observation-Level Handoff",
+    category: "Suicide Risk - Handoff Reliability",
+    roles: ["clinical", "leadership"],
+    prompt: "At shift handoff, one note says Q15 checks while another says constant observation. What is safest?",
     choices: [
-      { text: "Verify identity and authorization first, then share only minimum-necessary information allowed by policy.", score: 18, good: true, feedback: "Correct and policy-aligned." },
-      { text: "Confirm only broad status information since they sound legitimate and urgent.", score: 5, good: false, feedback: "Intent and urgency do not replace authorization controls." },
-      { text: "Transfer the call to clinical staff without documenting the request.", score: 4, good: false, feedback: "Transfer without context can still propagate privacy and workflow risks." },
+      { text: "Pause transfer, reconcile observation order immediately, perform read-back, and document final level clearly.", score: 18, good: true, feedback: "Correct. Observation-level ambiguity must be resolved before handoff completes." },
+      { text: "Default to Q15 until the next physician round clarifies.", score: 5, good: false, feedback: "Defaulting downward without reconciliation can create severe safety risk." },
+      { text: "Send a quick message and let receiving staff decide in context.", score: 4, good: false, feedback: "One-way messaging does not satisfy high-risk transfer reliability." },
+    ],
+    categoryKey: "safety",
+    recap: "Scenario recap: conflicting observation levels require immediate reconciliation and closed-loop handoff.",
+  },
+  {
+    title: "Scenario 3: Trauma Trigger During Care",
+    category: "Trauma-Informed Care - Communication",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A patient becomes visibly distressed during routine safety checks and says, 'This feels like before.' Best response?",
+    choices: [
+      { text: "Slow pace, validate concern, explain each next step, and offer safe choices where possible.", score: 18, good: true, feedback: "Strong trauma-informed practice that reduces retraumatization risk." },
+      { text: "Insist on strict compliance first and debrief feelings later.", score: 6, good: false, feedback: "Command-first language can intensify distress and resistance." },
+      { text: "Discontinue interaction until patient fully calms without support.", score: 3, good: false, feedback: "Supportive stabilization should start now, not after disengagement." },
+    ],
+    categoryKey: "communication",
+    recap: "Scenario recap: trauma-informed response uses validation, transparency, and controlled choice.",
+  },
+  {
+    title: "Scenario 4: Family Distress in Waiting Area",
+    category: "Trauma-Informed Care - Family Interaction",
+    roles: ["nonclinical", "leadership"],
+    prompt: "A family member is crying and angry after receiving partial updates. What approach is best?",
+    choices: [
+      { text: "Acknowledge emotion first, explain what you can share now, and provide a concrete next update time.", score: 18, good: true, feedback: "Correct. Validation plus clear timing helps de-escalate and preserve trust." },
+      { text: "Lead with policy limits and ask them to lower their voice before discussion.", score: 6, good: false, feedback: "Policy context matters, but empathy and regulation should come first." },
+      { text: "Avoid engagement and refer them to a later complaint process.", score: 2, good: false, feedback: "Deferral can escalate distress and service breakdown." },
+    ],
+    categoryKey: "communication",
+    recap: "Scenario recap: emotionally regulated, time-specific communication is central to trauma-informed family support.",
+  },
+  {
+    title: "Scenario 5: High-Risk Medication Alert",
+    category: "Medication Safety - Alert Response",
+    roles: ["clinical", "leadership"],
+    prompt: "A high-risk medication alert appears for possible duplicate therapy and renal contraindication. Best immediate action?",
+    choices: [
+      { text: "Pause administration, reconcile meds/labs, notify prescriber/pharmacy, and document escalation pathway.", score: 18, good: true, feedback: "Correct. Stop-verify-escalate is required before administration." },
+      { text: "Proceed with dose and create a follow-up ticket for pharmacy review.", score: 4, good: false, feedback: "Administration before resolution can create preventable adverse events." },
+      { text: "Hold all meds for the shift until complete chart review is finished.", score: 6, good: false, feedback: "Broad holds without targeted safety plan can create additional risk." },
     ],
     categoryKey: "privacy",
-    recap: "Scenario recap: verify authorization before disclosure, then apply minimum-necessary rules.",
+    recap: "Scenario recap: high-risk med alerts require immediate targeted reconciliation and escalation.",
   },
   {
-    title: "Scenario 5: Vendor Gift Basket",
-    category: "Conduct - Conflict of Interest",
-    roles: ["leadership", "nonclinical"],
-    prompt: "A vendor sends a high-value gift and hints that continued referrals should be 'mutually beneficial.' Best action?",
+    title: "Scenario 6: Medication Reconciliation Gap",
+    category: "Medication Safety - Transition Risk",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "On transfer, home medication list conflicts with current orders and allergy history. Strongest response?",
     choices: [
-      { text: "Decline or return, disclose immediately, and document through the required channel.", score: 18, good: true, feedback: "Correct transparent action." },
-      { text: "Accept temporarily and ask compliance later whether disclosure is needed.", score: 6, good: false, feedback: "Deferring disclosure creates avoidable integrity risk." },
-      { text: "Distribute it equally so no individual receives personal benefit.", score: 2, good: false, feedback: "Distribution does not resolve the underlying conflict-of-interest concern." },
+      { text: "Escalate reconciliation discrepancy immediately and verify allergies/orders before next administration.", score: 18, good: true, feedback: "Correct. Transitions are high-risk for medication error and need immediate reconciliation." },
+      { text: "Use most recent order set and revisit discrepancy at next care conference.", score: 5, good: false, feedback: "Deferral can propagate errors into active medication cycles." },
+      { text: "Ask patient family to choose which list seems most accurate.", score: 2, good: false, feedback: "Families are valuable sources, but clinical reconciliation requires formal verification workflow." },
     ],
-    categoryKey: "conduct",
-    recap: "Scenario recap: conflict-of-interest concerns require immediate transparency and documentation.",
+    categoryKey: "privacy",
+    recap: "Scenario recap: medication transitions demand formal reconciliation before administration proceeds.",
   },
   {
-    title: "Scenario 6: Manager Pressure",
-    category: "Reporting - Speak Up",
-    roles: ["leadership"],
-    prompt: "A peer leader asks to keep a reportable event internal until 'we know more' to avoid scrutiny. What is the right response?",
+    title: "Scenario 7: Escalating Visitor Threat",
+    category: "Workplace Violence Prevention - Immediate Protection",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A visitor pounds on the desk and threatens staff after being denied immediate entry. Best immediate action?",
     choices: [
-      { text: "Escalate through approved channels now and document objective facts plus timeline.", score: 20, good: true, feedback: "Correct, this supports non-retaliation and integrity." },
-      { text: "Collect internal context first, then decide whether formal reporting is necessary.", score: 8, good: false, feedback: "Context matters, but reportable concerns should not be delayed." },
-      { text: "Keep a private note and monitor for another occurrence.", score: 3, good: false, feedback: "Private monitoring does not satisfy reporting obligations." },
+      { text: "Activate violence-prevention response, create safe distance, alert security/supervisor, and keep verbal engagement controlled.", score: 20, good: true, feedback: "Correct. Early coordinated safety response protects staff and patients." },
+      { text: "Continue one-on-one discussion to calm them before calling for support.", score: 6, good: false, feedback: "Solo engagement increases exposure during active threat behavior." },
+      { text: "Ignore threats unless physical contact occurs.", score: 2, good: false, feedback: "Threat indicators warrant immediate protective action before assault occurs." },
     ],
     categoryKey: "reporting",
-    recap: "Scenario recap: reportable concerns must be escalated promptly with factual documentation.",
+    recap: "Scenario recap: threat indicators trigger immediate protective escalation, not watchful waiting.",
   },
   {
-    title: "Scenario 7: Possible Neglect Signal",
-    category: "Abuse or Neglect - Recognition and Reporting",
-    roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "A patient reports being left without needed support for long periods and shows fear about returning to a specific caregiver. What is the strongest response?",
-    choices: [
-      { text: "Treat it as dissatisfaction only and route to routine service-recovery follow-up.", score: 4, good: false, feedback: "Service recovery may be needed, but potential neglect indicators require immediate safety and reporting review." },
-      { text: "Complete immediate safety check, document objective statements and observations, and initiate mandatory reporting pathway.", score: 20, good: true, feedback: "Correct. This protects the patient and aligns with mandatory reporting responsibilities." },
-      { text: "Ask the patient to provide more detail later so the report can be more complete.", score: 6, good: false, feedback: "Additional detail can follow, but immediate safety and timely reporting come first." },
-    ],
-    categoryKey: "abuseNeglect",
-    recap: "Scenario recap: when abuse or neglect may be present, act now on safety, documentation, and mandated escalation.",
-  },
-  {
-    title: "Scenario 8: Clinical Observation Concern",
-    category: "Abuse or Neglect - Clinical Escalation",
-    roles: ["clinical"],
-    prompt: "During medication pass, you observe unexplained bruising and the patient becomes visibly fearful when a caregiver is mentioned. What is the best immediate response?",
-    choices: [
-      { text: "Complete immediate safety assessment, document objective findings, notify charge leadership, and trigger mandatory reporting workflow.", score: 20, good: true, feedback: "Correct. This prioritizes safety, objective documentation, and required escalation." },
-      { text: "Wait for physician rounds so findings can be reviewed once by the full team.", score: 5, good: false, feedback: "Team coordination matters, but immediate reporting steps should not be delayed." },
-      { text: "Ask peers for informal consensus before documenting to avoid overcalling risk.", score: 3, good: false, feedback: "Consensus seeking can delay protective action and mandated reporting timelines." },
-    ],
-    categoryKey: "abuseNeglect",
-    recap: "Scenario recap: clinical teams should document objective indicators and escalate immediately when concern is credible.",
-  },
-  {
-    title: "Scenario 9: Non-Clinical Witness Report",
-    category: "Abuse or Neglect - Witness Response",
-    roles: ["nonclinical"],
-    prompt: "A support-services staff member reports hearing a caregiver threaten to withhold basic needs from a patient. What should happen first?",
-    choices: [
-      { text: "Report immediately through supervisor and mandated pathway, document exact wording, and support immediate safety check.", score: 20, good: true, feedback: "Correct. Non-clinical teams still have direct reporting responsibility for credible concerns." },
-      { text: "Tell the witness to monitor for a second event before escalating.", score: 4, good: false, feedback: "Waiting for repeat behavior can expose patients to preventable harm." },
-      { text: "Escalate only to a coworker from the same department to keep the issue contained.", score: 2, good: false, feedback: "Containment without formal reporting is not acceptable for potential neglect." },
-    ],
-    categoryKey: "abuseNeglect",
-    recap: "Scenario recap: non-clinical staff should escalate credible concerns immediately with factual documentation.",
-  },
-  {
-    title: "Scenario 10: Leadership Conflict Pressure",
-    category: "Abuse or Neglect - Leadership Accountability",
+    title: "Scenario 8: Internal Staff Threat Cue",
+    category: "Workplace Violence Prevention - Team Safety",
     roles: ["leadership"],
-    prompt: "An allegation involves a high-performing senior employee and a leader suggests delaying formal reporting until internal review is complete. Best action?",
+    prompt: "A staff member reports feeling unsafe after repeated verbal intimidation from another employee. Best leadership response?",
     choices: [
-      { text: "Initiate mandated reporting and protective actions immediately, then run internal review in parallel.", score: 20, good: true, feedback: "Correct. Leadership accountability requires immediate formal action independent of rank." },
-      { text: "Delay formal reporting 24 hours while gathering additional context from leadership peers.", score: 6, good: false, feedback: "Context gathering can continue, but mandated escalation should not wait." },
-      { text: "Reassign the employee quietly and document internally only.", score: 3, good: false, feedback: "Reassignment without formal pathway activation leaves significant risk unresolved." },
+      { text: "Initiate formal workplace-safety reporting path now, implement interim protections, and document objective facts.", score: 20, good: true, feedback: "Correct. Immediate documentation and protective action are required." },
+      { text: "Coach both staff informally and revisit if behavior repeats.", score: 6, good: false, feedback: "Informal handling can leave risk unmanaged and undocumented." },
+      { text: "Delay action until unit morale review next week.", score: 2, good: false, feedback: "Delay can expose staff to continued harm." },
+    ],
+    categoryKey: "reporting",
+    recap: "Scenario recap: workplace-safety concerns require immediate formal escalation and interim protections.",
+  },
+  {
+    title: "Scenario 9: Legal Hold Rights Clarification",
+    category: "Legal Holds and Rights - Communication",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A patient on emergency hold asks why they cannot leave and requests legal rights information. Best response?",
+    choices: [
+      { text: "Explain hold status and rights in plain language now, provide formal rights materials, and document the exchange.", score: 20, good: true, feedback: "Correct. Timely rights communication and documentation are essential." },
+      { text: "Wait for the next physician update before discussing rights details.", score: 6, good: false, feedback: "Delaying rights communication can increase legal and trust risk." },
+      { text: "Tell the patient legal details are only discussed at discharge.", score: 2, good: false, feedback: "Rights communication is required during active care, not only at discharge." },
+    ],
+    categoryKey: "conduct",
+    recap: "Scenario recap: legal-hold care requires immediate rights explanation with accurate documentation.",
+  },
+  {
+    title: "Scenario 10: Consent Boundary Under Urgency",
+    category: "Legal Holds and Consent - Critical Safety Escalation",
+    roles: ["clinical", "leadership"],
+    prompt: "A patient lacks decision capacity for urgent intervention, and family consent status is unclear. Strongest immediate approach?",
+    choices: [
+      { text: "Activate urgent legal/clinical escalation pathway, document incapacity rationale, and proceed per emergency-consent policy.", score: 20, good: true, feedback: "Correct. Critical care requires policy-backed escalation with explicit legal documentation." },
+      { text: "Proceed with routine consent assumptions to avoid delaying intervention.", score: 5, good: false, feedback: "Assumptions around consent in urgent care create significant legal and safety risk." },
+      { text: "Delay intervention until full family consensus is obtained.", score: 4, good: false, feedback: "Some urgent interventions require immediate action under emergency-consent rules." },
     ],
     categoryKey: "abuseNeglect",
-    recap: "Scenario recap: leadership must not delay mandated reporting due to hierarchy or optics.",
+    recap: "Scenario recap: urgent consent-boundary decisions require immediate legal-clinical escalation and clear rationale documentation.",
   },
 ];
 
 const lightningQuestions = [
   {
-    q: "A coworker makes an inappropriate joke targeting a protected group. Best response?",
+    q: "A patient states, 'I might hurt myself tonight.' Fastest safe first move?",
     answers: [
-      { text: "Address it respectfully, then report if the behavior continues.", score: 12, good: true },
-      { text: "Address it privately only if someone formally complains.", score: 5, good: false },
-      { text: "Log it informally with peers and avoid formal channels.", score: 2, good: false },
+      { text: "Immediate risk screening plus protective observation and escalation.", score: 12, good: true },
+      { text: "Reassure and continue regular workflow first.", score: 3, good: false },
+      { text: "Document for next shift review.", score: 2, good: false },
     ],
-    why: "Respect standards apply in every setting.",
+    why: "Immediate suicide-risk response prevents delay in protective care.",
+    categoryKey: "safety",
+  },
+  {
+    q: "High-risk med alert appears before administration. Best action?",
+    answers: [
+      { text: "Stop, verify, and escalate through med-safety workflow.", score: 12, good: true },
+      { text: "Administer now and review alert later.", score: 2, good: false },
+      { text: "Ignore if dose looks familiar.", score: 1, good: false },
+    ],
+    why: "Alert-triggered discrepancies require immediate verification.",
+    categoryKey: "privacy",
+  },
+  {
+    q: "Visitor threat behavior escalates at front desk. First priority?",
+    answers: [
+      { text: "Activate protective response and maintain safe distance with support.", score: 12, good: true },
+      { text: "Handle one-on-one to avoid alarm.", score: 3, good: false },
+      { text: "Wait for physical contact before escalating.", score: 1, good: false },
+    ],
+    why: "Early coordinated response lowers violence risk.",
+    categoryKey: "reporting",
+  },
+  {
+    q: "Patient on legal hold asks for rights explanation during escalation. Best response?",
+    answers: [
+      { text: "Provide rights information now in plain language while maintaining safety protocol.", score: 12, good: true },
+      { text: "Delay rights explanation until behavior settles completely.", score: 4, good: false },
+      { text: "Tell them rights are discussed only at discharge.", score: 2, good: false },
+    ],
+    why: "Legal-hold care still requires timely rights communication.",
     categoryKey: "conduct",
-  },
-  {
-    q: "You are asked to chart a task you did not complete. Best action?",
-    answers: [
-      { text: "Refuse inaccurate charting and escalate appropriately.", score: 12, good: true },
-      { text: "Chart with a clarifying note and update later.", score: 4, good: false },
-      { text: "Ask a coworker to co-sign so accountability is shared.", score: 1, good: false },
-    ],
-    why: "Documentation integrity is mandatory.",
-    categoryKey: "conduct",
-  },
-  {
-    q: "Feedback says communication felt cold. What improves trust fastest?",
-    answers: [
-      { text: "Empathy language and clear next steps.", score: 12, good: true },
-      { text: "Structured policy script before emotional acknowledgment.", score: 4, good: false },
-      { text: "Escalate all difficult conversations to supervisors.", score: 2, good: false },
-    ],
-    why: "Clear empathy outperforms scripted formality.",
-    categoryKey: "communication",
-  },
-  {
-    q: "A patient hints they feel unsafe with a caregiver but asks you not to report it yet. Best response?",
-    answers: [
-      { text: "Explain safety duty, complete immediate safety check, and escalate through required reporting channels.", score: 12, good: true },
-      { text: "Respect the request fully and wait for more details next shift.", score: 2, good: false },
-      { text: "Ask a teammate to decide whether reporting is necessary.", score: 3, good: false },
-    ],
-    why: "Safety and mandated reporting obligations override delay requests when risk is credible.",
-    categoryKey: "abuseNeglect",
   },
 ];
 
 const finalAssessment = [
-  { q: "In psychiatric acute inpatient care, reliable staff communication starts with", a: ["Calm empathy and ownership", "Avoiding difficult conversations", "Speed over clarity"], c: 0, k: "communication" },
-  { q: "If a patient complaint escalates, first step is", a: ["Defend your team", "Acknowledge and clarify next action", "Exit conversation"], c: 1, k: "communication" },
-  { q: "Confidentiality should be discussed", a: ["Only in private appropriate settings", "Anywhere if quick", "Only by managers"], c: 0, k: "privacy" },
-  { q: "Gift policy concerns should be", a: ["Documented and disclosed", "Ignored if shared", "Handled privately"], c: 0, k: "conduct" },
-  { q: "Respectful workplace means", a: ["No harmful jokes or slurs", "Intent matters more than impact", "Humor has no limits"], c: 0, k: "conduct" },
-  { q: "When unsure about reporting", a: ["Do nothing", "Use approved channels promptly", "Ask social media"], c: 1, k: "reporting" },
-  { q: "Charting should be", a: ["Accurate and truthful", "Adjusted to help team", "Backfilled from memory only"], c: 0, k: "conduct" },
-  { q: "Conflict of interest is best handled by", a: ["Disclosure and guidance", "Private side decisions", "Verbal only notice"], c: 0, k: "conduct" },
-  { q: "Service recovery includes", a: ["Ownership, apology, follow-through", "Silence", "Transfer blame"], c: 0, k: "communication" },
-  { q: "Minimum necessary data means", a: ["Share all with coworkers", "Share only what is required", "Share if asked twice"], c: 1, k: "privacy" },
-  { q: "Retaliation concerns should be", a: ["Reported and documented", "Handled informally only", "Ignored"], c: 0, k: "reporting" },
-  { q: "A high-trust handoff uses", a: ["Closed-loop read-back", "Assumptions", "Partial details"], c: 0, k: "safety" },
-  { q: "In tense moments, tone should be", a: ["Calm and clear", "Cold and short", "Defensive"], c: 0, k: "communication" },
-  { q: "If policy and convenience conflict", a: ["Convenience wins", "Policy wins", "Manager mood wins"], c: 1, k: "conduct" },
-  { q: "Escalation pathways should be", a: ["Known and practiced", "Used only annually", "Avoided"], c: 0, k: "reporting" },
-  { q: "Respect means", a: ["Professional language always", "Only with patients", "Only in meetings"], c: 0, k: "conduct" },
-  { q: "A compliance red flag should trigger", a: ["Prompt review or report", "Silence", "Jokes"], c: 0, k: "reporting" },
-  { q: "Patient trust grows when teams are", a: ["Transparent and responsive", "Busy and vague", "Detached"], c: 0, k: "communication" },
-  { q: "Annual training objective is", a: ["Behavior change", "Checkbox completion", "Minimal score"], c: 0, k: "knowledgeCheck" },
-  { q: "If you witness possible misconduct", a: ["Report facts through channels", "Investigate privately", "Ignore"], c: 0, k: "reporting" },
-  { q: "Manager role in conduct includes", a: ["Modeling and enforcing standards", "Selective enforcement", "Silence"], c: 0, k: "conduct" },
-  { q: "Documentation timing should be", a: ["Prompt and accurate", "Delayed weekly", "When convenient"], c: 0, k: "safety" },
-  { q: "Privacy includes", a: ["Verbal, written, and digital safeguards", "Only paper records", "Only nurse stations"], c: 0, k: "privacy" },
-  { q: "If abuse or neglect is suspected, the first priority is", a: ["Immediate safety and required escalation", "Collect informal opinions first", "Wait for next leadership meeting"], c: 0, k: "abuseNeglect" },
+  { q: "When a patient verbalizes suicidal intent, first priority is", a: ["Immediate structured risk screening and safety escalation", "Reassure and continue routine flow", "Document for next shift"], c: 0, k: "safety" },
+  { q: "Observation level changes should be", a: ["Assumed from prior shift", "Confirmed with read-back and documented clearly", "Updated only at daily rounds"], c: 1, k: "safety" },
+  { q: "Trauma-informed communication starts with", a: ["Validation and transparent next steps", "Command-first directives", "Silence until calm"], c: 0, k: "communication" },
+  { q: "In acute distress, offering safe choices helps by", a: ["Reducing retraumatization and improving engagement", "Delaying care", "Replacing safety protocol"], c: 0, k: "communication" },
+  { q: "A high-risk medication alert should trigger", a: ["Immediate stop-verify-escalate workflow", "Automatic override if dose is common", "Deferred review after administration"], c: 0, k: "privacy" },
+  { q: "Medication reconciliation is most critical", a: ["During transitions and status changes", "Only at annual review", "Only if family requests it"], c: 0, k: "privacy" },
+  { q: "Threat indicators in visitors or staff should be", a: ["Ignored until physical contact", "Escalated through protective response pathway immediately", "Managed one-on-one first"], c: 1, k: "reporting" },
+  { q: "Best de-escalation posture during threat response includes", a: ["Safe distance, support activation, controlled directives", "Crowding the individual", "Confrontation without backup"], c: 0, k: "reporting" },
+  { q: "Patients on legal hold still retain", a: ["No rights until discharge", "Rights that must be explained in plain language", "Only visitation rights"], c: 1, k: "conduct" },
+  { q: "Consent boundaries in urgent care require", a: ["Policy-backed legal rationale and documentation", "Routine assumptions", "Family vote before action in all cases"], c: 0, k: "conduct" },
+  { q: "Critical-safety events require documentation that is", a: ["Objective, time-stamped, and escalation-specific", "Narrative only", "Deferred until end of week"], c: 0, k: "abuseNeglect" },
+  { q: "If legal status and treatment plan conflict, teams should", a: ["Ignore legal status in emergencies", "Escalate immediately to legal-clinical pathway", "Pause all care indefinitely"], c: 1, k: "conduct" },
+  { q: "Trauma-informed care avoids", a: ["Unexplained coercive language", "Clear next-step communication", "Supportive tone"], c: 0, k: "communication" },
+  { q: "A safe suicide-risk handoff includes", a: ["General impression only", "Observation level, triggers, and follow-up read-back", "Single message to charge nurse"], c: 1, k: "safety" },
+  { q: "When medication data conflicts across sources, teams should", a: ["Choose the most recent quickly", "Escalate reconciliation before next administration", "Wait for discharge planner"], c: 1, k: "privacy" },
+  { q: "Workplace violence prevention culture is strongest when", a: ["Threats are normalized as stress behavior", "Early reporting and protective action are expected", "Only security manages all concerns"], c: 1, k: "reporting" },
+  { q: "Legal-hold rights communication should happen", a: ["Only if patient asks repeatedly", "At time of status change and as needed", "After final disposition only"], c: 1, k: "conduct" },
+  { q: "Critical-safety escalation decisions should prioritize", a: ["Speed with no documentation", "Safety plus defensible policy alignment", "Optics over protocol"], c: 1, k: "abuseNeglect" },
+  { q: "Trauma-informed interactions improve", a: ["Engagement, trust, and safety participation", "Only throughput speed", "Legal defense only"], c: 0, k: "communication" },
+  { q: "Observation-level ambiguity at shift change should lead to", a: ["Immediate reconciliation before transfer completion", "Defaulting lower level", "Ignoring unless incident occurs"], c: 0, k: "safety" },
+  { q: "High-risk medication workflow requires", a: ["Independent verification and escalation when alerts trigger", "Single-check administration", "Family verbal confirmation only"], c: 0, k: "privacy" },
+  { q: "Violence-prevention response should include", a: ["Safe positioning and team coordination", "Solo confrontation", "Documentation only after event"], c: 0, k: "reporting" },
+  { q: "Consent-boundary decisions are safest when", a: ["Documented with legal/clinical rationale", "Handled by memory of past cases", "Delegated without oversight"], c: 0, k: "conduct" },
+  { q: "If risk is credible and urgent, the first priority is", a: ["Immediate protective action and formal escalation", "Collecting informal opinions", "Waiting for next committee"], c: 0, k: "abuseNeglect" },
   { q: "Best annual completion standard", a: ["Pass score plus acknowledgment", "Attendance only", "No tracking"], c: 0, k: "knowledgeCheck" },
 ];
 
@@ -2147,7 +2147,7 @@ function evaluateBonusScenario(choice, bonusTitle) {
   feedbackBox.classList.add(choice.good ? "good" : "warn");
   setFeedbackNode(
     scenarioRecap,
-    "Scenario recap: when abuse or neglect may be present, safety and formal reporting come first.",
+    "Scenario recap: when critical safety risk is present, protective action and formal escalation come first.",
     "recap"
   );
   setFeedbackNode(scenarioHint, choice.good ? "" : getAdaptiveHint("abuseNeglect"), "hint");
