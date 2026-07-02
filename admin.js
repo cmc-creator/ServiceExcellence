@@ -1016,6 +1016,31 @@ async function loadSettings() {
     return;
   }
 
+  const hasAbuseNeglect = courses.some((c) =>
+    /abuse|neglect/i.test(c.code || "") || /abuse|neglect/i.test(c.title || "")
+  );
+  const canCreateCourses = ["OWNER", "ADMIN"].includes(storedRole);
+
+  if (canCreateCourses && !hasAbuseNeglect) {
+    try {
+      await api("/api/admin/courses", {
+        method: "POST",
+        body: {
+          code: "ABUSE-NEGLECT-ANNUAL",
+          title: "Abuse and Neglect Recognition and Reporting Annual",
+          version: "2026.1",
+          passPercent: 85,
+          opensAt: null,
+          closesAt: null,
+        },
+      });
+      courses = await api("/api/admin/courses");
+      showToast("Abuse/Neglect course auto-added to catalogue.", "success");
+    } catch {
+      // If another admin created it concurrently, just continue with existing list.
+    }
+  }
+
   // Org name form
   const nameInput = document.getElementById("settingsOrgName");
   const saveBtn = document.getElementById("saveSettingsBtn");
@@ -1172,10 +1197,10 @@ async function loadSettings() {
   const addCourseStatus = document.getElementById("addCourseStatus");
 
   if (addAbuseNeglectCourseBtn) {
-    const hasAbuseNeglect = courses.some((c) =>
+    const hasAbuseNeglectCourse = courses.some((c) =>
       /abuse|neglect/i.test(c.code || "") || /abuse|neglect/i.test(c.title || "")
     );
-    addAbuseNeglectCourseBtn.classList.toggle("hidden", hasAbuseNeglect);
+    addAbuseNeglectCourseBtn.classList.toggle("hidden", hasAbuseNeglectCourse);
   }
 
   showAddCourseBtn.onclick = () => {
