@@ -24,6 +24,7 @@ Configure runtime settings in `runtime-config.js` for production backend routing
   - HIPAA/privacy refresh
   - Professional boundaries and conduct
   - Documentation essentials
+- Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round
 - Full final assessment with 25 questions

@@ -126,6 +126,11 @@
             <label for="roleDepartmentsInput">Department tags (comma separated)</label>
             <input id="roleDepartmentsInput" class="input-glass" type="text" placeholder="Nursing, Intake, Admissions">
           </div>
+          <div class="field-row">
+            <label>Enabled training modules</label>
+            <div id="roleModulesCheckboxes" class="choice-list"></div>
+            <p class="muted" style="font-size: 0.82rem; margin-top: 6px;">At least one module must remain enabled for each role.</p>
+          </div>
           <div class="cta-row">
             <button class="btn btn-primary" id="saveRoleBtn">Save Role</button>
             <button class="btn btn-secondary" id="clearRoleFormBtn">Clear</button>
@@ -155,23 +160,23 @@
     <section class="panel glass hidden" id="mapPanel">
       <h2>Learning Map</h2>
       <div class="module-grid">
-        <article class="module-card">
+        <article class="module-card" data-module-id="deescalation">
           <h3>1. De-escalation and Crisis Response</h3>
           <p>Use first-minute language and safety steps that reduce escalation risk immediately.</p>
         </article>
-        <article class="module-card">
+        <article class="module-card" data-module-id="abuse-neglect">
           <h3>2. Abuse or Neglect Recognition and Reporting</h3>
           <p>Apply immediate safety checks, objective documentation, and mandatory reporting pathways.</p>
         </article>
-        <article class="module-card">
+        <article class="module-card" data-module-id="hipaa-privacy">
           <h3>3. HIPAA and Privacy Refresh</h3>
           <p>Protect patient information using minimum-necessary sharing and authorization checks.</p>
         </article>
-        <article class="module-card">
+        <article class="module-card" data-module-id="boundaries-conduct">
           <h3>4. Professional Boundaries and Conduct</h3>
           <p>Model respectful, accountable behavior under pressure and avoid integrity drift.</p>
         </article>
-        <article class="module-card">
+        <article class="module-card" data-module-id="documentation-essentials">
           <h3>5. Documentation Essentials</h3>
           <p>Chart promptly and accurately, and complete reliable handoffs with closed-loop read-back.</p>
         </article>

@@ -14,6 +14,7 @@ const state = {
   badges: new Set(),
   trackingEvents: [],
   activeScenarios: [],
+  activeLessons: [],
   finalized: false,
   pass: false,
   lessonsCompleted: false,
@@ -72,20 +73,51 @@ const defaultRoleConfigs = [
     name: "Clinical Staff",
     persona: "clinical",
     departments: ["Nursing", "Behavioral Health"],
+    enabledModules: [
+      "deescalation",
+      "abuse-neglect",
+      "hipaa-privacy",
+      "boundaries-conduct",
+      "documentation-essentials",
+    ],
   },
   {
     id: "nonclinical-staff",
     name: "Non-Clinical Staff",
     persona: "nonclinical",
     departments: ["Admissions", "Support Services"],
+    enabledModules: [
+      "deescalation",
+      "abuse-neglect",
+      "hipaa-privacy",
+      "boundaries-conduct",
+      "documentation-essentials",
+    ],
   },
   {
     id: "leadership-supervisors",
     name: "Leaders and Supervisors",
     persona: "leadership",
     departments: ["Management", "Operations"],
+    enabledModules: [
+      "deescalation",
+      "abuse-neglect",
+      "hipaa-privacy",
+      "boundaries-conduct",
+      "documentation-essentials",
+    ],
   },
 ];
+
+const MODULE_LIBRARY = [
+  { id: "deescalation", title: "De-escalation and Crisis Response" },
+  { id: "abuse-neglect", title: "Abuse or Neglect Recognition and Reporting" },
+  { id: "hipaa-privacy", title: "HIPAA and Privacy Refresh" },
+  { id: "boundaries-conduct", title: "Professional Boundaries and Conduct" },
+  { id: "documentation-essentials", title: "Documentation Essentials" },
+];
+
+const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
 
 let roleConfigs = [];
 let editingRoleId = null;
@@ -242,7 +274,21 @@ function loadRoleConfigs() {
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) return [...defaultRoleConfigs];
-    return parsed.filter((item) => item?.id && item?.name && item?.persona);
+    return parsed
+      .filter((item) => item?.id && item?.name && item?.persona)
+      .map((item) => {
+        const enabledModules = Array.isArray(item.enabledModules)
+          ? item.enabledModules.filter((id) => MODULE_IDS.has(id))
+          : [];
+
+        return {
+          ...item,
+          enabledModules:
+            enabledModules.length > 0
+              ? enabledModules
+              : MODULE_LIBRARY.map((module) => module.id),
+        };
+      });
   } catch {
     return [...defaultRoleConfigs];
   }
@@ -257,6 +303,7 @@ function saveRoleConfigs() {
 }
 
 async function loadRoleConfigsFromBackend() {
+  const existingById = new Map((roleConfigs || []).map((item) => [item.id, item]));
   const rows = await apiRequest(`/api/training/public/roles/${ORG_SLUG}`);
   if (!Array.isArray(rows) || rows.length === 0) {
     return false;
@@ -267,6 +314,9 @@ async function loadRoleConfigsFromBackend() {
     name: item.name,
     persona: item.persona,
     departments: Array.isArray(item.departments) ? item.departments : [],
+    enabledModules:
+      existingById.get(item.id)?.enabledModules?.filter((id) => MODULE_IDS.has(id)) ||
+      MODULE_LIBRARY.map((module) => module.id),
   }));
   syncLocalRoleCache();
   return true;
@@ -358,6 +408,13 @@ function getCurrentRolePersona() {
 
 function getCurrentRoleDepartments() {
   return getCurrentRoleConfig().departments || [];
+}
+
+function getCurrentRoleEnabledModules() {
+  const selected = getCurrentRoleConfig().enabledModules || [];
+  return selected.length > 0
+    ? selected.filter((id) => MODULE_IDS.has(id))
+    : MODULE_LIBRARY.map((module) => module.id);
 }
 
 // ============ FUN FEATURES SYSTEM ============
@@ -1052,6 +1109,8 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
 
 const coreLessons = [
   {
+    moduleId: "deescalation",
+    spotlightIndex: 0,
     title: "Lesson 1: De-escalation and Crisis Response",
     body: "Early interactions in psychiatric acute inpatient care set tone for safety and trust. In escalated moments, use calm acknowledgment, immediate safety orientation, and one concrete next step with timing.",
     check: "A family member says, 'No one tells us anything and this is getting out of control.' What is the strongest first response?",
@@ -1065,6 +1124,8 @@ const coreLessons = [
     recap: "Checkpoint: de-escalation reliability = acknowledge, orient to safety, and give a timed next step.",
   },
   {
+    moduleId: "abuse-neglect",
+    spotlightIndex: 1,
     title: "Lesson 2: Abuse or Neglect Recognition and Reporting",
     body: "Use the SAFE response model: Secure immediate safety, Assess urgency and reporting threshold, capture Facts objectively, and Escalate through mandatory pathways now. Potential abuse or neglect concerns are time-sensitive and must not be handled informally.",
     check: "A patient reports possible neglect by a caregiver and appears fearful. What is the strongest immediate action?",
@@ -1078,6 +1139,8 @@ const coreLessons = [
     recap: "Checkpoint: suspected abuse or neglect requires immediate safety action plus formal reporting.",
   },
   {
+    moduleId: "hipaa-privacy",
+    spotlightIndex: 2,
     title: "Lesson 3: HIPAA and Privacy Refresh",
     body: "Privacy discipline means sharing only what is necessary for the current task, with authorized individuals, in an appropriate setting. Urgency and familiarity do not replace authorization.",
     check: "Which response best reflects HIPAA-aligned minimum-necessary practice?",
@@ -1091,6 +1154,8 @@ const coreLessons = [
     recap: "Checkpoint: always validate authorization and purpose before sharing protected information.",
   },
   {
+    moduleId: "boundaries-conduct",
+    spotlightIndex: 3,
     title: "Lesson 4: Professional Boundaries and Conduct",
     body: "Professional standards apply in high-stress moments, not only during audits. Consistent language, non-retaliation, and accountable behavior protect both team culture and patient outcomes.",
     check: "You hear a repeated disrespectful comment about a patient in a shared workspace. Best response?",
@@ -1104,6 +1169,8 @@ const coreLessons = [
     recap: "Checkpoint: conduct standards are enforced in real time, with documentation when patterns persist.",
   },
   {
+    moduleId: "documentation-essentials",
+    spotlightIndex: 4,
     title: "Lesson 5: Documentation Essentials",
     body: "Documentation should be timely, objective, and complete enough for immediate continuity. High-reliability handoffs use closed-loop communication: state key risk facts, confirm understanding, and verify next actions.",
     check: "What creates the strongest documentation and handoff standard?",
@@ -1341,6 +1408,7 @@ const roleEditorTitle = document.getElementById("roleEditorTitle");
 const roleNameInput = document.getElementById("roleNameInput");
 const rolePersonaSelect = document.getElementById("rolePersonaSelect");
 const roleDepartmentsInput = document.getElementById("roleDepartmentsInput");
+const roleModulesCheckboxes = document.getElementById("roleModulesCheckboxes");
 const saveRoleBtn = document.getElementById("saveRoleBtn");
 const clearRoleFormBtn = document.getElementById("clearRoleFormBtn");
 const closeRoleConfigBtn = document.getElementById("closeRoleConfigBtn");
@@ -1511,8 +1579,14 @@ function updateHUD() {
 function buildRoleTrack() {
   const persona = getCurrentRolePersona();
   const roleName = getCurrentRoleName();
+  const enabledModules = new Set(getCurrentRoleEnabledModules());
+  state.activeLessons = coreLessons.filter((lesson) => enabledModules.has(lesson.moduleId));
+  if (state.activeLessons.length === 0) {
+    state.activeLessons = [...coreLessons];
+  }
   state.activeScenarios = scenarios.filter((item) => item.roles.includes(persona));
-  trackSummary.textContent = `${roleName} includes ${coreLessons.length} core lessons and ${state.activeScenarios.length} tailored scenarios.`;
+  updateMapModuleCards(state.activeLessons.map((lesson) => lesson.moduleId));
+  trackSummary.textContent = `${roleName} includes ${state.activeLessons.length} enabled modules and ${state.activeScenarios.length} tailored scenarios.`;
 }
 
 function renderRoleSelect() {
@@ -1536,7 +1610,52 @@ function clearRoleEditor(message = "") {
   roleNameInput.value = "";
   rolePersonaSelect.value = "clinical";
   roleDepartmentsInput.value = "";
+  renderRoleModuleCheckboxes(MODULE_LIBRARY.map((item) => item.id));
   roleConfigStatus.textContent = message;
+}
+
+function renderRoleModuleCheckboxes(selectedModules) {
+  if (!roleModulesCheckboxes) return;
+  const selectedSet = new Set(selectedModules?.filter((id) => MODULE_IDS.has(id)) || []);
+  roleModulesCheckboxes.innerHTML = "";
+
+  MODULE_LIBRARY.forEach((module) => {
+    const label = document.createElement("label");
+    label.className = "choice";
+    label.style.display = "flex";
+    label.style.alignItems = "center";
+    label.style.gap = "8px";
+
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.name = "roleModule";
+    input.value = module.id;
+    input.checked = selectedSet.has(module.id);
+
+    const text = document.createElement("span");
+    text.textContent = module.title;
+
+    label.appendChild(input);
+    label.appendChild(text);
+    roleModulesCheckboxes.appendChild(label);
+  });
+}
+
+function getSelectedRoleModulesFromForm() {
+  if (!roleModulesCheckboxes) return MODULE_LIBRARY.map((item) => item.id);
+  return Array.from(roleModulesCheckboxes.querySelectorAll('input[name="roleModule"]:checked')).map((input) => input.value);
+}
+
+function updateMapModuleCards(enabledModuleIds) {
+  const enabledSet = new Set(enabledModuleIds || []);
+  const cards = Array.from(document.querySelectorAll("#mapPanel .module-card[data-module-id]"));
+
+  cards.forEach((card) => {
+    const moduleId = card.getAttribute("data-module-id");
+    const enabled = enabledSet.has(moduleId);
+    card.style.opacity = enabled ? "1" : "0.48";
+    card.style.filter = enabled ? "none" : "grayscale(0.3)";
+  });
 }
 
 function renderRoleList() {
@@ -1550,7 +1669,10 @@ function renderRoleList() {
     card.appendChild(heading);
 
     const meta = document.createElement("p");
-    meta.textContent = `Base track: ${roleLabels[item.persona]} | Departments: ${(item.departments || []).join(", ") || "None"}`;
+    const modules = (item.enabledModules || MODULE_LIBRARY.map((module) => module.id))
+      .map((id) => MODULE_LIBRARY.find((module) => module.id === id)?.title)
+      .filter(Boolean);
+    meta.textContent = `Base track: ${roleLabels[item.persona]} | Departments: ${(item.departments || []).join(", ") || "None"} | Modules: ${modules.length}`;
     card.appendChild(meta);
 
     const actions = document.createElement("div");
@@ -1568,6 +1690,7 @@ function renderRoleList() {
         roleNameInput.value = item.name;
         rolePersonaSelect.value = item.persona;
         roleDepartmentsInput.value = (item.departments || []).join(", ");
+        renderRoleModuleCheckboxes(item.enabledModules || MODULE_LIBRARY.map((module) => module.id));
         roleConfigStatus.textContent = "Editing role. Save to apply updates.";
       }
     });
@@ -1622,6 +1745,12 @@ async function upsertRoleFromForm() {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+  const enabledModules = getSelectedRoleModulesFromForm();
+
+  if (enabledModules.length === 0) {
+    roleConfigStatus.textContent = "Select at least one training module.";
+    return;
+  }
 
   if (editingRoleId) {
     const updated = await upsertRoleToBackend({
@@ -1633,7 +1762,15 @@ async function upsertRoleFromForm() {
 
     if (updated?.id) {
       roleConfigs = roleConfigs.map((item) =>
-        item.id === editingRoleId ? { ...item, name: updated.name, persona: updated.persona, departments: updated.departments || [] } : item,
+        item.id === editingRoleId
+          ? {
+              ...item,
+              name: updated.name,
+              persona: updated.persona,
+              departments: updated.departments || [],
+              enabledModules,
+            }
+          : item,
       );
       if (state.role === editingRoleId) state.role = editingRoleId;
       saveRoleConfigs();
@@ -1663,6 +1800,7 @@ async function upsertRoleFromForm() {
       name: created.name,
       persona: created.persona,
       departments: Array.isArray(created.departments) ? created.departments : [],
+      enabledModules,
     });
     state.role = created.id;
     saveRoleConfigs();
@@ -1673,7 +1811,7 @@ async function upsertRoleFromForm() {
     return;
   }
 
-  roleConfigs.push({ id, name, persona, departments });
+  roleConfigs.push({ id, name, persona, departments, enabledModules });
   state.role = id;
   saveRoleConfigs();
   renderRoleSelect();
@@ -1685,13 +1823,15 @@ async function upsertRoleFromForm() {
 function updateLessonRail() {
   if (!lessonRail) return;
   const steps = Array.from(lessonRail.querySelectorAll(".lesson-step"));
+  const lessonTotal = state.activeLessons.length || 1;
   const completedCount = state.lessonPassed.size;
-  const percent = Math.round((completedCount / coreLessons.length) * 100);
+  const percent = Math.round((completedCount / lessonTotal) * 100);
 
   steps.forEach((step, index) => {
     const key = `lesson-${index}`;
     step.classList.remove("active", "complete");
     step.textContent = String(index + 1);
+    step.classList.toggle("hidden", index >= lessonTotal);
 
     if (state.lessonPassed.has(key)) {
       step.classList.add("complete");
@@ -1704,7 +1844,7 @@ function updateLessonRail() {
   });
 
   if (lessonProgressLabel) {
-    lessonProgressLabel.textContent = `${completedCount} of ${coreLessons.length} lessons complete (${percent}%)`;
+    lessonProgressLabel.textContent = `${completedCount} of ${lessonTotal} lessons complete (${percent}%)`;
   }
 
   if (lessonProgressFill) {
@@ -1713,17 +1853,22 @@ function updateLessonRail() {
 }
 
 function renderLesson() {
-  const lesson = coreLessons[state.lessonIndex];
+  const lesson = state.activeLessons[state.lessonIndex];
+  if (!lesson) {
+    showPanel("scenario");
+    renderScenario();
+    return;
+  }
   const lessonKey = `lesson-${state.lessonIndex}`;
   const attempts = state.lessonAttempts[lessonKey] || 0;
   const persona = getCurrentRolePersona();
-  const spotlight = roleDepartmentSpotlights[persona][state.lessonIndex];
+  const spotlight = roleDepartmentSpotlights[persona][lesson.spotlightIndex] || roleDepartmentSpotlights[persona][0];
   const facilityDepartments = getCurrentRoleDepartments();
 
   updateLessonRail();
 
   lessonTitle.textContent = lesson.title;
-  lessonProgress.textContent = `Lesson ${state.lessonIndex + 1} of ${coreLessons.length}`;
+  lessonProgress.textContent = `Lesson ${state.lessonIndex + 1} of ${state.activeLessons.length}`;
   lessonRoleIntro.textContent = `${getCurrentRoleName()} - ${roleLessonIntros[persona]}`;
   lessonBody.textContent = lesson.body;
   lessonSpotlightTitle.textContent = `${spotlight.title} - Lesson Application`;
@@ -1842,10 +1987,10 @@ function evaluateLessonChoice(answer, lesson) {
 
 function nextLesson() {
   state.lessonIndex += 1;
-  if (state.lessonIndex >= coreLessons.length) {
+  if (state.lessonIndex >= state.activeLessons.length) {
     state.lessonsCompleted = true;
     updateLessonRail();
-    trackEvent("completed-core-lessons", { totalLessons: coreLessons.length });
+    trackEvent("completed-core-lessons", { totalLessons: state.activeLessons.length });
     showPanel("scenario");
     renderScenario();
     return;
@@ -2539,6 +2684,7 @@ pinPromptSubmitBtn.addEventListener("click", async () => {
       roleNameInput.value = role.name;
       rolePersonaSelect.value = role.persona;
       roleDepartmentsInput.value = (role.departments || []).join(", ");
+      renderRoleModuleCheckboxes(role.enabledModules || MODULE_LIBRARY.map((module) => module.id));
       roleConfigStatus.textContent = "Editing role (PIN verified). Save to apply updates.";
     }
   } else if (pendingPinAction?.action === "delete") {
@@ -2589,13 +2735,14 @@ document.getElementById("difficultySelect").addEventListener("change", (e) => {
 });
 
 document.getElementById("beginScenarioBtn").addEventListener("click", () => {
+  buildRoleTrack();
   showPanel("lesson");
   state.lessonIndex = 0;
   state.lessonAttempts = {};
   state.lessonPassed = new Set();
   state.perfectRun = true;
   updateLearnerProfile();
-  trackEvent("started-core-lessons", { totalLessons: coreLessons.length, difficulty: state.difficulty });
+  trackEvent("started-core-lessons", { totalLessons: state.activeLessons.length, difficulty: state.difficulty });
   renderLesson();
 });
 
