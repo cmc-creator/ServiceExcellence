@@ -133,3 +133,15 @@ function bindTiltCard(card) {
 }
 
 tiltCards.forEach(bindTiltCard);
+
+const heroPreviewCarousel = document.getElementById("heroPreviewCarousel");
+if (heroPreviewCarousel) {
+  const setPaused = (paused) => {
+    heroPreviewCarousel.classList.toggle("is-paused", paused);
+  };
+
+  heroPreviewCarousel.addEventListener("mouseenter", () => setPaused(true));
+  heroPreviewCarousel.addEventListener("mouseleave", () => setPaused(false));
+  heroPreviewCarousel.addEventListener("focusin", () => setPaused(true));
+  heroPreviewCarousel.addEventListener("focusout", () => setPaused(false));
+}
