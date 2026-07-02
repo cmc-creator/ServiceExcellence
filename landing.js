@@ -1,5 +1,9 @@
 const revealNodes = document.querySelectorAll(".reveal");
 const metricNodes = document.querySelectorAll(".metric-value");
+const sectionAnchors = document.querySelectorAll(".nav-links a[href^='#']");
+const observedSections = Array.from(sectionAnchors)
+  .map((link) => document.querySelector(link.getAttribute("href")))
+  .filter(Boolean);
 
 const observer = new IntersectionObserver(
   (entries) => {
@@ -51,3 +55,29 @@ const metricsObserver = new IntersectionObserver(
 );
 
 metricNodes.forEach((node) => metricsObserver.observe(node));
+
+function setActiveNav(hash) {
+  sectionAnchors.forEach((link) => {
+    const isActive = link.getAttribute("href") === hash;
+    link.classList.toggle("is-active", isActive);
+    if (isActive) {
+      link.setAttribute("aria-current", "true");
+    } else {
+      link.removeAttribute("aria-current");
+    }
+  });
+}
+
+const sectionObserver = new IntersectionObserver(
+  (entries) => {
+    const visible = entries
+      .filter((entry) => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+    if (!visible.length) return;
+    setActiveNav(`#${visible[0].target.id}`);
+  },
+  { threshold: [0.35, 0.6], rootMargin: "-10% 0px -45% 0px" }
+);
+
+observedSections.forEach((section) => sectionObserver.observe(section));
