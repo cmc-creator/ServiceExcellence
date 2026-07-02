@@ -69,7 +69,7 @@
     document.getElementById("certCourse").textContent =
       cert.course?.title
       || cert.course?.code
-      || "Service Excellence";
+      || "Annual Workforce Training";
 
     // Score
     const passed = cert.attempt?.status === "PASSED";

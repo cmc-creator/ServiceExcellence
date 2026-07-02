@@ -6,6 +6,89 @@ const router = express.Router();
 
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
+function aggregateAbuseNeglectMastery(events) {
+  const requiredByPersona = {
+    clinical: 85,
+    nonclinical: 80,
+    leadership: 90,
+  };
+
+  const latestByAttempt = new Map();
+  for (const evt of events) {
+    const key = evt.attemptId || evt.createdAt.toISOString();
+    if (!latestByAttempt.has(key)) {
+      latestByAttempt.set(key, evt);
+    }
+  }
+
+  const learnerRows = [];
+  for (const evt of latestByAttempt.values()) {
+    const payload = evt.payload || {};
+    const detail = payload?.detail || {};
+
+    const roleTrack = payload?.roleTrack || "Unknown";
+    const rolePersona = payload?.rolePersona || "nonclinical";
+    const requiredThreshold = Number(detail?.abuseNeglectThreshold)
+      || requiredByPersona[rolePersona]
+      || 80;
+
+    const abuseNeglectPct = Number(detail?.abuseNeglectPct);
+    if (!Number.isFinite(abuseNeglectPct)) continue;
+
+    const mastered = typeof detail?.abuseNeglectMastered === "boolean"
+      ? detail.abuseNeglectMastered
+      : abuseNeglectPct >= requiredThreshold;
+
+    learnerRows.push({
+      attemptId: evt.attemptId,
+      learnerId: evt.learnerId || null,
+      learnerName: evt.learner?.fullName || "Unknown Learner",
+      learnerEmail: evt.learner?.email || "",
+      employeeId: evt.learner?.employeeId || "",
+      department: evt.learner?.department || "Unassigned",
+      roleTrack,
+      rolePersona,
+      assessmentPercent: Number(detail?.assessmentPercent),
+      abuseNeglectPct,
+      requiredThreshold,
+      mastered,
+      completedAt: evt.createdAt,
+    });
+  }
+
+  const byRole = new Map();
+  for (const row of learnerRows) {
+    if (!byRole.has(row.roleTrack)) {
+      byRole.set(row.roleTrack, {
+        roleTrack: row.roleTrack,
+        attempts: 0,
+        masteredCount: 0,
+        masteryPctTotal: 0,
+        requiredThreshold: row.requiredThreshold,
+      });
+    }
+
+    const agg = byRole.get(row.roleTrack);
+    agg.attempts += 1;
+    agg.masteredCount += row.mastered ? 1 : 0;
+    agg.masteryPctTotal += row.abuseNeglectPct;
+    agg.requiredThreshold = row.requiredThreshold;
+  }
+
+  const roles = Array.from(byRole.values())
+    .map((row) => ({
+      roleTrack: row.roleTrack,
+      attempts: row.attempts,
+      masteredCount: row.masteredCount,
+      avgMasteryPct: row.attempts ? Number((row.masteryPctTotal / row.attempts).toFixed(1)) : 0,
+      requiredThreshold: row.requiredThreshold,
+      masteryRate: row.attempts ? Number(((row.masteredCount / row.attempts) * 100).toFixed(1)) : 0,
+    }))
+    .sort((a, b) => b.attempts - a.attempts);
+
+  return { roles, learnerRows };
+}
+
 router.get("/completion", async (req, res) => {
   const orgId = req.user.organizationId;
   const [totalEnrollments, completedEnrollments, passCount, failCount] = await Promise.all([
@@ -112,71 +195,22 @@ router.get("/mastery/abuse-neglect", async (req, res) => {
     },
     select: {
       attemptId: true,
+      learnerId: true,
+      learner: {
+        select: {
+          fullName: true,
+          email: true,
+          employeeId: true,
+          department: true,
+        },
+      },
       payload: true,
       createdAt: true,
     },
     orderBy: { createdAt: "desc" },
   });
 
-  const requiredByPersona = {
-    clinical: 85,
-    nonclinical: 80,
-    leadership: 90,
-  };
-
-  const latestByAttempt = new Map();
-  for (const evt of events) {
-    const key = evt.attemptId || evt.createdAt.toISOString();
-    if (!latestByAttempt.has(key)) {
-      latestByAttempt.set(key, evt);
-    }
-  }
-
-  const byRole = new Map();
-  for (const evt of latestByAttempt.values()) {
-    const payload = evt.payload || {};
-    const detail = payload?.detail || {};
-
-    const roleTrack = payload?.roleTrack || "Unknown";
-    const rolePersona = payload?.rolePersona || "nonclinical";
-    const requiredThreshold = Number(detail?.abuseNeglectThreshold)
-      || requiredByPersona[rolePersona]
-      || 80;
-
-    const abuseNeglectPct = Number(detail?.abuseNeglectPct);
-    if (!Number.isFinite(abuseNeglectPct)) continue;
-
-    const mastered = typeof detail?.abuseNeglectMastered === "boolean"
-      ? detail.abuseNeglectMastered
-      : abuseNeglectPct >= requiredThreshold;
-
-    if (!byRole.has(roleTrack)) {
-      byRole.set(roleTrack, {
-        roleTrack,
-        attempts: 0,
-        masteredCount: 0,
-        masteryPctTotal: 0,
-        requiredThreshold,
-      });
-    }
-
-    const row = byRole.get(roleTrack);
-    row.attempts += 1;
-    row.masteredCount += mastered ? 1 : 0;
-    row.masteryPctTotal += abuseNeglectPct;
-    row.requiredThreshold = requiredThreshold;
-  }
-
-  const roles = Array.from(byRole.values())
-    .map((row) => ({
-      roleTrack: row.roleTrack,
-      attempts: row.attempts,
-      masteredCount: row.masteredCount,
-      avgMasteryPct: row.attempts ? Number((row.masteryPctTotal / row.attempts).toFixed(1)) : 0,
-      requiredThreshold: row.requiredThreshold,
-      masteryRate: row.attempts ? Number(((row.masteredCount / row.attempts) * 100).toFixed(1)) : 0,
-    }))
-    .sort((a, b) => b.attempts - a.attempts);
+  const { roles } = aggregateAbuseNeglectMastery(events);
 
   const totals = roles.reduce(
     (acc, row) => {
@@ -196,6 +230,49 @@ router.get("/mastery/abuse-neglect", async (req, res) => {
         : 0,
     },
     roles,
+  });
+});
+
+router.get("/mastery/abuse-neglect/learners", async (req, res) => {
+  const orgId = req.user.organizationId;
+  const events = await db.trainingEvent.findMany({
+    where: {
+      organizationId: orgId,
+      verb: "completed-training",
+    },
+    select: {
+      attemptId: true,
+      learnerId: true,
+      learner: {
+        select: {
+          fullName: true,
+          email: true,
+          employeeId: true,
+          department: true,
+        },
+      },
+      payload: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const { learnerRows } = aggregateAbuseNeglectMastery(events);
+  const rows = learnerRows
+    .sort((a, b) => {
+      if (a.mastered !== b.mastered) return a.mastered ? 1 : -1;
+      if (a.abuseNeglectPct !== b.abuseNeglectPct) return a.abuseNeglectPct - b.abuseNeglectPct;
+      return new Date(b.completedAt) - new Date(a.completedAt);
+    })
+    .map((row) => ({
+      ...row,
+      completedAt: row.completedAt.toISOString(),
+    }));
+
+  return res.json({
+    totalRows: rows.length,
+    belowThreshold: rows.filter((row) => !row.mastered).length,
+    learners: rows,
   });
 });
 

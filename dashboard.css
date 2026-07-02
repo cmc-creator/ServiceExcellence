@@ -77,17 +77,46 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
 }
-.logo-mark {
-  font-family: "Cinzel", serif;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--ink-1);
-  margin: 0;
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--ink-0);
 }
-.logo-divider {
-  opacity: 0.4;
-  margin: 0 6px;
+.brand-lockup:focus-visible {
+  outline: 2px solid rgba(137, 221, 204, 0.7);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+.logo-glyph {
+  width: 34px;
+  height: 34px;
+  display: inline-block;
+  filter: drop-shadow(0 8px 14px rgba(245, 184, 103, 0.2));
+}
+.logo-glyph img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.brand-copy {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 2px;
+}
+.brand-copy strong {
+  font-family: "Cinzel", serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.brand-copy small {
+  color: var(--ink-2);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 .nav-right {
   display: flex;
@@ -808,6 +837,8 @@ p.muted { font-size: 13px; color: var(--ink-2); opacity: 0.7; }
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 860px) {
   .dash-nav { padding: 12px 20px; }
+  .brand-copy strong { font-size: 13px; }
+  .brand-copy small { font-size: 9px; }
   .dash-main { padding: 32px 20px 60px; }
   .metrics-row { grid-template-columns: repeat(2, 1fr); }
   .action-inner { padding: 28px 24px; }

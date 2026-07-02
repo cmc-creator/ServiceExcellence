@@ -96,6 +96,54 @@ body {
   font-weight: 700;
 }
 
+.brand-lockup {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--ink-0);
+}
+
+.brand-lockup:focus-visible {
+  outline: 2px solid rgba(156, 231, 212, 0.8);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.logo-glyph {
+  width: 38px;
+  height: 38px;
+  display: inline-block;
+  filter: drop-shadow(0 8px 14px rgba(245, 184, 103, 0.22));
+}
+
+.logo-glyph img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.brand-copy {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 2px;
+}
+
+.brand-copy strong {
+  font-family: "Cinzel", serif;
+  font-size: 1rem;
+  letter-spacing: 0.04rem;
+}
+
+.brand-copy small {
+  color: var(--ink-2);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.11rem;
+}
+
 h1,
 h2 {
   font-family: "Cinzel", serif;

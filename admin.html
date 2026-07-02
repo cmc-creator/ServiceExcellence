@@ -19,7 +19,10 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <header class="dash-nav">
-    <p class="logo-mark">NyxArete <span class="logo-divider">|</span> Admin Panel</p>
+    <a class="brand-lockup" href="index.html" aria-label="NyxArete for Destiny Springs">
+      <span class="logo-glyph" aria-hidden="true"><img src="assets/nyxarete-logo.svg" alt="" loading="lazy"></span>
+      <span class="brand-copy"><strong>NyxArete</strong><small>Admin Panel</small></span>
+    </a>
     <div class="nav-right">
       <a class="btn-ghost btn-sm" href="dashboard.html">My Dashboard</a>
       <span class="nav-user" id="navUserName"></span>
@@ -361,7 +364,39 @@
             <p class="section-kicker">Engagement Data</p>
             <h2>Analytics</h2>
           </div>
-          <button class="btn-ghost btn-sm" id="exportAnalyticsBtn" type="button">Export CSV</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-ghost btn-sm" id="exportAnalyticsBtn" type="button">Export Summary CSV</button>
+            <button class="btn-ghost btn-sm" id="exportMasteryLearnersBtn" type="button">Export Mastery Audit CSV</button>
+            <span id="masteryFilterCount" style="align-self:center;font-size:12px;opacity:0.7;padding:0 4px;">Audit rows: 0</span>
+          </div>
+        </div>
+
+        <div class="admin-form-card" style="padding:16px;margin-top:12px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;">
+            <div class="field" style="margin:0;">
+              <label for="masteryFilterRole">Role Track</label>
+              <select id="masteryFilterRole">
+                <option value="">All role tracks</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="masteryFilterDept">Department</label>
+              <select id="masteryFilterDept">
+                <option value="">All departments</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="masteryFilterFrom">Completed From</label>
+              <input id="masteryFilterFrom" type="date">
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="masteryFilterTo">Completed To</label>
+              <input id="masteryFilterTo" type="date">
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn-ghost btn-sm" id="masteryFilterClearBtn" type="button">Clear Filters</button>
+            </div>
+          </div>
         </div>
         <div class="metrics-row">
           <div class="metric-card">
@@ -387,6 +422,10 @@
           <div class="metric-card">
             <p class="metric-val" id="anAbuseMastery">-</p>
             <p class="metric-lbl">Abuse/Neglect Mastery</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-val" id="anBelowMastery">-</p>
+            <p class="metric-lbl">Below Mastery Threshold</p>
           </div>
         </div>
 

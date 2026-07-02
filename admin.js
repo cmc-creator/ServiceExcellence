@@ -275,6 +275,7 @@ let allEnrollments = [];
 let analyticsCompletion = null;
 let analyticsTrends = [];
 let analyticsMastery = null;
+let analyticsMasteryLearners = [];
 let learnerNextCursor = null;
 let learnerHasMore = false;
 
@@ -745,18 +746,101 @@ function destroyChart(ref) {
   return null;
 }
 
+function hasActiveMasteryFilters() {
+  const role = document.getElementById("masteryFilterRole")?.value || "";
+  const dept = document.getElementById("masteryFilterDept")?.value || "";
+  const from = document.getElementById("masteryFilterFrom")?.value || "";
+  const to = document.getElementById("masteryFilterTo")?.value || "";
+  return Boolean(role || dept || from || to);
+}
+
+function populateMasteryAuditFilters(rows) {
+  const roleSel = document.getElementById("masteryFilterRole");
+  const deptSel = document.getElementById("masteryFilterDept");
+  if (!roleSel || !deptSel) return;
+
+  const prevRole = roleSel.value;
+  const prevDept = deptSel.value;
+
+  const roles = [...new Set(rows.map((r) => (r.roleTrack || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const depts = [...new Set(rows.map((r) => (r.department || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+  roleSel.innerHTML = '<option value="">All role tracks</option>';
+  roles.forEach((value) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    roleSel.appendChild(opt);
+  });
+
+  deptSel.innerHTML = '<option value="">All departments</option>';
+  depts.forEach((value) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    deptSel.appendChild(opt);
+  });
+
+  if (prevRole && roles.includes(prevRole)) roleSel.value = prevRole;
+  if (prevDept && depts.includes(prevDept)) deptSel.value = prevDept;
+}
+
+function getFilteredMasteryLearners(rows = analyticsMasteryLearners) {
+  const role = document.getElementById("masteryFilterRole")?.value || "";
+  const dept = document.getElementById("masteryFilterDept")?.value || "";
+  const fromRaw = document.getElementById("masteryFilterFrom")?.value || "";
+  const toRaw = document.getElementById("masteryFilterTo")?.value || "";
+
+  const fromDate = fromRaw ? new Date(`${fromRaw}T00:00:00`) : null;
+  const toDate = toRaw ? new Date(`${toRaw}T23:59:59`) : null;
+
+  return (rows || []).filter((row) => {
+    if (role && (row.roleTrack || "") !== role) return false;
+    if (dept && (row.department || "") !== dept) return false;
+    if (fromDate || toDate) {
+      const completedAt = row.completedAt ? new Date(row.completedAt) : null;
+      if (!completedAt || Number.isNaN(completedAt.getTime())) return false;
+      if (fromDate && completedAt < fromDate) return false;
+      if (toDate && completedAt > toDate) return false;
+    }
+    return true;
+  });
+}
+
+function refreshMasteryAuditSummary() {
+  const belowMasteryMetric = document.getElementById("anBelowMastery");
+  const countLabel = document.getElementById("masteryFilterCount");
+
+  const total = analyticsMasteryLearners?.length || 0;
+  const filtered = getFilteredMasteryLearners();
+  const filteredCount = filtered.length;
+  const below = filtered.filter((row) => !row.mastered).length;
+  if (belowMasteryMetric) {
+    belowMasteryMetric.textContent = hasActiveMasteryFilters() ? `${below} / ${filteredCount}` : below;
+  }
+
+  if (countLabel) {
+    countLabel.textContent = hasActiveMasteryFilters()
+      ? `Audit rows: ${filteredCount} of ${total}`
+      : `Audit rows: ${total}`;
+  }
+}
+
 async function loadAnalytics() {
-  const [completion, events, trends, deptData, mastery] = await Promise.all([
+  const [completion, events, trends, deptData, mastery, masteryLearners] = await Promise.all([
     api("/api/analytics/completion"),
     api("/api/analytics/events/top"),
     api("/api/analytics/trends"),
     api("/api/analytics/by-department").catch(() => []),
     api("/api/analytics/mastery/abuse-neglect").catch(() => null),
+    api("/api/analytics/mastery/abuse-neglect/learners").catch(() => null),
   ]);
 
   analyticsCompletion = completion || null;
   analyticsTrends = trends || [];
   analyticsMastery = mastery || null;
+  analyticsMasteryLearners = masteryLearners?.learners || [];
+  populateMasteryAuditFilters(analyticsMasteryLearners);
 
   if (completion) {
     document.getElementById("anTotal").textContent = completion.totalEnrollments;
@@ -774,6 +858,16 @@ async function loadAnalytics() {
       masteryMetric.textContent = "-";
     }
   }
+
+  const belowMasteryMetric = document.getElementById("anBelowMastery");
+  if (belowMasteryMetric) {
+    if (masteryLearners && typeof masteryLearners.belowThreshold === "number") {
+      belowMasteryMetric.textContent = masteryLearners.belowThreshold;
+    } else {
+      belowMasteryMetric.textContent = "-";
+    }
+  }
+  refreshMasteryAuditSummary();
 
   // --- Completion donut chart ---
   const completionCanvas = document.getElementById("completionChart");
@@ -1644,4 +1738,69 @@ document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
   a.download = `analytics-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+});
+
+document.getElementById("exportMasteryLearnersBtn")?.addEventListener("click", async () => {
+  let learners = analyticsMasteryLearners;
+  if (!learners?.length) {
+    const result = await api("/api/analytics/mastery/abuse-neglect/learners").catch(() => null);
+    learners = result?.learners || [];
+    analyticsMasteryLearners = learners;
+    populateMasteryAuditFilters(analyticsMasteryLearners);
+  }
+
+  learners = getFilteredMasteryLearners(learners);
+
+  if (!learners.length) {
+    showToast("No learner mastery data available for the current filters.", "error");
+    return;
+  }
+
+  const rows = [
+    ["Learner", "Email", "Employee ID", "Department", "Role Track", "Assessment %", "Abuse/Neglect %", "Required %", "Mastered", "Completed At"],
+  ];
+
+  learners.forEach((row) => {
+    rows.push([
+      row.learnerName || "",
+      row.learnerEmail || "",
+      row.employeeId || "",
+      row.department || "",
+      row.roleTrack || "",
+      Number.isFinite(row.assessmentPercent) ? row.assessmentPercent : "",
+      Number.isFinite(row.abuseNeglectPct) ? row.abuseNeglectPct : "",
+      row.requiredThreshold || "",
+      row.mastered ? "Yes" : "No",
+      row.completedAt ? fmt(row.completedAt) : "",
+    ]);
+  });
+
+  const csv = rows
+    .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const suffix = hasActiveMasteryFilters() ? "-filtered" : "";
+  a.download = `mastery-audit-abuse-neglect${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+["masteryFilterRole", "masteryFilterDept", "masteryFilterFrom", "masteryFilterTo"].forEach((id) => {
+  document.getElementById(id)?.addEventListener("change", refreshMasteryAuditSummary);
+});
+
+document.getElementById("masteryFilterClearBtn")?.addEventListener("click", () => {
+  const role = document.getElementById("masteryFilterRole");
+  const dept = document.getElementById("masteryFilterDept");
+  const from = document.getElementById("masteryFilterFrom");
+  const to = document.getElementById("masteryFilterTo");
+  if (role) role.value = "";
+  if (dept) dept.value = "";
+  if (from) from.value = "";
+  if (to) to.value = "";
+  refreshMasteryAuditSummary();
 });

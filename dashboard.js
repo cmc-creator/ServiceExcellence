@@ -301,7 +301,7 @@ function renderAction(data) {
     "not-started": {
       eyebrow: "Ready to Begin",
       heading: "Start your annual training.",
-      desc: "Your Service Excellence and Code of Conduct training is ready. Complete all modules to earn your certification for this year.",
+      desc: "Your comprehensive annual workforce training is ready. Complete all modules to earn your certification for this year.",
       btns: [
         { label: "Begin Training", href: trainingUrl, cls: "btn-solid" },
       ],

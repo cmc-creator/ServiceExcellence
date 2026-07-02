@@ -53,14 +53,14 @@ async function main() {
       },
     },
     update: {
-      title: "Service Excellence and Code of Conduct Annual",
+      title: "Annual Workforce Training and Compliance",
       passPercent: 80,
       isActive: true,
     },
     create: {
       organizationId: org.id,
       code: "SE-COC-ANNUAL",
-      title: "Service Excellence and Code of Conduct Annual",
+      title: "Annual Workforce Training and Compliance",
       version: "2026.1",
       passPercent: 80,
       isActive: true,
