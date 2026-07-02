@@ -1,5 +1,6 @@
 import express from "express";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 import { db } from "../lib/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
@@ -354,6 +355,8 @@ router.post("/complete", requireAuth, async (req, res) => {
     },
   });
 
+  let certificate = null;
+
   if (passed) {
     await db.enrollment.updateMany({
       where: {
@@ -363,12 +366,27 @@ router.post("/complete", requireAuth, async (req, res) => {
       },
       data: { completedAt: new Date() },
     });
+
+    // Automatically issue (or reuse) the certificate for the passed attempt.
+    certificate = await db.certificate.upsert({
+      where: { attemptId: attempt.id },
+      update: {},
+      create: {
+        attemptId: attempt.id,
+        organizationId: attempt.organizationId,
+        learnerId: attempt.learnerId,
+        courseId: attempt.courseId,
+        certificateNo: `NYX-${nanoid(10).toUpperCase()}`,
+      },
+    });
   }
 
   return res.json({
     attemptId: updated.id,
     status: updated.status,
     passed,
+    certificateId: certificate?.id || null,
+    certificateNo: certificate?.certificateNo || null,
   });
 });
 

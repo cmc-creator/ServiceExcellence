@@ -1935,11 +1935,29 @@ function submitCompletion() {
         attested: true,
       },
     })
-  ).finally(() => {
-    submissionStatus.textContent = scorm.initialized
-      ? "Completion submitted to LMS successfully."
-      : "Completion saved locally. LMS was not connected in this session.";
-  });
+  )
+    .then((result) => {
+      const lmsMessage = scorm.initialized
+        ? "LMS submission complete."
+        : "LMS was not connected in this session.";
+
+      if (result?.passed && result?.certificateNo) {
+        submissionStatus.textContent = `Training record saved and certificate ${result.certificateNo} issued. ${lmsMessage}`;
+        return;
+      }
+
+      if (result?.passed) {
+        submissionStatus.textContent = `Training record saved successfully. ${lmsMessage}`;
+        return;
+      }
+
+      submissionStatus.textContent = `Completion recorded, but passing score was not met. ${lmsMessage}`;
+    })
+    .catch(() => {
+      submissionStatus.textContent = scorm.initialized
+        ? "Completion sent to LMS, but server sync failed."
+        : "Completion saved locally. Could not sync server record in this session.";
+    });
 }
 
 function resetExperience() {
