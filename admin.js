@@ -212,12 +212,18 @@ document.querySelectorAll(".admin-tab").forEach((btn) => {
       b.classList.remove("active");
       b.setAttribute("aria-selected", "false");
     });
-    document.querySelectorAll(".admin-panel").forEach((p) => p.classList.remove("active"));
+    document.querySelectorAll(".admin-panel").forEach((p) => {
+      p.classList.remove("active");
+      p.classList.add("hidden");
+    });
     btn.classList.add("active");
     btn.setAttribute("aria-selected", "true");
     const panel = document.getElementById(`tab-${btn.dataset.tab}`);
-    if (panel) panel.classList.add("active");
-    revealObserver.observe(panel);
+    if (panel) {
+      panel.classList.remove("hidden");
+      panel.classList.add("active");
+      revealObserver.observe(panel);
+    }
   });
 });
 
