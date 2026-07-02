@@ -51,10 +51,9 @@ router.get("/events/top", async (req, res) => {
 });
 
 router.get("/trends", async (req, res) => {
-  const orgId = req.user.organizationId;
   const attempts = await db.attempt.findMany({
     where: {
-      organizationId: orgId,
+      organizationId: req.user.organizationId,
       status: "PASSED",
       submittedAt: { not: null },
     },
@@ -62,32 +61,37 @@ router.get("/trends", async (req, res) => {
     orderBy: { submittedAt: "asc" },
   });
 
-  const counts = {};
-  for (const a of attempts) {
-    const key = a.submittedAt.toISOString().slice(0, 7);
-    counts[key] = (counts[key] || 0) + 1;
+  const grouped = {};
+  for (const attempt of attempts) {
+    const month = attempt.submittedAt.toISOString().slice(0, 7);
+    grouped[month] = (grouped[month] || 0) + 1;
   }
 
-  const trends = Object.entries(counts).map(([month, count]) => ({ month, count }));
-  return res.json(trends);
+  return res.json(Object.entries(grouped).map(([month, count]) => ({ month, count })));
 });
 
 router.get("/by-department", async (req, res) => {
-  const orgId = req.user.organizationId;
   const enrollments = await db.enrollment.findMany({
-    where: { organizationId: orgId },
-    select: { completedAt: true, learner: { select: { department: true } } },
+    where: { organizationId: req.user.organizationId },
+    select: {
+      completedAt: true,
+      learner: { select: { department: true } },
+    },
   });
 
-  const deptMap = {};
-  for (const e of enrollments) {
-    const dept = e.learner?.department || "Unassigned";
-    if (!deptMap[dept]) deptMap[dept] = { total: 0, completed: 0 };
-    deptMap[dept].total++;
-    if (e.completedAt) deptMap[dept].completed++;
+  const map = {};
+  for (const enrollment of enrollments) {
+    const department = enrollment.learner?.department || "Unassigned";
+    if (!map[department]) {
+      map[department] = { total: 0, completed: 0 };
+    }
+    map[department].total += 1;
+    if (enrollment.completedAt) {
+      map[department].completed += 1;
+    }
   }
 
-  const rows = Object.entries(deptMap)
+  const rows = Object.entries(map)
     .map(([department, stats]) => ({
       department,
       total: stats.total,

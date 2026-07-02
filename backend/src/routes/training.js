@@ -1,9 +1,7 @@
 import express from "express";
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import { db } from "../lib/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
-import { sendEmail } from "../lib/email.js";
 
 const router = express.Router();
 
@@ -39,9 +37,180 @@ const completeSchema = z.object({
   attested: z.boolean(),
 });
 
+const selfEnrollSchema = z.object({
+  courseId: z.string(),
+});
+
 function requestMatchesOrganization(req, organizationId, organizationSlug) {
   return req.user?.organizationId === organizationId || req.user?.organizationSlug === organizationSlug;
 }
+
+async function resolveLearnerForUser(user) {
+  let learner = await db.learner.findFirst({
+    where: {
+      organizationId: user.organizationId,
+      OR: [{ userId: user.sub }, { email: user.email.toLowerCase() }],
+    },
+  });
+
+  if (!learner) {
+    const account = await db.user.findUnique({ where: { id: user.sub } });
+    learner = await db.learner.create({
+      data: {
+        organizationId: user.organizationId,
+        email: user.email.toLowerCase(),
+        fullName: account?.fullName || user.email,
+        userId: user.sub,
+      },
+    });
+  }
+
+  return learner;
+}
+
+router.get("/me", requireAuth, async (req, res) => {
+  const learner = await resolveLearnerForUser(req.user);
+
+  const [enrollmentsRaw, attempts, certificates] = await Promise.all([
+    db.enrollment.findMany({
+      where: {
+        organizationId: req.user.organizationId,
+        learnerId: learner.id,
+      },
+      include: { course: true },
+      orderBy: { enrolledAt: "desc" },
+    }),
+    db.attempt.findMany({
+      where: {
+        organizationId: req.user.organizationId,
+        learnerId: learner.id,
+      },
+      include: { course: true },
+      orderBy: { startedAt: "desc" },
+    }),
+    db.certificate.findMany({
+      where: {
+        organizationId: req.user.organizationId,
+        learnerId: learner.id,
+      },
+      include: { course: true },
+      orderBy: { issuedAt: "desc" },
+    }),
+  ]);
+
+  const attemptsByCourse = attempts.reduce((acc, attempt) => {
+    if (!acc[attempt.courseId]) {
+      acc[attempt.courseId] = [];
+    }
+    acc[attempt.courseId].push(attempt);
+    return acc;
+  }, {});
+
+  const certByCourse = certificates.reduce((acc, cert) => {
+    if (!acc[cert.courseId]) {
+      acc[cert.courseId] = cert;
+    }
+    return acc;
+  }, {});
+
+  const enrollments = enrollmentsRaw.map((enrollment) => {
+    const courseAttempts = (attemptsByCourse[enrollment.courseId] || [])
+      .slice()
+      .sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt));
+
+    const bestAttempt = courseAttempts
+      .filter((attempt) => attempt.status === "PASSED")
+      .sort((a, b) => (b.scorePercent || 0) - (a.scorePercent || 0))[0] || null;
+
+    const inProgressAttempt = courseAttempts
+      .filter((attempt) => attempt.status === "IN_PROGRESS")
+      .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))[0] || null;
+
+    return {
+      ...enrollment,
+      courseAttempts,
+      bestAttempt,
+      inProgressAttempt,
+      certificate: certByCourse[enrollment.courseId] || null,
+    };
+  });
+
+  const summary = {
+    totalCourses: enrollments.length,
+    completedCourses: enrollments.filter((row) => row.completedAt).length,
+    inProgressAttempts: attempts.filter((attempt) => attempt.status === "IN_PROGRESS").length,
+    failedAttempts: attempts.filter((attempt) => attempt.status === "FAILED").length,
+    passedAttempts: attempts.filter((attempt) => attempt.status === "PASSED").length,
+    bestScore: attempts.reduce((max, attempt) => {
+      if (attempt.scorePercent == null) return max;
+      return max == null ? attempt.scorePercent : Math.max(max, attempt.scorePercent);
+    }, null),
+  };
+
+  return res.json({
+    learner,
+    summary,
+    enrollments,
+    attempts,
+    certificates,
+  });
+});
+
+router.get("/available", requireAuth, async (req, res) => {
+  const learner = await resolveLearnerForUser(req.user);
+  const enrollments = await db.enrollment.findMany({
+    where: {
+      organizationId: req.user.organizationId,
+      learnerId: learner.id,
+    },
+    select: { courseId: true },
+  });
+
+  const enrolledCourseIds = new Set(enrollments.map((row) => row.courseId));
+  const courses = await db.course.findMany({
+    where: { organizationId: req.user.organizationId, isActive: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return res.json(courses.filter((course) => !enrolledCourseIds.has(course.id)));
+});
+
+router.post("/self-enroll", requireAuth, async (req, res) => {
+  const parsed = selfEnrollSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+
+  const learner = await resolveLearnerForUser(req.user);
+  const course = await db.course.findFirst({
+    where: {
+      id: parsed.data.courseId,
+      organizationId: req.user.organizationId,
+      isActive: true,
+    },
+  });
+  if (!course) {
+    return res.status(404).json({ error: "Course not found" });
+  }
+
+  const enrollment = await db.enrollment.upsert({
+    where: {
+      organizationId_learnerId_courseId: {
+        organizationId: req.user.organizationId,
+        learnerId: learner.id,
+        courseId: course.id,
+      },
+    },
+    update: {},
+    create: {
+      organizationId: req.user.organizationId,
+      learnerId: learner.id,
+      courseId: course.id,
+    },
+  });
+
+  return res.status(201).json(enrollment);
+});
 
 router.post("/start", requireAuth, async (req, res) => {
   const parsed = startSchema.safeParse(req.body);
@@ -58,11 +227,6 @@ router.post("/start", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  // Ensure the authenticated user can only submit training under their own email
-  if (parsed.data.learnerEmail.toLowerCase() !== req.user.email.toLowerCase()) {
-    return res.status(403).json({ error: "learnerEmail must match your login email" });
-  }
-
   const course = await db.course.findFirst({
     where: {
       organizationId: org.id,
@@ -73,17 +237,6 @@ router.post("/start", requireAuth, async (req, res) => {
   });
   if (!course) {
     return res.status(404).json({ error: "Course not found" });
-  }
-
-  // Enforce open/close schedule
-  const now = new Date();
-  if (course.opensAt && now < course.opensAt) {
-    const opens = course.opensAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    return res.status(403).json({ error: `This course opens on ${opens}. Check back then.` });
-  }
-  if (course.closesAt && now > course.closesAt) {
-    const closed = course.closesAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    return res.status(403).json({ error: `This course closed on ${closed}.` });
   }
 
   const learner = await db.learner.upsert({
@@ -201,7 +354,6 @@ router.post("/complete", requireAuth, async (req, res) => {
     },
   });
 
-  let certificate = null;
   if (passed) {
     await db.enrollment.updateMany({
       where: {
@@ -211,44 +363,12 @@ router.post("/complete", requireAuth, async (req, res) => {
       },
       data: { completedAt: new Date() },
     });
-
-    // Auto-issue certificate on first pass (upsert so retries are idempotent)
-    certificate = await db.certificate.upsert({
-      where: { attemptId: updated.id },
-      update: {},
-      create: {
-        attemptId: updated.id,
-        organizationId: attempt.organizationId,
-        learnerId: attempt.learnerId,
-        courseId: attempt.courseId,
-        certificateNo: `NYX-${nanoid(10).toUpperCase()}`,
-      },
-    });
-
-    // Send congratulatory email with certificate link (non-blocking)
-    try {
-      const learner = await db.learner.findUnique({ where: { id: attempt.learnerId } });
-      if (learner?.email) {
-        const APP_URL = (process.env.APP_URL || "").replace(/\/$/, "");
-        const certUrl = APP_URL ? `${APP_URL}/certificate.html?id=${encodeURIComponent(certificate.id)}` : null;
-        sendEmail({
-          to: learner.email,
-          subject: `Congratulations! You completed ${attempt.course.title}`,
-          html: `<p>Hi ${learner.fullName},</p>
-<p>You have successfully completed <strong>${attempt.course.title}</strong> with a score of <strong>${parsed.data.scorePercent}%</strong>.</p>
-<p>Your certificate number is <strong>${certificate.certificateNo}</strong>.</p>
-${certUrl ? `<p><a href="${certUrl}">View your certificate online</a></p>` : ""}
-<p>Well done!</p>`,
-        }).catch(() => null); // fire-and-forget; do not block the response
-      }
-    } catch { /* non-critical */ }
   }
 
   return res.json({
     attemptId: updated.id,
     status: updated.status,
     passed,
-    certificateId: certificate?.id ?? null,
   });
 });
 
@@ -344,108 +464,6 @@ router.delete("/public/roles/:organizationSlug/:roleId", requireAuth, requireRol
   return res.status(204).send();
 });
 
-router.get("/me", requireAuth, async (req, res) => {
-  const { email, organizationId } = req.user;
-
-  const learner = await db.learner.findUnique({
-    where: { organizationId_email: { organizationId, email } },
-  });
-
-  if (!learner) {
-    return res.json({
-      learner: null,
-      enrollments: [],
-      attempts: [],
-      certificates: [],
-      summary: {
-        totalCourses: 0,
-        completedCourses: 0,
-        passedAttempts: 0,
-        failedAttempts: 0,
-        inProgressAttempts: 0,
-        bestScore: null,
-        hasCertificate: false,
-      },
-    });
-  }
-
-  const [enrollments, attempts, certificates] = await Promise.all([
-    db.enrollment.findMany({
-      where: { organizationId, learnerId: learner.id },
-      include: { course: true },
-      orderBy: { enrolledAt: "desc" },
-    }),
-    db.attempt.findMany({
-      where: { organizationId, learnerId: learner.id },
-      include: { course: true },
-      orderBy: { startedAt: "desc" },
-    }),
-    db.certificate.findMany({
-      where: { organizationId, learnerId: learner.id },
-      include: { course: true },
-      orderBy: { issuedAt: "desc" },
-    }),
-  ]);
-
-  const enrichedEnrollments = enrollments.map((e) => {
-    const courseAttempts = attempts.filter((a) => a.courseId === e.courseId);
-    const passedAttempts = courseAttempts.filter((a) => a.status === "PASSED");
-    const bestAttempt =
-      passedAttempts.sort((a, b) => (b.scorePercent ?? 0) - (a.scorePercent ?? 0))[0] ?? null;
-    const inProgressAttempt = courseAttempts.find((a) => a.status === "IN_PROGRESS") ?? null;
-    const certificate = certificates.find((c) => c.courseId === e.courseId) ?? null;
-    return { ...e, courseAttempts, bestAttempt, inProgressAttempt, certificate };
-  });
-
-  const passedAttempts = attempts.filter((a) => a.status === "PASSED").length;
-  const failedAttempts = attempts.filter((a) => a.status === "FAILED").length;
-  const inProgressAttempts = attempts.filter((a) => a.status === "IN_PROGRESS").length;
-  const completedCourses = enrollments.filter((e) => e.completedAt).length;
-  const scores = attempts.filter((a) => a.scorePercent !== null).map((a) => a.scorePercent);
-  const bestScore = scores.length ? Math.max(...scores) : null;
-
-  return res.json({
-    learner,
-    enrollments: enrichedEnrollments,
-    attempts,
-    certificates,
-    summary: {
-      totalCourses: enrollments.length,
-      completedCourses,
-      passedAttempts,
-      failedAttempts,
-      inProgressAttempts,
-      bestScore,
-      hasCertificate: certificates.length > 0,
-    },
-  });
-});
-
-router.get("/certificates/:id", requireAuth, async (req, res) => {
-  const { email, organizationId, role } = req.user;
-
-  const cert = await db.certificate.findFirst({
-    where: { id: req.params.id, organizationId },
-    include: {
-      learner: { include: { organization: true } },
-      course: true,
-      attempt: true,
-    },
-  });
-
-  if (!cert) {
-    return res.status(404).json({ error: "Certificate not found" });
-  }
-
-  // Managers+ can see any cert in the org. STAFF can only see their own.
-  const elevated = ["OWNER", "ADMIN", "MANAGER"].includes(role);
-  if (!elevated && cert.learner?.email.toLowerCase() !== email.toLowerCase()) {
-    return res.status(403).json({ error: "Forbidden" });
-  }
-
-  return res.json(cert);
-});
-
 router.get("/public/config/:organizationSlug", async (req, res) => {
   const org = await db.organization.findUnique({ where: { slug: req.params.organizationSlug } });
   if (!org) {
@@ -458,82 +476,11 @@ router.get("/public/config/:organizationSlug", async (req, res) => {
   });
 
   return res.json({
-    organization: { name: org.name, slug: org.slug, logoUrl: org.logoUrl, brandColor: org.brandColor },
+    organization: { name: org.name, slug: org.slug },
     activeCourse: activeCourse
       ? { code: activeCourse.code, title: activeCourse.title, version: activeCourse.version }
       : null,
   });
-});
-
-// ─── Available courses (active courses the authenticated learner is NOT enrolled in) ──
-
-router.get("/available", requireAuth, async (req, res) => {
-  const { email, organizationId } = req.user;
-  const learner = await db.learner.findUnique({
-    where: { organizationId_email: { organizationId, email } },
-  });
-
-  const enrolledCourseIds = learner
-    ? (await db.enrollment.findMany({
-        where: { organizationId, learnerId: learner.id },
-        select: { courseId: true },
-      })).map((e) => e.courseId)
-    : [];
-
-  const available = await db.course.findMany({
-    where: {
-      organizationId,
-      isActive: true,
-      ...(enrolledCourseIds.length ? { id: { notIn: enrolledCourseIds } } : {}),
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
-  return res.json(available);
-});
-
-// ─── Self-enrollment ──────────────────────────────────────────────────────────
-
-router.post("/self-enroll", requireAuth, async (req, res) => {
-  const schema = z.object({ courseId: z.string().min(1) });
-  const parsed = schema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-
-  const { email, organizationId } = req.user;
-
-  // Auto-create learner profile on first self-enroll so users never hit a 404
-  const user = await db.user.findUnique({ where: { id: req.user.sub } });
-  if (!user) return res.status(401).json({ error: "User not found." });
-
-  const learner = await db.learner.upsert({
-    where: { organizationId_email: { organizationId, email } },
-    update: {},
-    create: {
-      organizationId,
-      email,
-      fullName: user.fullName,
-      userId: user.id,
-    },
-  });
-
-  const course = await db.course.findFirst({
-    where: { id: parsed.data.courseId, organizationId, isActive: true },
-  });
-  if (!course) return res.status(404).json({ error: "Course not found." });
-
-  const enrollment = await db.enrollment.upsert({
-    where: {
-      organizationId_learnerId_courseId: {
-        organizationId,
-        learnerId: learner.id,
-        courseId: course.id,
-      },
-    },
-    update: {},
-    create: { organizationId, learnerId: learner.id, courseId: course.id },
-  });
-
-  return res.status(201).json(enrollment);
 });
 
 export default router;

@@ -19,6 +19,7 @@ const fieldRefs = {
 
 const revealNodes = document.querySelectorAll(".reveal");
 const searchParams = new URLSearchParams(window.location.search);
+const ADMIN_ROLES = new Set(["OWNER", "ADMIN", "MANAGER"]);
 
 const DEFAULT_API_BASE = window.NYX_API_BASE || "https://backend-three-rho-40.vercel.app";
 
@@ -179,6 +180,7 @@ form.addEventListener("submit", async (event) => {
 
     localStorage.setItem("nyxApiBase", apiBase);
     localStorage.setItem("nyxOrgSlug", payload.organizationSlug);
+    localStorage.setItem("nyxRequireLogin", "true");
     localStorage.setItem("nyxLearnerEmail", payload.email);
     localStorage.setItem("nyxLearnerName", result.user?.fullName || "Training Learner");
 
@@ -190,9 +192,12 @@ form.addEventListener("submit", async (event) => {
       localStorage.setItem("nyxUserRole", result.user.role);
     }
 
-    updateStatus("Login successful. Opening training platform...");
+    const role = (result.user?.role || "").toUpperCase();
+    const destination = ADMIN_ROLES.has(role) ? "admin.html" : "dashboard.html";
+
+    updateStatus("Login successful. Opening your dashboard...");
     window.setTimeout(() => {
-      window.location.href = "training-tool/index.html";
+      window.location.href = destination;
     }, 550);
   } catch (error) {
     updateStatus(error.message || "Unable to sign in", true);

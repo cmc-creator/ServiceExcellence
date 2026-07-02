@@ -96,7 +96,7 @@ const API_BASE =
   window.NYX_API_BASE ||
   "";
 
-const REQUIRE_LOGIN = localStorage.getItem("nyxRequireLogin") === "true";
+const REQUIRE_LOGIN = localStorage.getItem("nyxRequireLogin") !== "false";
 
 const ORG_SLUG =
   localStorage.getItem("nyxOrgSlug") ||
