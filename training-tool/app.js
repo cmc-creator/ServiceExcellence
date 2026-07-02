@@ -1048,6 +1048,8 @@ const badgeRow = document.getElementById("badgeRow");
 const attestCheckbox = document.getElementById("attestCheckbox");
 const submissionStatus = document.getElementById("submissionStatus");
 const submitCompletionBtn = document.getElementById("submitCompletionBtn");
+const dashboardBtn = document.getElementById("dashboardBtn");
+const viewCertBtn = document.getElementById("viewCertBtn");
 
 let timerHandle;
 
@@ -1941,7 +1943,15 @@ function submitCompletion() {
         ? "LMS submission complete."
         : "LMS was not connected in this session.";
 
+      if (result?.passed) {
+        dashboardBtn?.classList.remove("hidden");
+      }
+
       if (result?.passed && result?.certificateNo) {
+        if (result?.certificateId && viewCertBtn) {
+          viewCertBtn.href = `../certificate.html?id=${encodeURIComponent(result.certificateId)}`;
+          viewCertBtn.classList.remove("hidden");
+        }
         submissionStatus.textContent = `Training record saved and certificate ${result.certificateNo} issued. ${lmsMessage}`;
         return;
       }
@@ -1985,6 +1995,11 @@ function resetExperience() {
   state.personality = { calm: 0, precision: 0, courage: 0 };
   attestCheckbox.checked = false;
   submissionStatus.textContent = "";
+  dashboardBtn?.classList.add("hidden");
+  if (viewCertBtn) {
+    viewCertBtn.classList.add("hidden");
+    viewCertBtn.href = "#";
+  }
   buildRoleTrack();
   clearInterval(timerHandle);
   updateHUD();
