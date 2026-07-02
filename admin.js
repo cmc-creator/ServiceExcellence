@@ -1165,10 +1165,18 @@ async function loadSettings() {
 
   // Add Course form (wired once per loadSettings call)
   const showAddCourseBtn = document.getElementById("showAddCourseBtn");
+  const addAbuseNeglectCourseBtn = document.getElementById("addAbuseNeglectCourseBtn");
   const addCourseForm = document.getElementById("addCourseForm");
   const cancelAddCourseBtn = document.getElementById("cancelAddCourseBtn");
   const saveAddCourseBtn = document.getElementById("saveAddCourseBtn");
   const addCourseStatus = document.getElementById("addCourseStatus");
+
+  if (addAbuseNeglectCourseBtn) {
+    const hasAbuseNeglect = courses.some((c) =>
+      /abuse|neglect/i.test(c.code || "") || /abuse|neglect/i.test(c.title || "")
+    );
+    addAbuseNeglectCourseBtn.classList.toggle("hidden", hasAbuseNeglect);
+  }
 
   showAddCourseBtn.onclick = () => {
     addCourseForm.classList.toggle("hidden");
@@ -1226,6 +1234,38 @@ async function loadSettings() {
       saveAddCourseBtn.disabled = false;
     }
   };
+
+  if (addAbuseNeglectCourseBtn) {
+    addAbuseNeglectCourseBtn.onclick = async () => {
+      addAbuseNeglectCourseBtn.disabled = true;
+      addAbuseNeglectCourseBtn.textContent = "Adding...";
+      try {
+        await api("/api/admin/courses", {
+          method: "POST",
+          body: {
+            code: "ABUSE-NEGLECT-ANNUAL",
+            title: "Abuse and Neglect Recognition and Reporting Annual",
+            version: "2026.1",
+            passPercent: 85,
+            opensAt: null,
+            closesAt: null,
+          },
+        });
+        showToast("Abuse/Neglect course added.", "success");
+        await loadSettings();
+      } catch (err) {
+        const message = err.message || "Failed to add Abuse/Neglect course.";
+        if (/unique|already exists|constraint/i.test(message)) {
+          showToast("Abuse/Neglect course already exists.", "error");
+        } else {
+          showToast(message, "error");
+        }
+      } finally {
+        addAbuseNeglectCourseBtn.disabled = false;
+        addAbuseNeglectCourseBtn.textContent = "+ Add Abuse/Neglect Course";
+      }
+    };
+  }
 }
 
 // ============================================================
