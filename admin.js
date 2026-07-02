@@ -221,6 +221,47 @@ const NEO_STARTER_TEMPLATE_KEYS = [
   "osha-safety",
 ];
 
+const ROLE_SCOPED_TEMPLATE_KEYS = {
+  clinical: [
+    "annual-compliance",
+    "abuse-neglect",
+    "deescalation",
+    "workplace-violence",
+    "hipaa-privacy",
+    "infection-control",
+    "patient-rights",
+    "bloodborne-pathogens",
+    "restraint-seclusion",
+    "incident-reporting",
+    "fire-life-safety",
+    "hazard-communication",
+    "cybersecurity",
+  ],
+  "non-clinical": [
+    "annual-compliance",
+    "abuse-neglect",
+    "workplace-violence",
+    "hipaa-privacy",
+    "patient-rights",
+    "incident-reporting",
+    "fire-life-safety",
+    "hazard-communication",
+    "cultural-competency",
+    "cybersecurity",
+    "osha-safety",
+  ],
+  leadership: [
+    "annual-compliance",
+    "abuse-neglect",
+    "workplace-violence",
+    "hipaa-privacy",
+    "patient-rights",
+    "incident-reporting",
+    "cultural-competency",
+    "cybersecurity",
+  ],
+};
+
 // ============================================================
 // TOAST SYSTEM
 // ============================================================
@@ -483,7 +524,7 @@ saveLearnerBtn.addEventListener("click", async () => {
   addLearnerStatus.textContent = "Saving...";
   addLearnerStatus.className = "form-status";
   try {
-    await api("/api/admin/learners", {
+    const createdLearner = await api("/api/admin/learners", {
       method: "POST",
       body: {
         fullName,
@@ -493,7 +534,13 @@ saveLearnerBtn.addEventListener("click", async () => {
         roleTrack: document.getElementById("lRoleTrack").value.trim() || undefined,
       },
     });
-    showToast("Learner added successfully.", "success");
+    const autoEnrollCount = Number(createdLearner?.autoEnrolled || 0);
+    showToast(
+      autoEnrollCount > 0
+        ? `Learner added. Auto-enrolled in ${autoEnrollCount} course${autoEnrollCount === 1 ? "" : "s"}.`
+        : "Learner added successfully.",
+      "success"
+    );
     addLearnerForm.classList.add("hidden");
     await loadLearners();
   } catch (err) {
@@ -1354,6 +1401,129 @@ async function loadSettings() {
   const addCourseStatus = document.getElementById("addCourseStatus");
   const templateStatus = document.getElementById("courseTemplateStatus");
   const addNeoStarterPackBtn = document.getElementById("addNeoStarterPackBtn");
+  const addClinicalNeoStarterPackBtn = document.getElementById("addClinicalNeoStarterPackBtn");
+  const addNonClinicalNeoStarterPackBtn = document.getElementById("addNonClinicalNeoStarterPackBtn");
+  const addLeadershipNeoStarterPackBtn = document.getElementById("addLeadershipNeoStarterPackBtn");
+  const templateReviewModal = document.getElementById("templateReviewModal");
+  const templateReviewTitle = document.getElementById("templateReviewTitle");
+  const templateReviewSummary = document.getElementById("templateReviewSummary");
+  const templateReviewCreateList = document.getElementById("templateReviewCreateList");
+  const templateReviewSkipList = document.getElementById("templateReviewSkipList");
+  const confirmTemplateReviewBtn = document.getElementById("confirmTemplateReviewBtn");
+  const cancelTemplateReviewBtn = document.getElementById("cancelTemplateReviewBtn");
+
+  let pendingTemplateBatch = null;
+
+  const getTemplateSplit = (keys) => {
+    const toCreate = [];
+    const toSkip = [];
+    keys.forEach((key) => {
+      const tpl = COURSE_TEMPLATES[key];
+      if (!tpl) return;
+      const exists = courses.some((c) => c.code === tpl.code);
+      if (exists) toSkip.push(key);
+      else toCreate.push(key);
+    });
+    return { toCreate, toSkip };
+  };
+
+  const renderTemplateList = (listEl, keys) => {
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    if (!keys.length) {
+      const li = document.createElement("li");
+      li.textContent = "None";
+      listEl.appendChild(li);
+      return;
+    }
+    keys.forEach((key) => {
+      const tpl = COURSE_TEMPLATES[key];
+      if (!tpl) return;
+      const li = document.createElement("li");
+      li.textContent = tpl.title;
+      listEl.appendChild(li);
+    });
+  };
+
+  const closeTemplateReview = () => {
+    pendingTemplateBatch = null;
+    if (templateReviewModal) templateReviewModal.classList.add("hidden");
+  };
+
+  const openTemplateReview = (label, keys) => {
+    const split = getTemplateSplit(keys);
+    pendingTemplateBatch = { label, ...split };
+
+    if (templateReviewTitle) templateReviewTitle.textContent = `Review ${label}`;
+    if (templateReviewSummary) {
+      templateReviewSummary.textContent = `Create ${split.toCreate.length} course(s), skip ${split.toSkip.length} already in your catalogue.`;
+    }
+    renderTemplateList(templateReviewCreateList, split.toCreate);
+    renderTemplateList(templateReviewSkipList, split.toSkip);
+
+    if (confirmTemplateReviewBtn) {
+      confirmTemplateReviewBtn.disabled = split.toCreate.length === 0;
+      confirmTemplateReviewBtn.textContent = split.toCreate.length
+        ? `Create ${split.toCreate.length} Course${split.toCreate.length === 1 ? "" : "s"}`
+        : "Nothing New to Create";
+    }
+
+    if (templateReviewModal) templateReviewModal.classList.remove("hidden");
+  };
+
+  const runTemplateBatchCreate = async () => {
+    if (!pendingTemplateBatch) return;
+
+    const { label, toCreate, toSkip } = pendingTemplateBatch;
+    let added = 0;
+    let failed = 0;
+
+    if (templateStatus) {
+      templateStatus.textContent = `Adding ${label}...`;
+      templateStatus.className = "form-status";
+    }
+
+    if (confirmTemplateReviewBtn) confirmTemplateReviewBtn.disabled = true;
+
+    for (const key of toCreate) {
+      const tpl = COURSE_TEMPLATES[key];
+      if (!tpl) continue;
+      try {
+        await api("/api/admin/courses", {
+          method: "POST",
+          body: {
+            code: tpl.code,
+            title: tpl.title,
+            courseType: tpl.courseType,
+            version: tpl.version,
+            passPercent: tpl.passPercent,
+            opensAt: null,
+            closesAt: null,
+          },
+        });
+        added += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+
+    const skipped = toSkip.length + failed;
+    const statusMsg = `${label}: added ${added}, skipped ${skipped}.`;
+    if (templateStatus) {
+      templateStatus.textContent = statusMsg;
+      templateStatus.className = failed > 0 ? "form-status is-error" : "form-status";
+    }
+    showToast(statusMsg, failed > 0 ? "error" : "success");
+
+    closeTemplateReview();
+    await loadSettings();
+  };
+
+  cancelTemplateReviewBtn?.onclick = closeTemplateReview;
+  templateReviewModal?.addEventListener("click", (event) => {
+    if (event.target === templateReviewModal) closeTemplateReview();
+  });
+  confirmTemplateReviewBtn?.onclick = runTemplateBatchCreate;
 
   if (addAbuseNeglectCourseBtn) {
     const hasAbuseNeglectCourse = courses.some((c) =>
@@ -1409,64 +1579,39 @@ async function loadSettings() {
   });
 
   if (addNeoStarterPackBtn) {
-    const missingCount = NEO_STARTER_TEMPLATE_KEYS.filter((key) => {
-      const tpl = COURSE_TEMPLATES[key];
-      return tpl && !courses.some((c) => c.code === tpl.code);
-    }).length;
-
-    addNeoStarterPackBtn.disabled = missingCount === 0;
+    const missingCount = getTemplateSplit(NEO_STARTER_TEMPLATE_KEYS).toCreate.length;
+    addNeoStarterPackBtn.disabled = false;
     addNeoStarterPackBtn.textContent = missingCount === 0
       ? "NEO Starter Pack Added ✓"
       : `Add Full NEO Starter Pack (${missingCount} missing)`;
-
-    addNeoStarterPackBtn.onclick = async () => {
-      addNeoStarterPackBtn.disabled = true;
-      if (templateStatus) {
-        templateStatus.textContent = "Adding NEO starter pack...";
-        templateStatus.className = "form-status";
-      }
-
-      let added = 0;
-      let skipped = 0;
-
-      for (const key of NEO_STARTER_TEMPLATE_KEYS) {
-        const tpl = COURSE_TEMPLATES[key];
-        if (!tpl) continue;
-
-        const exists = courses.some((c) => c.code === tpl.code);
-        if (exists) {
-          skipped += 1;
-          continue;
-        }
-
-        try {
-          await api("/api/admin/courses", {
-            method: "POST",
-            body: {
-              code: tpl.code,
-              title: tpl.title,
-              courseType: tpl.courseType,
-              version: tpl.version,
-              passPercent: tpl.passPercent,
-              opensAt: null,
-              closesAt: null,
-            },
-          });
-          added += 1;
-        } catch {
-          skipped += 1;
-        }
-      }
-
-      if (templateStatus) {
-        templateStatus.textContent = `NEO starter pack: added ${added}, skipped ${skipped}.`;
-        templateStatus.className = "form-status";
-      }
-
-      showToast(`NEO starter pack complete. Added ${added}, skipped ${skipped}.`, "success");
-      await loadSettings();
-    };
+    addNeoStarterPackBtn.onclick = () => openTemplateReview("Full NEO Starter Pack", NEO_STARTER_TEMPLATE_KEYS);
   }
+
+  const configureRolePackButton = (btn, label, keys) => {
+    if (!btn) return;
+    const missingCount = getTemplateSplit(keys).toCreate.length;
+    btn.disabled = false;
+    btn.textContent = missingCount === 0
+      ? `${label} Added ✓`
+      : `${label} (${missingCount} missing)`;
+    btn.onclick = () => openTemplateReview(label, keys);
+  };
+
+  configureRolePackButton(
+    addClinicalNeoStarterPackBtn,
+    "Clinical NEO Pack",
+    ROLE_SCOPED_TEMPLATE_KEYS.clinical
+  );
+  configureRolePackButton(
+    addNonClinicalNeoStarterPackBtn,
+    "Non-Clinical NEO Pack",
+    ROLE_SCOPED_TEMPLATE_KEYS["non-clinical"]
+  );
+  configureRolePackButton(
+    addLeadershipNeoStarterPackBtn,
+    "Leadership NEO Pack",
+    ROLE_SCOPED_TEMPLATE_KEYS.leadership
+  );
 
   showAddCourseBtn.onclick = () => {
     addCourseForm.classList.toggle("hidden");
@@ -1874,7 +2019,10 @@ csvImportInput.addEventListener("change", async (e) => {
   csvImportBtn.textContent = "Importing...";
   try {
     const result = await api("/api/admin/learners/bulk", { method: "POST", body: rows });
-    showToast(`Imported ${result.created} learner${result.created !== 1 ? "s" : ""}. Skipped ${result.skipped} duplicate${result.skipped !== 1 ? "s" : ""}.`, "success");
+    const autoEnrollMsg = Number(result.autoEnrolled || 0) > 0
+      ? ` Auto-enrolled ${result.autoEnrolled} assignment${result.autoEnrolled === 1 ? "" : "s"}.`
+      : "";
+    showToast(`Imported ${result.created} learner${result.created !== 1 ? "s" : ""}. Skipped ${result.skipped} duplicate${result.skipped !== 1 ? "s" : ""}.${autoEnrollMsg}`, "success");
     await loadLearners();
   } catch (err) {
     showToast(err.message || "Import failed.", "error");

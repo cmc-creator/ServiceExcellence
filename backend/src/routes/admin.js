@@ -58,6 +58,139 @@ function parseOptionalIso(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+const AUTO_ENROLLMENT_CORE_CODES = [
+  "ANNUAL-COMPLIANCE-CORE",
+  "ABUSE-NEGLECT-ANNUAL",
+  "WORKPLACE-VIOLENCE-ANNUAL",
+  "HIPAA-PRIVACY-ANNUAL",
+  "PATIENT-RIGHTS-ANNUAL",
+  "INCIDENT-REPORTING-ANNUAL",
+  "CYBERSECURITY-PHISHING-ANNUAL",
+  "CULTURAL-COMPETENCY-ANNUAL",
+  "FIRE-LIFE-SAFETY-ANNUAL",
+];
+
+const AUTO_ENROLLMENT_DEPARTMENT_RULES = [
+  {
+    keywords: ["behavioral", "psychi", "mental", "clinical"],
+    codes: [
+      "DEESCALATION-ANNUAL",
+      "RESTRAINT-SECLUSION-ANNUAL",
+      "INFECTION-CONTROL-ANNUAL",
+      "BLOODBORNE-PATHOGENS-ANNUAL",
+      "HAZARD-COMM-ANNUAL",
+    ],
+  },
+  {
+    keywords: ["nursing", "nurse", "patient care", "med surg", "med-surg"],
+    codes: [
+      "INFECTION-CONTROL-ANNUAL",
+      "BLOODBORNE-PATHOGENS-ANNUAL",
+      "HAZARD-COMM-ANNUAL",
+      "DEESCALATION-ANNUAL",
+    ],
+  },
+  {
+    keywords: ["emergency", "ed", "triage"],
+    codes: [
+      "EMTALA-AWARENESS-ANNUAL",
+      "DEESCALATION-ANNUAL",
+      "RESTRAINT-SECLUSION-ANNUAL",
+      "INFECTION-CONTROL-ANNUAL",
+      "BLOODBORNE-PATHOGENS-ANNUAL",
+    ],
+  },
+  {
+    keywords: ["security", "facilities", "maintenance", "environmental", "evs", "housekeeping"],
+    codes: [
+      "OSHA-SAFETY-ANNUAL",
+      "HAZARD-COMM-ANNUAL",
+      "DEESCALATION-ANNUAL",
+    ],
+  },
+  {
+    keywords: ["leadership", "director", "manager", "supervisor"],
+    codes: [
+      "EMTALA-AWARENESS-ANNUAL",
+      "OSHA-SAFETY-ANNUAL",
+    ],
+  },
+  {
+    keywords: ["registration", "admitting", "front desk", "intake"],
+    codes: [
+      "EMTALA-AWARENESS-ANNUAL",
+      "HAZARD-COMM-ANNUAL",
+    ],
+  },
+];
+
+const AUTO_ENROLLMENT_CODE_SET = Array.from(new Set([
+  ...AUTO_ENROLLMENT_CORE_CODES,
+  ...AUTO_ENROLLMENT_DEPARTMENT_RULES.flatMap((rule) => rule.codes),
+]));
+
+function normalizeDeptLabel(value) {
+  return (value || "").toLowerCase().trim();
+}
+
+function resolveAutoEnrollmentCodes(department) {
+  const dept = normalizeDeptLabel(department);
+  const selected = new Set(AUTO_ENROLLMENT_CORE_CODES);
+
+  AUTO_ENROLLMENT_DEPARTMENT_RULES.forEach((rule) => {
+    const match = rule.keywords.some((keyword) => dept.includes(keyword));
+    if (match) {
+      rule.codes.forEach((code) => selected.add(code));
+    }
+  });
+
+  return Array.from(selected);
+}
+
+async function autoEnrollNewHireCourses(organizationId, learnerId, department, activeCourseByCode = null) {
+  const targetCodes = resolveAutoEnrollmentCodes(department);
+  if (!targetCodes.length) return 0;
+
+  let courseMap = activeCourseByCode;
+  if (!courseMap) {
+    const activeCourses = await db.course.findMany({
+      where: {
+        organizationId,
+        isActive: true,
+        code: { in: AUTO_ENROLLMENT_CODE_SET },
+      },
+      select: { id: true, code: true },
+    });
+    courseMap = new Map(activeCourses.map((course) => [course.code, course]));
+  }
+
+  let enrolledCount = 0;
+  for (const code of targetCodes) {
+    const course = courseMap.get(code);
+    if (!course) continue;
+
+    await db.enrollment.upsert({
+      where: {
+        organizationId_learnerId_courseId: {
+          organizationId,
+          learnerId,
+          courseId: course.id,
+        },
+      },
+      update: {},
+      create: {
+        organizationId,
+        learnerId,
+        courseId: course.id,
+      },
+    });
+
+    enrolledCount += 1;
+  }
+
+  return enrolledCount;
+}
+
 router.get("/dashboard", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
   const orgId = req.user.organizationId;
   const [learners, courses, attempts, passed] = await Promise.all([
@@ -84,7 +217,13 @@ router.post("/learners", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req,
     },
   });
 
-  return res.status(201).json(learner);
+  const autoEnrolled = await autoEnrollNewHireCourses(
+    req.user.organizationId,
+    learner.id,
+    learner.department
+  );
+
+  return res.status(201).json({ ...learner, autoEnrolled });
 });
 
 router.get("/learners", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
@@ -114,6 +253,17 @@ router.post("/learners/bulk", requireRole(["OWNER", "ADMIN", "MANAGER"]), async 
 
   let created = 0;
   let skipped = 0;
+  let autoEnrolled = 0;
+
+  const activeCourses = await db.course.findMany({
+    where: {
+      organizationId: req.user.organizationId,
+      isActive: true,
+      code: { in: AUTO_ENROLLMENT_CODE_SET },
+    },
+    select: { id: true, code: true },
+  });
+  const activeCourseByCode = new Map(activeCourses.map((course) => [course.code, course]));
 
   for (const row of parsed.data) {
     const email = row.email.toLowerCase();
@@ -129,17 +279,23 @@ router.post("/learners/bulk", requireRole(["OWNER", "ADMIN", "MANAGER"]), async 
       continue;
     }
 
-    await db.learner.create({
+    const learner = await db.learner.create({
       data: {
         ...row,
         email,
         organizationId: req.user.organizationId,
       },
     });
+    autoEnrolled += await autoEnrollNewHireCourses(
+      req.user.organizationId,
+      learner.id,
+      learner.department,
+      activeCourseByCode
+    );
     created += 1;
   }
 
-  return res.status(201).json({ created, skipped });
+  return res.status(201).json({ created, skipped, autoEnrolled });
 });
 
 router.patch("/learners/:id", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {

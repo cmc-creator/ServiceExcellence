@@ -326,3 +326,57 @@ select.admin-input option {
 .toggle-text { font-size: 12px; font-weight: 600; }
 .text-green { color: var(--brand-green); }
 .text-muted { color: var(--ink-2); }
+
+/* ==================== TEMPLATE REVIEW MODAL ==================== */
+.template-review-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 18, 0.72);
+  z-index: 700;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.template-review-modal {
+  width: min(860px, 96vw);
+  max-height: 88vh;
+  overflow: auto;
+  background: rgba(10, 22, 36, 0.97);
+  border: 1px solid rgba(245, 184, 103, 0.3);
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+}
+.template-review-summary {
+  color: var(--ink-1);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+.template-review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.template-review-grid h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand-gold);
+}
+.template-review-list {
+  margin: 0;
+  padding-left: 18px;
+  max-height: 280px;
+  overflow: auto;
+}
+.template-review-list li {
+  color: var(--ink-1);
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+@media (max-width: 820px) {
+  .template-review-grid {
+    grid-template-columns: 1fr;
+  }
+}
