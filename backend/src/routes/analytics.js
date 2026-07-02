@@ -46,6 +46,9 @@ function aggregateAbuseNeglectMastery(events) {
       learnerEmail: evt.learner?.email || "",
       employeeId: evt.learner?.employeeId || "",
       department: evt.learner?.department || "Unassigned",
+      courseCode: evt.course?.code || "",
+      courseTitle: evt.course?.title || "",
+      courseType: evt.course?.courseType || "Compliance",
       roleTrack,
       rolePersona,
       assessmentPercent: Number(detail?.assessmentPercent),
@@ -186,6 +189,67 @@ router.get("/by-department", async (req, res) => {
   return res.json(rows);
 });
 
+router.get("/by-course-type", async (req, res) => {
+  const orgId = req.user.organizationId;
+  const [enrollments, attempts] = await Promise.all([
+    db.enrollment.findMany({
+      where: { organizationId: orgId },
+      select: {
+        completedAt: true,
+        course: { select: { courseType: true } },
+      },
+    }),
+    db.attempt.findMany({
+      where: { organizationId: orgId },
+      select: {
+        status: true,
+        course: { select: { courseType: true } },
+      },
+    }),
+  ]);
+
+  const map = new Map();
+  const ensure = (courseType) => {
+    const key = courseType || "Compliance";
+    if (!map.has(key)) {
+      map.set(key, {
+        courseType: key,
+        totalEnrollments: 0,
+        completedEnrollments: 0,
+        passCount: 0,
+        failCount: 0,
+      });
+    }
+    return map.get(key);
+  };
+
+  for (const row of enrollments) {
+    const agg = ensure(row.course?.courseType);
+    agg.totalEnrollments += 1;
+    if (row.completedAt) agg.completedEnrollments += 1;
+  }
+
+  for (const row of attempts) {
+    const agg = ensure(row.course?.courseType);
+    if (row.status === "PASSED") agg.passCount += 1;
+    if (row.status === "FAILED") agg.failCount += 1;
+  }
+
+  const rows = Array.from(map.values())
+    .map((row) => ({
+      ...row,
+      completionRate: row.totalEnrollments
+        ? Number(((row.completedEnrollments / row.totalEnrollments) * 100).toFixed(1))
+        : 0,
+      passRate: row.passCount + row.failCount
+        ? Number((row.passCount / (row.passCount + row.failCount) * 100).toFixed(1))
+        : 0,
+    }))
+    .sort((a, b) => b.totalEnrollments - a.totalEnrollments);
+
+  return res.json(rows);
+});
+
 router.get("/mastery/abuse-neglect", async (req, res) => {
   const orgId = req.user.organizationId;
   const events = await db.trainingEvent.findMany({
@@ -196,6 +260,13 @@ router.get("/mastery/abuse-neglect", async (req, res) => {
     select: {
       attemptId: true,
       learnerId: true,
+      course: {
+        select: {
+          code: true,
+          title: true,
+          courseType: true,
+        },
+      },
       learner: {
         select: {
           fullName: true,
@@ -243,6 +314,13 @@ router.get("/mastery/abuse-neglect/learners", async (req, res) => {
     select: {
       attemptId: true,
       learnerId: true,
+      course: {
+        select: {
+          code: true,
+          title: true,
+          courseType: true,
+        },
+      },
       learner: {
         select: {
           fullName: true,

@@ -321,6 +321,7 @@ let analyticsCompletion = null;
 let analyticsTrends = [];
 let analyticsMastery = null;
 let analyticsMasteryLearners = [];
+let analyticsByCourseType = [];
 let learnerNextCursor = null;
 let learnerHasMore = false;
 
@@ -794,21 +795,28 @@ function destroyChart(ref) {
 function hasActiveMasteryFilters() {
   const role = document.getElementById("masteryFilterRole")?.value || "";
   const dept = document.getElementById("masteryFilterDept")?.value || "";
+  const courseType = document.getElementById("masteryFilterCourseType")?.value || "";
   const from = document.getElementById("masteryFilterFrom")?.value || "";
   const to = document.getElementById("masteryFilterTo")?.value || "";
-  return Boolean(role || dept || from || to);
+  return Boolean(role || dept || courseType || from || to);
 }
 
 function populateMasteryAuditFilters(rows) {
   const roleSel = document.getElementById("masteryFilterRole");
   const deptSel = document.getElementById("masteryFilterDept");
-  if (!roleSel || !deptSel) return;
+  const courseTypeSel = document.getElementById("masteryFilterCourseType");
+  if (!roleSel || !deptSel || !courseTypeSel) return;
 
   const prevRole = roleSel.value;
   const prevDept = deptSel.value;
+  const prevCourseType = courseTypeSel.value;
 
   const roles = [...new Set(rows.map((r) => (r.roleTrack || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const depts = [...new Set(rows.map((r) => (r.department || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const courseTypes = [...new Set([
+    ...rows.map((r) => (r.courseType || "").trim()),
+    ...analyticsByCourseType.map((r) => (r.courseType || "").trim()),
+  ].filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
   roleSel.innerHTML = '<option value="">All role tracks</option>';
   roles.forEach((value) => {
@@ -826,13 +834,23 @@ function populateMasteryAuditFilters(rows) {
     deptSel.appendChild(opt);
   });
 
+  courseTypeSel.innerHTML = '<option value="">All course types</option>';
+  courseTypes.forEach((value) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    courseTypeSel.appendChild(opt);
+  });
+
   if (prevRole && roles.includes(prevRole)) roleSel.value = prevRole;
   if (prevDept && depts.includes(prevDept)) deptSel.value = prevDept;
+  if (prevCourseType && courseTypes.includes(prevCourseType)) courseTypeSel.value = prevCourseType;
 }
 
 function getFilteredMasteryLearners(rows = analyticsMasteryLearners) {
   const role = document.getElementById("masteryFilterRole")?.value || "";
   const dept = document.getElementById("masteryFilterDept")?.value || "";
+  const courseType = document.getElementById("masteryFilterCourseType")?.value || "";
   const fromRaw = document.getElementById("masteryFilterFrom")?.value || "";
   const toRaw = document.getElementById("masteryFilterTo")?.value || "";
 
@@ -842,6 +860,7 @@ function getFilteredMasteryLearners(rows = analyticsMasteryLearners) {
   return (rows || []).filter((row) => {
     if (role && (row.roleTrack || "") !== role) return false;
     if (dept && (row.department || "") !== dept) return false;
+    if (courseType && (row.courseType || "") !== courseType) return false;
     if (fromDate || toDate) {
       const completedAt = row.completedAt ? new Date(row.completedAt) : null;
       if (!completedAt || Number.isNaN(completedAt.getTime())) return false;
@@ -872,19 +891,21 @@ function refreshMasteryAuditSummary() {
 }
 
 async function loadAnalytics() {
-  const [completion, events, trends, deptData, mastery, masteryLearners] = await Promise.all([
+  const [completion, events, trends, deptData, mastery, masteryLearners, byCourseType] = await Promise.all([
     api("/api/analytics/completion"),
     api("/api/analytics/events/top"),
     api("/api/analytics/trends"),
     api("/api/analytics/by-department").catch(() => []),
     api("/api/analytics/mastery/abuse-neglect").catch(() => null),
     api("/api/analytics/mastery/abuse-neglect/learners").catch(() => null),
+    api("/api/analytics/by-course-type").catch(() => []),
   ]);
 
   analyticsCompletion = completion || null;
   analyticsTrends = trends || [];
   analyticsMastery = mastery || null;
   analyticsMasteryLearners = masteryLearners?.learners || [];
+  analyticsByCourseType = byCourseType || [];
   populateMasteryAuditFilters(analyticsMasteryLearners);
 
   if (completion) {
@@ -1867,6 +1888,28 @@ document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
     return;
   }
   const rows = [];
+  const selectedCourseType = document.getElementById("masteryFilterCourseType")?.value || "";
+  const selectedTypeSummary = selectedCourseType
+    ? analyticsByCourseType.find((r) => (r.courseType || "") === selectedCourseType)
+    : null;
+
+  if (selectedCourseType) {
+    rows.push(["Analytics Filter", "Value"]);
+    rows.push(["Course Type", selectedCourseType]);
+    rows.push([]);
+
+    if (selectedTypeSummary) {
+      rows.push(["Filtered Summary", "Value"]);
+      rows.push(["Total Enrollments", selectedTypeSummary.totalEnrollments]);
+      rows.push(["Completed", selectedTypeSummary.completedEnrollments]);
+      rows.push(["Completion Rate", `${selectedTypeSummary.completionRate}%`]);
+      rows.push(["Passed Attempts", selectedTypeSummary.passCount]);
+      rows.push(["Failed Attempts", selectedTypeSummary.failCount]);
+      rows.push(["Pass Rate", `${selectedTypeSummary.passRate}%`]);
+      rows.push([]);
+    }
+  }
+
   if (analyticsCompletion) {
     rows.push(["Metric", "Value"]);
     rows.push(["Total Enrollments", analyticsCompletion.totalEnrollments]);
@@ -1887,9 +1930,38 @@ document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
     rows.push([]);
   }
   if (analyticsMastery?.roles?.length) {
+    let masteryRows = analyticsMastery.roles;
+    if (selectedCourseType) {
+      const filteredLearners = getFilteredMasteryLearners();
+      const roleMap = new Map();
+      filteredLearners.forEach((row) => {
+        if (!roleMap.has(row.roleTrack)) {
+          roleMap.set(row.roleTrack, {
+            roleTrack: row.roleTrack,
+            attempts: 0,
+            masteredCount: 0,
+            masteryTotal: 0,
+            requiredThreshold: row.requiredThreshold,
+          });
+        }
+        const agg = roleMap.get(row.roleTrack);
+        agg.attempts += 1;
+        agg.masteredCount += row.mastered ? 1 : 0;
+        agg.masteryTotal += Number(row.abuseNeglectPct) || 0;
+      });
+      masteryRows = Array.from(roleMap.values()).map((row) => ({
+        roleTrack: row.roleTrack,
+        attempts: row.attempts,
+        masteredCount: row.masteredCount,
+        avgMasteryPct: row.attempts ? Number((row.masteryTotal / row.attempts).toFixed(1)) : 0,
+        requiredThreshold: row.requiredThreshold,
+        masteryRate: row.attempts ? Number(((row.masteredCount / row.attempts) * 100).toFixed(1)) : 0,
+      }));
+    }
+
     rows.push(["Abuse/Neglect Mastery", ""]);
     rows.push(["Role Track", "Attempts", "Mastered", "Avg Mastery %", "Target %", "Mastery Rate %"]);
-    analyticsMastery.roles.forEach((r) => {
+    masteryRows.forEach((r) => {
       rows.push([r.roleTrack, r.attempts, r.masteredCount, r.avgMasteryPct, r.requiredThreshold, r.masteryRate]);
     });
   }
@@ -1920,7 +1992,7 @@ document.getElementById("exportMasteryLearnersBtn")?.addEventListener("click", a
   }
 
   const rows = [
-    ["Learner", "Email", "Employee ID", "Department", "Role Track", "Assessment %", "Abuse/Neglect %", "Required %", "Mastered", "Completed At"],
+    ["Learner", "Email", "Employee ID", "Department", "Course Type", "Course", "Role Track", "Assessment %", "Abuse/Neglect %", "Required %", "Mastered", "Completed At"],
   ];
 
   learners.forEach((row) => {
@@ -1929,6 +2001,8 @@ document.getElementById("exportMasteryLearnersBtn")?.addEventListener("click", a
       row.learnerEmail || "",
       row.employeeId || "",
       row.department || "",
+      row.courseType || "",
+      row.courseTitle || row.courseCode || "",
       row.roleTrack || "",
       Number.isFinite(row.assessmentPercent) ? row.assessmentPercent : "",
       Number.isFinite(row.abuseNeglectPct) ? row.abuseNeglectPct : "",
@@ -1952,17 +2026,19 @@ document.getElementById("exportMasteryLearnersBtn")?.addEventListener("click", a
   URL.revokeObjectURL(url);
 });
 
-["masteryFilterRole", "masteryFilterDept", "masteryFilterFrom", "masteryFilterTo"].forEach((id) => {
+["masteryFilterRole", "masteryFilterDept", "masteryFilterCourseType", "masteryFilterFrom", "masteryFilterTo"].forEach((id) => {
   document.getElementById(id)?.addEventListener("change", refreshMasteryAuditSummary);
 });
 
 document.getElementById("masteryFilterClearBtn")?.addEventListener("click", () => {
   const role = document.getElementById("masteryFilterRole");
   const dept = document.getElementById("masteryFilterDept");
+  const courseType = document.getElementById("masteryFilterCourseType");
   const from = document.getElementById("masteryFilterFrom");
   const to = document.getElementById("masteryFilterTo");
   if (role) role.value = "";
   if (dept) dept.value = "";
+  if (courseType) courseType.value = "";
   if (from) from.value = "";
   if (to) to.value = "";
   refreshMasteryAuditSummary();
