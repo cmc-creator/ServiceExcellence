@@ -624,6 +624,68 @@
           <p class="form-status" id="brandingStatus"></p>
         </div>
 
+        <div class="admin-form-card" style="max-width:980px;margin-top:24px;">
+          <h3>New-Hire Auto-Enrollment Rules</h3>
+          <p class="muted" style="margin-top:-8px;margin-bottom:12px;">Edit JSON rule mappings, preview expected enrollments, then save to apply for future learner creates/imports.</p>
+          <div class="form-field">
+            <label for="autoEnrollRulesJson">Rules JSON</label>
+            <textarea id="autoEnrollRulesJson" class="admin-input mono-input" rows="12" spellcheck="false"></textarea>
+          </div>
+          <div class="form-field" style="margin-top:10px;max-width:340px;">
+            <label for="autoEnrollSampleDepartment">Sample Department (for dry run)</label>
+            <input id="autoEnrollSampleDepartment" type="text" class="admin-input" placeholder="e.g. Nursing, Behavioral Health, Intake">
+          </div>
+          <div class="form-actions" style="margin-top:12px;">
+            <button class="btn-ghost btn-sm" id="previewAutoEnrollRulesBtn" type="button">Preview Rule Impact</button>
+            <button class="btn-solid btn-sm" id="saveAutoEnrollRulesBtn" type="button">Save Auto-Enrollment Rules</button>
+          </div>
+          <p class="form-status" id="autoEnrollRulesStatus"></p>
+
+          <div class="table-wrap" style="margin-top:12px;">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Learner</th>
+                  <th>Department</th>
+                  <th>Potential Assignments</th>
+                  <th>Course Codes</th>
+                </tr>
+              </thead>
+              <tbody id="autoEnrollPreviewTableBody"></tbody>
+            </table>
+          </div>
+          <p class="form-status" id="autoEnrollPreviewSummary"></p>
+          <p class="no-data hidden" id="noAutoEnrollPreview">Run preview to see learner-level enrollment impact.</p>
+
+          <h3 style="margin-top:18px;">Rule Change Audit</h3>
+          <div class="table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Changed At</th>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Core Codes</th>
+                  <th>Department Rules</th>
+                </tr>
+              </thead>
+              <tbody id="autoEnrollAuditTableBody"></tbody>
+            </table>
+          </div>
+          <p class="no-data hidden" id="noAutoEnrollAudit">No rule changes recorded yet.</p>
+        </div>
+
+        <div class="admin-form-card" style="max-width:980px;margin-top:24px;">
+          <h3>Production Smoke Checklist</h3>
+          <p class="muted" style="margin-top:-8px;margin-bottom:12px;">Quick verification for frontend readiness, backend auto-enrollment checks, and CSV export behavior.</p>
+          <div class="form-actions">
+            <button class="btn-ghost btn-sm" id="runSmokeChecklistBtn" type="button">Run UI Smoke Check</button>
+            <button class="btn-ghost btn-sm" id="verifyCsvExportsBtn" type="button">Verify CSV Exports</button>
+          </div>
+          <ul id="smokeChecklistResults" class="smoke-checklist"></ul>
+          <p class="muted" style="margin-top:10px;">Backend/API smoke command: <code>npm run smoke:backend</code> (from local clone).</p>
+        </div>
+
         <div class="section-head" style="margin-top:40px;">
           <p class="section-kicker">Course Catalogue</p>
           <h2>Manage Courses</h2>

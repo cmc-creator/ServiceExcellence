@@ -23,7 +23,9 @@ const observer = new IntersectionObserver(
 );
 
 revealNodes.forEach((node, index) => {
-  node.style.transitionDelay = `${Math.min(index * 70, 280)}ms`;
+  const explicitDelay = Number(node.getAttribute("data-reveal-delay"));
+  const delay = Number.isFinite(explicitDelay) ? explicitDelay : Math.min(index * 70, 280);
+  node.style.transitionDelay = `${delay}ms`;
   observer.observe(node);
 });
 

@@ -450,6 +450,35 @@ main,
   letter-spacing: 0.03rem;
 }
 
+.hero-stage-progress {
+  margin-top: 8px;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.hero-stage-progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--brand-gold), var(--brand-mint));
+  animation: heroProgressCycle 12s linear infinite;
+}
+
+.hero-stage-image:hover .hero-stage-progress span,
+.hero-stage-image:focus-within .hero-stage-progress span,
+.hero-stage-image.is-paused .hero-stage-progress span {
+  animation-play-state: paused;
+}
+
+@keyframes heroProgressCycle {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
 .stage-stats {
   margin-top: 12px;
   display: flex;
@@ -908,26 +937,10 @@ main,
     grid-template-columns: 1fr;
   }
 
-  .hero-stage-image img {
-    height: 200px;
-  }
-
   .hero-stage-image-track {
     height: 200px;
   }
 
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-stage-slide {
-    animation: none;
-    opacity: 0;
-    transform: none;
-  }
-
-  .hero-stage-slide:first-child {
-    opacity: 1;
-  }
-}
   .metrics,
   .facts-grid,
   .card-grid,
@@ -969,6 +982,21 @@ main,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-stage-slide {
+    animation: none;
+    opacity: 0;
+    transform: none;
+  }
+
+  .hero-stage-slide:first-child {
+    opacity: 1;
+  }
+
+  .hero-stage-progress span {
+    animation: none;
+    width: 100%;
+  }
+
   * {
     animation: none !important;
     transition: none !important;

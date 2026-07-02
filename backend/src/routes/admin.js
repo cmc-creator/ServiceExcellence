@@ -48,6 +48,21 @@ const userUpdateSchema = z.object({
   newPassword: z.string().min(8).optional(),
 });
 
+const autoEnrollmentDepartmentRuleSchema = z.object({
+  keywords: z.array(z.string().min(1)).min(1).max(25),
+  codes: z.array(z.string().min(2)).min(1).max(50),
+});
+
+const autoEnrollmentRuleSetSchema = z.object({
+  coreCodes: z.array(z.string().min(2)).max(100).default([]),
+  departmentRules: z.array(autoEnrollmentDepartmentRuleSchema).max(100).default([]),
+});
+
+const autoEnrollmentPreviewSchema = z.object({
+  ruleSet: autoEnrollmentRuleSetSchema.optional(),
+  sampleDepartment: z.string().max(120).optional(),
+});
+
 function isOwner(req) {
   return req.user.role === "OWNER";
 }
@@ -58,7 +73,7 @@ function parseOptionalIso(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-const AUTO_ENROLLMENT_CORE_CODES = [
+const DEFAULT_AUTO_ENROLLMENT_CORE_CODES = [
   "ANNUAL-COMPLIANCE-CORE",
   "ABUSE-NEGLECT-ANNUAL",
   "WORKPLACE-VIOLENCE-ANNUAL",
@@ -70,7 +85,7 @@ const AUTO_ENROLLMENT_CORE_CODES = [
   "FIRE-LIFE-SAFETY-ANNUAL",
 ];
 
-const AUTO_ENROLLMENT_DEPARTMENT_RULES = [
+const DEFAULT_AUTO_ENROLLMENT_DEPARTMENT_RULES = [
   {
     keywords: ["behavioral", "psychi", "mental", "clinical"],
     codes: [
@@ -124,20 +139,82 @@ const AUTO_ENROLLMENT_DEPARTMENT_RULES = [
   },
 ];
 
-const AUTO_ENROLLMENT_CODE_SET = Array.from(new Set([
-  ...AUTO_ENROLLMENT_CORE_CODES,
-  ...AUTO_ENROLLMENT_DEPARTMENT_RULES.flatMap((rule) => rule.codes),
-]));
+function normalizeCodeList(codes) {
+  if (!Array.isArray(codes)) return [];
+  return Array.from(new Set(
+    codes
+      .map((code) => String(code || "").trim().toUpperCase())
+      .filter(Boolean)
+  ));
+}
+
+function normalizeKeywordList(keywords) {
+  if (!Array.isArray(keywords)) return [];
+  return Array.from(new Set(
+    keywords
+      .map((keyword) => String(keyword || "").trim().toLowerCase())
+      .filter(Boolean)
+  ));
+}
+
+function getDefaultAutoEnrollmentRuleSet() {
+  return {
+    coreCodes: [...DEFAULT_AUTO_ENROLLMENT_CORE_CODES],
+    departmentRules: DEFAULT_AUTO_ENROLLMENT_DEPARTMENT_RULES.map((rule) => ({
+      keywords: [...rule.keywords],
+      codes: [...rule.codes],
+    })),
+  };
+}
+
+function coerceAutoEnrollmentRuleSet(raw) {
+  const parsed = autoEnrollmentRuleSetSchema.safeParse(raw);
+  if (!parsed.success) return getDefaultAutoEnrollmentRuleSet();
+
+  const normalized = {
+    coreCodes: normalizeCodeList(parsed.data.coreCodes),
+    departmentRules: parsed.data.departmentRules
+      .map((rule) => ({
+        keywords: normalizeKeywordList(rule.keywords),
+        codes: normalizeCodeList(rule.codes),
+      }))
+      .filter((rule) => rule.keywords.length && rule.codes.length),
+  };
+
+  if (!normalized.coreCodes.length) {
+    normalized.coreCodes = [...DEFAULT_AUTO_ENROLLMENT_CORE_CODES];
+  }
+
+  if (!normalized.departmentRules.length) {
+    normalized.departmentRules = getDefaultAutoEnrollmentRuleSet().departmentRules;
+  }
+
+  return normalized;
+}
+
+function coerceAutoEnrollmentRuleAudit(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((entry) => entry && typeof entry === "object")
+    .slice(0, 100);
+}
+
+function buildAutoEnrollmentCodeSet(ruleSet) {
+  return Array.from(new Set([
+    ...ruleSet.coreCodes,
+    ...ruleSet.departmentRules.flatMap((rule) => rule.codes),
+  ]));
+}
 
 function normalizeDeptLabel(value) {
   return (value || "").toLowerCase().trim();
 }
 
-function resolveAutoEnrollmentCodes(department) {
+function resolveAutoEnrollmentCodes(department, ruleSet) {
   const dept = normalizeDeptLabel(department);
-  const selected = new Set(AUTO_ENROLLMENT_CORE_CODES);
+  const selected = new Set(ruleSet.coreCodes);
 
-  AUTO_ENROLLMENT_DEPARTMENT_RULES.forEach((rule) => {
+  ruleSet.departmentRules.forEach((rule) => {
     const match = rule.keywords.some((keyword) => dept.includes(keyword));
     if (match) {
       rule.codes.forEach((code) => selected.add(code));
@@ -147,17 +224,18 @@ function resolveAutoEnrollmentCodes(department) {
   return Array.from(selected);
 }
 
-async function autoEnrollNewHireCourses(organizationId, learnerId, department, activeCourseByCode = null) {
-  const targetCodes = resolveAutoEnrollmentCodes(department);
+async function autoEnrollNewHireCourses(organizationId, learnerId, department, ruleSet, activeCourseByCode = null) {
+  const targetCodes = resolveAutoEnrollmentCodes(department, ruleSet);
   if (!targetCodes.length) return 0;
 
   let courseMap = activeCourseByCode;
   if (!courseMap) {
+    const autoEnrollmentCodeSet = buildAutoEnrollmentCodeSet(ruleSet);
     const activeCourses = await db.course.findMany({
       where: {
         organizationId,
         isActive: true,
-        code: { in: AUTO_ENROLLMENT_CODE_SET },
+        code: { in: autoEnrollmentCodeSet },
       },
       select: { id: true, code: true },
     });
@@ -217,10 +295,17 @@ router.post("/learners", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req,
     },
   });
 
+  const org = await db.organization.findUnique({
+    where: { id: req.user.organizationId },
+    select: { autoEnrollmentRules: true },
+  });
+  const ruleSet = coerceAutoEnrollmentRuleSet(org?.autoEnrollmentRules);
+
   const autoEnrolled = await autoEnrollNewHireCourses(
     req.user.organizationId,
     learner.id,
-    learner.department
+    learner.department,
+    ruleSet
   );
 
   return res.status(201).json({ ...learner, autoEnrolled });
@@ -255,11 +340,18 @@ router.post("/learners/bulk", requireRole(["OWNER", "ADMIN", "MANAGER"]), async 
   let skipped = 0;
   let autoEnrolled = 0;
 
+  const org = await db.organization.findUnique({
+    where: { id: req.user.organizationId },
+    select: { autoEnrollmentRules: true },
+  });
+  const ruleSet = coerceAutoEnrollmentRuleSet(org?.autoEnrollmentRules);
+  const autoEnrollmentCodeSet = buildAutoEnrollmentCodeSet(ruleSet);
+
   const activeCourses = await db.course.findMany({
     where: {
       organizationId: req.user.organizationId,
       isActive: true,
-      code: { in: AUTO_ENROLLMENT_CODE_SET },
+      code: { in: autoEnrollmentCodeSet },
     },
     select: { id: true, code: true },
   });
@@ -290,6 +382,7 @@ router.post("/learners/bulk", requireRole(["OWNER", "ADMIN", "MANAGER"]), async 
       req.user.organizationId,
       learner.id,
       learner.department,
+      ruleSet,
       activeCourseByCode
     );
     created += 1;
@@ -572,6 +665,8 @@ router.get("/settings", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, 
     slug: org.slug,
     logoUrl: org.logoUrl,
     brandColor: org.brandColor,
+    autoEnrollmentRules: coerceAutoEnrollmentRuleSet(org.autoEnrollmentRules),
+    autoEnrollmentRuleAudit: coerceAutoEnrollmentRuleAudit(org.autoEnrollmentRuleAudit),
   });
 });
 
@@ -580,11 +675,38 @@ router.patch("/settings", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
     name: z.string().min(2).optional(),
     logoUrl: z.string().url().nullable().optional(),
     brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
+    autoEnrollmentRules: autoEnrollmentRuleSetSchema.optional(),
   });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
   }
+
+  const org = await db.organization.findUnique({ where: { id: req.user.organizationId } });
+  if (!org) {
+    return res.status(404).json({ error: "Organization not found" });
+  }
+
+  const nextRuleSet = parsed.data.autoEnrollmentRules
+    ? coerceAutoEnrollmentRuleSet(parsed.data.autoEnrollmentRules)
+    : null;
+
+  const existingAudit = coerceAutoEnrollmentRuleAudit(org.autoEnrollmentRuleAudit);
+  const nextAudit = nextRuleSet
+    ? [
+        {
+          at: new Date().toISOString(),
+          changedBy: {
+            id: req.user.sub,
+            email: req.user.email,
+            role: req.user.role,
+          },
+          coreCount: nextRuleSet.coreCodes.length,
+          departmentRuleCount: nextRuleSet.departmentRules.length,
+        },
+        ...existingAudit,
+      ].slice(0, 100)
+    : existingAudit;
 
   const updated = await db.organization.update({
     where: { id: req.user.organizationId },
@@ -592,10 +714,89 @@ router.patch("/settings", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
       ...(parsed.data.name !== undefined ? { name: parsed.data.name } : {}),
       ...(parsed.data.logoUrl !== undefined ? { logoUrl: parsed.data.logoUrl } : {}),
       ...(parsed.data.brandColor !== undefined ? { brandColor: parsed.data.brandColor } : {}),
+      ...(nextRuleSet ? { autoEnrollmentRules: nextRuleSet } : {}),
+      ...(nextRuleSet ? { autoEnrollmentRuleAudit: nextAudit } : {}),
     },
   });
 
   return res.json(updated);
+});
+
+router.post("/settings/auto-enrollment/preview", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {
+  const parsed = autoEnrollmentPreviewSchema.safeParse(req.body || {});
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+
+  const org = await db.organization.findUnique({
+    where: { id: req.user.organizationId },
+    select: { autoEnrollmentRules: true },
+  });
+
+  const ruleSet = parsed.data.ruleSet
+    ? coerceAutoEnrollmentRuleSet(parsed.data.ruleSet)
+    : coerceAutoEnrollmentRuleSet(org?.autoEnrollmentRules);
+
+  const autoEnrollmentCodeSet = buildAutoEnrollmentCodeSet(ruleSet);
+  const activeCourses = await db.course.findMany({
+    where: {
+      organizationId: req.user.organizationId,
+      isActive: true,
+      code: { in: autoEnrollmentCodeSet },
+    },
+    select: { id: true, code: true, title: true, courseType: true },
+  });
+  const activeByCode = new Map(activeCourses.map((course) => [course.code, course]));
+
+  const sampleDepartment = (parsed.data.sampleDepartment || "").trim();
+  const sampleCodes = sampleDepartment
+    ? resolveAutoEnrollmentCodes(sampleDepartment, ruleSet)
+    : [];
+  const sampleMatched = sampleCodes
+    .map((code) => activeByCode.get(code))
+    .filter(Boolean)
+    .map((course) => ({ code: course.code, title: course.title, courseType: course.courseType }));
+
+  const learners = await db.learner.findMany({
+    where: { organizationId: req.user.organizationId },
+    orderBy: { createdAt: "desc" },
+    take: 250,
+    select: { id: true, fullName: true, department: true },
+  });
+
+  const previewRows = learners
+    .map((learner) => {
+      const codes = resolveAutoEnrollmentCodes(learner.department, ruleSet)
+        .filter((code) => activeByCode.has(code));
+      return {
+        learnerId: learner.id,
+        learnerName: learner.fullName,
+        department: learner.department || "",
+        matchCount: codes.length,
+        codes,
+      };
+    })
+    .filter((row) => row.matchCount > 0)
+    .slice(0, 80);
+
+  const totalAssignmentsPotential = previewRows.reduce((sum, row) => sum + row.matchCount, 0);
+
+  return res.json({
+    ruleSet,
+    summary: {
+      learnersEvaluated: learners.length,
+      learnersWithMatches: previewRows.length,
+      totalAssignmentsPotential,
+      activeCourseCount: activeCourses.length,
+    },
+    sample: sampleDepartment
+      ? {
+          department: sampleDepartment,
+          matchedCourses: sampleMatched,
+        }
+      : null,
+    rows: previewRows,
+  });
 });
 
 router.get("/courses", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req, res) => {

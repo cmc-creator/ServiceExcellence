@@ -76,3 +76,22 @@ From `backend/` directly:
 - Backend deployment guide: `backend/DEPLOYMENT.md`
 - Backend service docs: `backend/README.md`
 - Frontend-backend connection notes: `training-tool/docs/backend-connection.md`
+
+## Production Smoke Checks
+
+Frontend/Admin smoke checks:
+
+- Open Admin `Settings`
+- Run `Run UI Smoke Check` for core UI readiness
+- Run `Verify CSV Exports` for analytics/mastery/certificate export readiness
+
+Backend smoke checks:
+
+- Run `npm run smoke:backend`
+- Optional protected endpoint verification:
+   Set `SMOKE_ADMIN_TOKEN` to a valid admin JWT, then re-run `npm run smoke:backend`.
+
+The backend smoke script checks:
+
+- `GET /health`
+- `POST /api/admin/settings/auto-enrollment/preview` (when token is provided)

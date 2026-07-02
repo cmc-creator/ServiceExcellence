@@ -7,7 +7,8 @@
     "dev": "concurrently -k -n FRONTEND,BACKEND \"npm:dev:frontend\" \"npm:dev:backend\"",
     "dev:frontend": "http-server . -p 3000 -c-1",
     "dev:backend": "npm --prefix backend run dev",
-    "start:backend": "npm --prefix backend run start"
+    "start:backend": "npm --prefix backend run start",
+    "smoke:backend": "pwsh -ExecutionPolicy Bypass -File ./scripts/smoke-backend.ps1"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",

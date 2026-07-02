@@ -87,6 +87,25 @@ function statusPill(status) {
   return `<span class="attempt-status ${map[status] || "s-in-progress"}">${labels[status] || status}</span>`;
 }
 
+function csvEscape(value) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function downloadCsvFile(filename, rows) {
+  if (!rows?.length) {
+    throw new Error("No rows available for CSV export.");
+  }
+  const csv = rows.map((row) => row.map((cell) => csvEscape(cell)).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  return rows.length - 1;
+}
+
 const COURSE_TEMPLATES = {
   "annual-compliance": {
     code: "ANNUAL-COMPLIANCE-CORE",
@@ -897,7 +916,7 @@ document.getElementById("exportCertsBtn").addEventListener("click", () => {
     return;
   }
   const headers = ["Certificate No", "Learner", "Email", "Course", "Issued Date"];
-  const csvRows = [headers.join(",")];
+  const csvRows = [headers];
   allCertificates.forEach((c) => {
     csvRows.push([
       c.certificateNo,
@@ -905,15 +924,10 @@ document.getElementById("exportCertsBtn").addEventListener("click", () => {
       c.learner?.email || "",
       c.course?.title || "",
       c.issuedAt ? new Date(c.issuedAt).toLocaleDateString("en-US") : "",
-    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+    ]);
   });
-  const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `certificates-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const exportedRows = downloadCsvFile(`certificates-${new Date().toISOString().slice(0, 10)}.csv`, csvRows);
+  showToast(`Certificate CSV exported (${exportedRows} rows).`, "success");
 });
 
 // ============================================================
@@ -1292,6 +1306,174 @@ async function loadSettings() {
       } finally {
         saveBrandingBtn.disabled = false;
       }
+    };
+  }
+
+  const autoEnrollRulesJson = document.getElementById("autoEnrollRulesJson");
+  const autoEnrollSampleDepartment = document.getElementById("autoEnrollSampleDepartment");
+  const previewAutoEnrollRulesBtn = document.getElementById("previewAutoEnrollRulesBtn");
+  const saveAutoEnrollRulesBtn = document.getElementById("saveAutoEnrollRulesBtn");
+  const autoEnrollRulesStatus = document.getElementById("autoEnrollRulesStatus");
+  const autoEnrollPreviewSummary = document.getElementById("autoEnrollPreviewSummary");
+  const autoEnrollPreviewTableBody = document.getElementById("autoEnrollPreviewTableBody");
+  const noAutoEnrollPreview = document.getElementById("noAutoEnrollPreview");
+  const autoEnrollAuditTableBody = document.getElementById("autoEnrollAuditTableBody");
+  const noAutoEnrollAudit = document.getElementById("noAutoEnrollAudit");
+
+  const parseRulesJson = () => {
+    try {
+      const parsed = JSON.parse(autoEnrollRulesJson?.value || "{}");
+      return { parsed, error: null };
+    } catch {
+      return { parsed: null, error: "Rules JSON is invalid. Please fix JSON syntax and retry." };
+    }
+  };
+
+  const renderAuditRows = (auditRows) => {
+    if (!autoEnrollAuditTableBody || !noAutoEnrollAudit) return;
+    const rows = Array.isArray(auditRows) ? auditRows : [];
+    autoEnrollAuditTableBody.innerHTML = "";
+    if (!rows.length) {
+      noAutoEnrollAudit.classList.remove("hidden");
+      return;
+    }
+    noAutoEnrollAudit.classList.add("hidden");
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${fmt(row.at)}</td>
+        <td>${sanitize(row.changedBy?.email || "Unknown")}</td>
+        <td>${sanitize(row.changedBy?.role || "—")}</td>
+        <td>${Number(row.coreCount || 0)}</td>
+        <td>${Number(row.departmentRuleCount || 0)}</td>
+      `;
+      autoEnrollAuditTableBody.appendChild(tr);
+    });
+  };
+
+  const renderPreviewRows = (preview) => {
+    if (!autoEnrollPreviewTableBody || !noAutoEnrollPreview || !autoEnrollPreviewSummary) return;
+    autoEnrollPreviewTableBody.innerHTML = "";
+    const rows = preview?.rows || [];
+    const summary = preview?.summary;
+    autoEnrollPreviewSummary.textContent = summary
+      ? `Evaluated ${summary.learnersEvaluated} learners. ${summary.learnersWithMatches} matched. Potential assignments: ${summary.totalAssignmentsPotential}.`
+      : "";
+
+    if (!rows.length) {
+      noAutoEnrollPreview.classList.remove("hidden");
+      return;
+    }
+
+    noAutoEnrollPreview.classList.add("hidden");
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${sanitize(row.learnerName || "")}</td>
+        <td>${sanitize(row.department || "—")}</td>
+        <td>${row.matchCount || 0}</td>
+        <td>${sanitize((row.codes || []).join(", "))}</td>
+      `;
+      autoEnrollPreviewTableBody.appendChild(tr);
+    });
+  };
+
+  if (autoEnrollRulesJson && settings?.autoEnrollmentRules) {
+    autoEnrollRulesJson.value = JSON.stringify(settings.autoEnrollmentRules, null, 2);
+    renderAuditRows(settings.autoEnrollmentRuleAudit);
+  }
+
+  previewAutoEnrollRulesBtn.onclick = async () => {
+    const { parsed, error } = parseRulesJson();
+    if (error) {
+      autoEnrollRulesStatus.textContent = error;
+      autoEnrollRulesStatus.className = "form-status is-error";
+      return;
+    }
+
+    previewAutoEnrollRulesBtn.disabled = true;
+    autoEnrollRulesStatus.textContent = "Previewing rule impact...";
+    autoEnrollRulesStatus.className = "form-status";
+    try {
+      const preview = await api("/api/admin/settings/auto-enrollment/preview", {
+        method: "POST",
+        body: {
+          ruleSet: parsed,
+          sampleDepartment: autoEnrollSampleDepartment?.value?.trim() || undefined,
+        },
+      });
+      renderPreviewRows(preview);
+      autoEnrollRulesStatus.textContent = "Preview ready.";
+    } catch (err) {
+      autoEnrollRulesStatus.textContent = err.message || "Failed to preview rules.";
+      autoEnrollRulesStatus.className = "form-status is-error";
+    } finally {
+      previewAutoEnrollRulesBtn.disabled = false;
+    }
+  };
+
+  saveAutoEnrollRulesBtn.onclick = async () => {
+    const { parsed, error } = parseRulesJson();
+    if (error) {
+      autoEnrollRulesStatus.textContent = error;
+      autoEnrollRulesStatus.className = "form-status is-error";
+      return;
+    }
+
+    saveAutoEnrollRulesBtn.disabled = true;
+    autoEnrollRulesStatus.textContent = "Saving rules...";
+    autoEnrollRulesStatus.className = "form-status";
+    try {
+      await api("/api/admin/settings", { method: "PATCH", body: { autoEnrollmentRules: parsed } });
+      autoEnrollRulesStatus.textContent = "Rules saved. New learners/imports will use this mapping.";
+      showToast("Auto-enrollment rules updated.", "success");
+      await loadSettings();
+    } catch (err) {
+      autoEnrollRulesStatus.textContent = err.message || "Failed to save rules.";
+      autoEnrollRulesStatus.className = "form-status is-error";
+    } finally {
+      saveAutoEnrollRulesBtn.disabled = false;
+    }
+  };
+
+  const smokeChecklistResults = document.getElementById("smokeChecklistResults");
+  const runSmokeChecklistBtn = document.getElementById("runSmokeChecklistBtn");
+  const verifyCsvExportsBtn = document.getElementById("verifyCsvExportsBtn");
+  if (runSmokeChecklistBtn && smokeChecklistResults) {
+    runSmokeChecklistBtn.onclick = async () => {
+      smokeChecklistResults.innerHTML = "";
+      const checks = [
+        { label: "Analytics export data loaded", pass: Boolean(analyticsCompletion || analyticsTrends.length || analyticsMastery?.roles?.length) },
+        { label: "Mastery learner dataset available", pass: Array.isArray(analyticsMasteryLearners) },
+        { label: "Course template catalog initialized", pass: Object.keys(COURSE_TEMPLATES).length >= 10 },
+        { label: "Auto-enrollment rules JSON present", pass: Boolean(autoEnrollRulesJson?.value?.trim()) },
+      ];
+      checks.forEach((check) => {
+        const li = document.createElement("li");
+        li.textContent = `${check.pass ? "PASS" : "FAIL"} - ${check.label}`;
+        smokeChecklistResults.appendChild(li);
+      });
+      showToast("UI smoke checklist completed.", "success");
+    };
+  }
+
+  if (verifyCsvExportsBtn && smokeChecklistResults) {
+    verifyCsvExportsBtn.onclick = () => {
+      smokeChecklistResults.innerHTML = "";
+      const checks = [
+        { label: "Certificate export has rows", pass: allCertificates.length > 0 },
+        { label: "Analytics export has metrics/trends/mastery", pass: Boolean(analyticsCompletion || analyticsTrends.length || analyticsMastery?.roles?.length) },
+        { label: "Mastery learner export has rows", pass: analyticsMasteryLearners.length > 0 },
+      ];
+
+      checks.forEach((check) => {
+        const li = document.createElement("li");
+        li.textContent = `${check.pass ? "PASS" : "FAIL"} - ${check.label}`;
+        smokeChecklistResults.appendChild(li);
+      });
+
+      const hasFail = checks.some((check) => !check.pass);
+      showToast(hasFail ? "CSV verification found gaps. Load tabs and retry." : "CSV export verification passed.", hasFail ? "error" : "success");
     };
   }
 
@@ -2263,14 +2445,8 @@ document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
       rows.push([r.roleTrack, r.attempts, r.masteredCount, r.avgMasteryPct, r.requiredThreshold, r.masteryRate]);
     });
   }
-  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `analytics-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const exportedRows = downloadCsvFile(`analytics-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+  showToast(`Analytics CSV exported (${exportedRows} rows).`, "success");
 });
 
 document.getElementById("exportMasteryLearnersBtn")?.addEventListener("click", async () => {
@@ -2310,18 +2486,12 @@ document.getElementById("exportMasteryLearnersBtn")?.addEventListener("click", a
     ]);
   });
 
-  const csv = rows
-    .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
-    .join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
   const suffix = hasActiveMasteryFilters() ? "-filtered" : "";
-  a.download = `mastery-audit-abuse-neglect${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const exportedRows = downloadCsvFile(
+    `mastery-audit-abuse-neglect${suffix}-${new Date().toISOString().slice(0, 10)}.csv`,
+    rows
+  );
+  showToast(`Mastery audit CSV exported (${exportedRows} rows).`, "success");
 });
 
 ["masteryFilterRole", "masteryFilterDept", "masteryFilterCourseType", "masteryFilterFrom", "masteryFilterTo"].forEach((id) => {
