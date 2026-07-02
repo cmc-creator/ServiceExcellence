@@ -1,6 +1,8 @@
 const revealNodes = document.querySelectorAll(".reveal");
 const metricNodes = document.querySelectorAll(".metric-value");
 const sectionAnchors = document.querySelectorAll(".nav-links a[href^='#']");
+const orbA = document.querySelector(".orb-a");
+const orbB = document.querySelector(".orb-b");
 const observedSections = Array.from(sectionAnchors)
   .map((link) => document.querySelector(link.getAttribute("href")))
   .filter(Boolean);
@@ -81,3 +83,27 @@ const sectionObserver = new IntersectionObserver(
 );
 
 observedSections.forEach((section) => sectionObserver.observe(section));
+
+function updateOrbsParallax(xPercent, yPercent) {
+  if (!orbA || !orbB) return;
+
+  orbA.style.transform = `translate(${xPercent * -10}px, ${yPercent * -8}px)`;
+  orbB.style.transform = `translate(${xPercent * 12}px, ${yPercent * 10}px)`;
+}
+
+let parallaxRaf = null;
+window.addEventListener("pointermove", (event) => {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const x = (event.clientX / window.innerWidth - 0.5) * 2;
+  const y = (event.clientY / window.innerHeight - 0.5) * 2;
+
+  if (parallaxRaf) cancelAnimationFrame(parallaxRaf);
+  parallaxRaf = requestAnimationFrame(() => updateOrbsParallax(x, y));
+});
+
+window.addEventListener("scroll", () => {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const y = Math.min(window.scrollY / 1200, 1);
+  updateOrbsParallax(0, y);
+});
