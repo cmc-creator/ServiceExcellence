@@ -130,7 +130,96 @@ const COURSE_TEMPLATES = {
     version: "2026.1",
     passPercent: 85,
   },
+  "patient-rights": {
+    code: "PATIENT-RIGHTS-ANNUAL",
+    title: "Patient Rights and Grievance Process",
+    courseType: "Compliance",
+    version: "2026.1",
+    passPercent: 85,
+  },
+  emtala: {
+    code: "EMTALA-AWARENESS-ANNUAL",
+    title: "EMTALA Awareness",
+    courseType: "Compliance",
+    version: "2026.1",
+    passPercent: 90,
+  },
+  "fire-life-safety": {
+    code: "FIRE-LIFE-SAFETY-ANNUAL",
+    title: "Fire and Life Safety",
+    courseType: "Safety",
+    version: "2026.1",
+    passPercent: 85,
+  },
+  "hazard-communication": {
+    code: "HAZARD-COMM-ANNUAL",
+    title: "Hazard Communication and SDS",
+    courseType: "Safety",
+    version: "2026.1",
+    passPercent: 85,
+  },
+  "bloodborne-pathogens": {
+    code: "BLOODBORNE-PATHOGENS-ANNUAL",
+    title: "Bloodborne Pathogens",
+    courseType: "Clinical",
+    version: "2026.1",
+    passPercent: 90,
+  },
+  "incident-reporting": {
+    code: "INCIDENT-REPORTING-ANNUAL",
+    title: "Incident Reporting and Just Culture",
+    courseType: "Compliance",
+    version: "2026.1",
+    passPercent: 85,
+  },
+  "restraint-seclusion": {
+    code: "RESTRAINT-SECLUSION-ANNUAL",
+    title: "Restraint and Seclusion Fundamentals",
+    courseType: "Clinical",
+    version: "2026.1",
+    passPercent: 90,
+  },
+  "cultural-competency": {
+    code: "CULTURAL-COMPETENCY-ANNUAL",
+    title: "Cultural Competency and Non-Discrimination",
+    courseType: "Professional Development",
+    version: "2026.1",
+    passPercent: 80,
+  },
+  cybersecurity: {
+    code: "CYBERSECURITY-PHISHING-ANNUAL",
+    title: "Cybersecurity and Phishing Awareness",
+    courseType: "Compliance",
+    version: "2026.1",
+    passPercent: 90,
+  },
+  "osha-safety": {
+    code: "OSHA-SAFETY-ANNUAL",
+    title: "OSHA Workplace Safety Essentials",
+    courseType: "Safety",
+    version: "2026.1",
+    passPercent: 85,
+  },
 };
+
+const NEO_STARTER_TEMPLATE_KEYS = [
+  "annual-compliance",
+  "abuse-neglect",
+  "deescalation",
+  "workplace-violence",
+  "hipaa-privacy",
+  "infection-control",
+  "patient-rights",
+  "emtala",
+  "fire-life-safety",
+  "hazard-communication",
+  "bloodborne-pathogens",
+  "incident-reporting",
+  "restraint-seclusion",
+  "cultural-competency",
+  "cybersecurity",
+  "osha-safety",
+];
 
 // ============================================================
 // TOAST SYSTEM
@@ -1264,6 +1353,7 @@ async function loadSettings() {
   const saveAddCourseBtn = document.getElementById("saveAddCourseBtn");
   const addCourseStatus = document.getElementById("addCourseStatus");
   const templateStatus = document.getElementById("courseTemplateStatus");
+  const addNeoStarterPackBtn = document.getElementById("addNeoStarterPackBtn");
 
   if (addAbuseNeglectCourseBtn) {
     const hasAbuseNeglectCourse = courses.some((c) =>
@@ -1317,6 +1407,66 @@ async function loadSettings() {
       }
     };
   });
+
+  if (addNeoStarterPackBtn) {
+    const missingCount = NEO_STARTER_TEMPLATE_KEYS.filter((key) => {
+      const tpl = COURSE_TEMPLATES[key];
+      return tpl && !courses.some((c) => c.code === tpl.code);
+    }).length;
+
+    addNeoStarterPackBtn.disabled = missingCount === 0;
+    addNeoStarterPackBtn.textContent = missingCount === 0
+      ? "NEO Starter Pack Added ✓"
+      : `Add Full NEO Starter Pack (${missingCount} missing)`;
+
+    addNeoStarterPackBtn.onclick = async () => {
+      addNeoStarterPackBtn.disabled = true;
+      if (templateStatus) {
+        templateStatus.textContent = "Adding NEO starter pack...";
+        templateStatus.className = "form-status";
+      }
+
+      let added = 0;
+      let skipped = 0;
+
+      for (const key of NEO_STARTER_TEMPLATE_KEYS) {
+        const tpl = COURSE_TEMPLATES[key];
+        if (!tpl) continue;
+
+        const exists = courses.some((c) => c.code === tpl.code);
+        if (exists) {
+          skipped += 1;
+          continue;
+        }
+
+        try {
+          await api("/api/admin/courses", {
+            method: "POST",
+            body: {
+              code: tpl.code,
+              title: tpl.title,
+              courseType: tpl.courseType,
+              version: tpl.version,
+              passPercent: tpl.passPercent,
+              opensAt: null,
+              closesAt: null,
+            },
+          });
+          added += 1;
+        } catch {
+          skipped += 1;
+        }
+      }
+
+      if (templateStatus) {
+        templateStatus.textContent = `NEO starter pack: added ${added}, skipped ${skipped}.`;
+        templateStatus.className = "form-status";
+      }
+
+      showToast(`NEO starter pack complete. Added ${added}, skipped ${skipped}.`, "success");
+      await loadSettings();
+    };
+  }
 
   showAddCourseBtn.onclick = () => {
     addCourseForm.classList.toggle("hidden");
