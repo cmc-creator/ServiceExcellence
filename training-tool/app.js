@@ -1967,6 +1967,7 @@ function evaluateLessonChoice(answer, lesson) {
   });
 
   trackEvent("answered-core-lesson", {
+    moduleId: lesson.moduleId,
     lesson: lesson.title,
     good: answer.good,
     points: answer.score,
@@ -2426,6 +2427,7 @@ function renderResults() {
     assessmentPercent: assessmentPct,
     assessmentCorrect: state.assessmentCorrect,
     assessmentTotal: finalAssessment.length,
+    activeModuleIds: state.activeLessons.map((lesson) => lesson.moduleId),
     abuseNeglectPct,
     abuseNeglectThreshold,
     abuseNeglectMastered,

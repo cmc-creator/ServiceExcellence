@@ -471,6 +471,7 @@ let analyticsTrends = [];
 let analyticsMastery = null;
 let analyticsMasteryLearners = [];
 let analyticsByCourseType = [];
+let analyticsByModule = [];
 let learnerNextCursor = null;
 let learnerHasMore = false;
 
@@ -1041,7 +1042,7 @@ function refreshMasteryAuditSummary() {
 }
 
 async function loadAnalytics() {
-  const [completion, events, trends, deptData, mastery, masteryLearners, byCourseType] = await Promise.all([
+  const [completion, events, trends, deptData, mastery, masteryLearners, byCourseType, byModule] = await Promise.all([
     api("/api/analytics/completion"),
     api("/api/analytics/events/top"),
     api("/api/analytics/trends"),
@@ -1049,6 +1050,7 @@ async function loadAnalytics() {
     api("/api/analytics/mastery/abuse-neglect").catch(() => null),
     api("/api/analytics/mastery/abuse-neglect/learners").catch(() => null),
     api("/api/analytics/by-course-type").catch(() => []),
+    api("/api/analytics/by-module").catch(() => []),
   ]);
 
   analyticsCompletion = completion || null;
@@ -1056,6 +1058,7 @@ async function loadAnalytics() {
   analyticsMastery = mastery || null;
   analyticsMasteryLearners = masteryLearners?.learners || [];
   analyticsByCourseType = byCourseType || [];
+  analyticsByModule = byModule || [];
   populateMasteryAuditFilters(analyticsMasteryLearners);
 
   if (completion) {
@@ -1193,6 +1196,32 @@ async function loadAnalytics() {
     noDeptMsg.classList.remove("hidden");
   }
 
+  // --- Module analytics table ---
+  const moduleTbody = document.getElementById("moduleAnalyticsTableBody");
+  const noModuleMsg = document.getElementById("noModuleAnalyticsData");
+  if (analyticsByModule?.length && moduleTbody) {
+    noModuleMsg?.classList.add("hidden");
+    moduleTbody.innerHTML = "";
+    analyticsByModule.forEach((row) => {
+      const passRateCls = row.passRate >= 85 ? "s-passed" : row.passRate >= 70 ? "s-in-progress" : "s-failed";
+      const accuracyCls = row.lessonAccuracyRate >= 85 ? "s-passed" : row.lessonAccuracyRate >= 70 ? "s-in-progress" : "s-failed";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${sanitize(row.moduleTitle || row.moduleId || "—")}</td>
+        <td>${row.lessonAttempts || 0}</td>
+        <td><span class="attempt-status ${accuracyCls}">${Number(row.lessonAccuracyRate || 0).toFixed(1)}%</span></td>
+        <td>${row.completionAttempts || 0}</td>
+        <td>${row.passCount || 0}</td>
+        <td>${row.failCount || 0}</td>
+        <td><span class="attempt-status ${passRateCls}">${Number(row.passRate || 0).toFixed(1)}%</span></td>
+      `;
+      moduleTbody.appendChild(tr);
+    });
+  } else if (noModuleMsg) {
+    noModuleMsg.classList.remove("hidden");
+    if (moduleTbody) moduleTbody.innerHTML = "";
+  }
+
   // --- Abuse/Neglect mastery by role table ---
   const masteryTbody = document.getElementById("masteryRoleTableBody");
   const noMasteryMsg = document.getElementById("noMasteryData");
@@ -1311,6 +1340,7 @@ async function loadSettings() {
 
   const autoEnrollRulesJson = document.getElementById("autoEnrollRulesJson");
   const autoEnrollSampleDepartment = document.getElementById("autoEnrollSampleDepartment");
+  const autoEnrollSampleRoleTrack = document.getElementById("autoEnrollSampleRoleTrack");
   const previewAutoEnrollRulesBtn = document.getElementById("previewAutoEnrollRulesBtn");
   const saveAutoEnrollRulesBtn = document.getElementById("saveAutoEnrollRulesBtn");
   const autoEnrollRulesStatus = document.getElementById("autoEnrollRulesStatus");
@@ -1346,6 +1376,7 @@ async function loadSettings() {
         <td>${sanitize(row.changedBy?.role || "—")}</td>
         <td>${Number(row.coreCount || 0)}</td>
         <td>${Number(row.departmentRuleCount || 0)}</td>
+        <td>${Number(row.roleTrackRuleCount || 0)}</td>
       `;
       autoEnrollAuditTableBody.appendChild(tr);
     });
@@ -1371,6 +1402,7 @@ async function loadSettings() {
       tr.innerHTML = `
         <td>${sanitize(row.learnerName || "")}</td>
         <td>${sanitize(row.department || "—")}</td>
+        <td>${sanitize(row.roleTrack || "—")}</td>
         <td>${row.matchCount || 0}</td>
         <td>${sanitize((row.codes || []).join(", "))}</td>
       `;
@@ -1400,6 +1432,7 @@ async function loadSettings() {
         body: {
           ruleSet: parsed,
           sampleDepartment: autoEnrollSampleDepartment?.value?.trim() || undefined,
+          sampleRoleTrack: autoEnrollSampleRoleTrack?.value?.trim() || undefined,
         },
       });
       renderPreviewRows(preview);
@@ -2363,7 +2396,7 @@ document.getElementById("saveBulkEnrollBtn").addEventListener("click", async () 
 // ANALYTICS EXPORT (module-level)
 // ============================================================
 document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
-  if (!analyticsCompletion && !analyticsTrends.length && !analyticsMastery?.roles?.length) {
+  if (!analyticsCompletion && !analyticsTrends.length && !analyticsMastery?.roles?.length && !analyticsByModule.length) {
     showToast("Open the Analytics tab first to load data.", "error");
     return;
   }
@@ -2443,6 +2476,23 @@ document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
     rows.push(["Role Track", "Attempts", "Mastered", "Avg Mastery %", "Target %", "Mastery Rate %"]);
     masteryRows.forEach((r) => {
       rows.push([r.roleTrack, r.attempts, r.masteredCount, r.avgMasteryPct, r.requiredThreshold, r.masteryRate]);
+    });
+    rows.push([]);
+  }
+
+  if (analyticsByModule.length) {
+    rows.push(["Module Analytics", ""]);
+    rows.push(["Module", "Lesson Attempts", "Lesson Accuracy %", "Completions", "Pass", "Fail", "Pass Rate %"]);
+    analyticsByModule.forEach((row) => {
+      rows.push([
+        row.moduleTitle || row.moduleId || "",
+        row.lessonAttempts || 0,
+        Number(row.lessonAccuracyRate || 0).toFixed(1),
+        row.completionAttempts || 0,
+        row.passCount || 0,
+        row.failCount || 0,
+        Number(row.passRate || 0).toFixed(1),
+      ]);
     });
   }
   const exportedRows = downloadCsvFile(`analytics-${new Date().toISOString().slice(0, 10)}.csv`, rows);

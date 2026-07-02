@@ -53,14 +53,21 @@ const autoEnrollmentDepartmentRuleSchema = z.object({
   codes: z.array(z.string().min(2)).min(1).max(50),
 });
 
+const autoEnrollmentRoleTrackRuleSchema = z.object({
+  roleTracks: z.array(z.string().min(1)).min(1).max(25),
+  codes: z.array(z.string().min(2)).min(1).max(50),
+});
+
 const autoEnrollmentRuleSetSchema = z.object({
   coreCodes: z.array(z.string().min(2)).max(100).default([]),
   departmentRules: z.array(autoEnrollmentDepartmentRuleSchema).max(100).default([]),
+  roleTrackRules: z.array(autoEnrollmentRoleTrackRuleSchema).max(100).default([]),
 });
 
 const autoEnrollmentPreviewSchema = z.object({
   ruleSet: autoEnrollmentRuleSetSchema.optional(),
   sampleDepartment: z.string().max(120).optional(),
+  sampleRoleTrack: z.string().max(120).optional(),
 });
 
 function isOwner(req) {
@@ -139,6 +146,32 @@ const DEFAULT_AUTO_ENROLLMENT_DEPARTMENT_RULES = [
   },
 ];
 
+const DEFAULT_AUTO_ENROLLMENT_ROLE_TRACK_RULES = [
+  {
+    roleTracks: ["clinical", "clinical staff"],
+    codes: [
+      "INFECTION-CONTROL-ANNUAL",
+      "BLOODBORNE-PATHOGENS-ANNUAL",
+      "RESTRAINT-SECLUSION-ANNUAL",
+      "DEESCALATION-ANNUAL",
+    ],
+  },
+  {
+    roleTracks: ["non-clinical", "nonclinical", "support"],
+    codes: [
+      "OSHA-SAFETY-ANNUAL",
+      "HAZARD-COMM-ANNUAL",
+    ],
+  },
+  {
+    roleTracks: ["leadership", "manager", "supervisor"],
+    codes: [
+      "EMTALA-AWARENESS-ANNUAL",
+      "INCIDENT-REPORTING-ANNUAL",
+    ],
+  },
+];
+
 function normalizeCodeList(codes) {
   if (!Array.isArray(codes)) return [];
   return Array.from(new Set(
@@ -164,6 +197,10 @@ function getDefaultAutoEnrollmentRuleSet() {
       keywords: [...rule.keywords],
       codes: [...rule.codes],
     })),
+    roleTrackRules: DEFAULT_AUTO_ENROLLMENT_ROLE_TRACK_RULES.map((rule) => ({
+      roleTracks: [...rule.roleTracks],
+      codes: [...rule.codes],
+    })),
   };
 }
 
@@ -179,6 +216,12 @@ function coerceAutoEnrollmentRuleSet(raw) {
         codes: normalizeCodeList(rule.codes),
       }))
       .filter((rule) => rule.keywords.length && rule.codes.length),
+    roleTrackRules: parsed.data.roleTrackRules
+      .map((rule) => ({
+        roleTracks: normalizeKeywordList(rule.roleTracks),
+        codes: normalizeCodeList(rule.codes),
+      }))
+      .filter((rule) => rule.roleTracks.length && rule.codes.length),
   };
 
   if (!normalized.coreCodes.length) {
@@ -187,6 +230,10 @@ function coerceAutoEnrollmentRuleSet(raw) {
 
   if (!normalized.departmentRules.length) {
     normalized.departmentRules = getDefaultAutoEnrollmentRuleSet().departmentRules;
+  }
+
+  if (!normalized.roleTrackRules.length) {
+    normalized.roleTrackRules = getDefaultAutoEnrollmentRuleSet().roleTrackRules;
   }
 
   return normalized;
@@ -203,6 +250,7 @@ function buildAutoEnrollmentCodeSet(ruleSet) {
   return Array.from(new Set([
     ...ruleSet.coreCodes,
     ...ruleSet.departmentRules.flatMap((rule) => rule.codes),
+    ...ruleSet.roleTrackRules.flatMap((rule) => rule.codes),
   ]));
 }
 
@@ -210,8 +258,13 @@ function normalizeDeptLabel(value) {
   return (value || "").toLowerCase().trim();
 }
 
-function resolveAutoEnrollmentCodes(department, ruleSet) {
+function normalizeRoleTrackLabel(value) {
+  return (value || "").toLowerCase().trim();
+}
+
+function resolveAutoEnrollmentCodes(department, roleTrack, ruleSet) {
   const dept = normalizeDeptLabel(department);
+  const normalizedRoleTrack = normalizeRoleTrackLabel(roleTrack);
   const selected = new Set(ruleSet.coreCodes);
 
   ruleSet.departmentRules.forEach((rule) => {
@@ -221,11 +274,18 @@ function resolveAutoEnrollmentCodes(department, ruleSet) {
     }
   });
 
+  ruleSet.roleTrackRules.forEach((rule) => {
+    const match = rule.roleTracks.some((keyword) => normalizedRoleTrack.includes(keyword));
+    if (match) {
+      rule.codes.forEach((code) => selected.add(code));
+    }
+  });
+
   return Array.from(selected);
 }
 
-async function autoEnrollNewHireCourses(organizationId, learnerId, department, ruleSet, activeCourseByCode = null) {
-  const targetCodes = resolveAutoEnrollmentCodes(department, ruleSet);
+async function autoEnrollNewHireCourses(organizationId, learnerId, department, roleTrack, ruleSet, activeCourseByCode = null) {
+  const targetCodes = resolveAutoEnrollmentCodes(department, roleTrack, ruleSet);
   if (!targetCodes.length) return 0;
 
   let courseMap = activeCourseByCode;
@@ -305,6 +365,7 @@ router.post("/learners", requireRole(["OWNER", "ADMIN", "MANAGER"]), async (req,
     req.user.organizationId,
     learner.id,
     learner.department,
+    learner.roleTrack,
     ruleSet
   );
 
@@ -382,6 +443,7 @@ router.post("/learners/bulk", requireRole(["OWNER", "ADMIN", "MANAGER"]), async 
       req.user.organizationId,
       learner.id,
       learner.department,
+      learner.roleTrack,
       ruleSet,
       activeCourseByCode
     );
@@ -703,6 +765,7 @@ router.patch("/settings", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
           },
           coreCount: nextRuleSet.coreCodes.length,
           departmentRuleCount: nextRuleSet.departmentRules.length,
+          roleTrackRuleCount: nextRuleSet.roleTrackRules.length,
         },
         ...existingAudit,
       ].slice(0, 100)
@@ -749,8 +812,9 @@ router.post("/settings/auto-enrollment/preview", requireRole(["OWNER", "ADMIN", 
   const activeByCode = new Map(activeCourses.map((course) => [course.code, course]));
 
   const sampleDepartment = (parsed.data.sampleDepartment || "").trim();
-  const sampleCodes = sampleDepartment
-    ? resolveAutoEnrollmentCodes(sampleDepartment, ruleSet)
+  const sampleRoleTrack = (parsed.data.sampleRoleTrack || "").trim();
+  const sampleCodes = sampleDepartment || sampleRoleTrack
+    ? resolveAutoEnrollmentCodes(sampleDepartment, sampleRoleTrack, ruleSet)
     : [];
   const sampleMatched = sampleCodes
     .map((code) => activeByCode.get(code))
@@ -761,17 +825,18 @@ router.post("/settings/auto-enrollment/preview", requireRole(["OWNER", "ADMIN", 
     where: { organizationId: req.user.organizationId },
     orderBy: { createdAt: "desc" },
     take: 250,
-    select: { id: true, fullName: true, department: true },
+    select: { id: true, fullName: true, department: true, roleTrack: true },
   });
 
   const previewRows = learners
     .map((learner) => {
-      const codes = resolveAutoEnrollmentCodes(learner.department, ruleSet)
+      const codes = resolveAutoEnrollmentCodes(learner.department, learner.roleTrack, ruleSet)
         .filter((code) => activeByCode.has(code));
       return {
         learnerId: learner.id,
         learnerName: learner.fullName,
         department: learner.department || "",
+        roleTrack: learner.roleTrack || "",
         matchCount: codes.length,
         codes,
       };
@@ -789,9 +854,10 @@ router.post("/settings/auto-enrollment/preview", requireRole(["OWNER", "ADMIN", 
       totalAssignmentsPotential,
       activeCourseCount: activeCourses.length,
     },
-    sample: sampleDepartment
+    sample: sampleDepartment || sampleRoleTrack
       ? {
           department: sampleDepartment,
+          roleTrack: sampleRoleTrack,
           matchedCourses: sampleMatched,
         }
       : null,

@@ -490,6 +490,30 @@
           </div>
           <p class="no-data hidden" id="noDeptData">No department data yet.</p>
         </div>
+
+        <div style="margin-top:40px;">
+          <div class="section-head">
+            <p class="section-kicker">By Module</p>
+            <h2>Module Completion and Accuracy</h2>
+          </div>
+          <div class="table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Lesson Attempts</th>
+                  <th>Lesson Accuracy</th>
+                  <th>Completions</th>
+                  <th>Pass</th>
+                  <th>Fail</th>
+                  <th>Pass Rate</th>
+                </tr>
+              </thead>
+              <tbody id="moduleAnalyticsTableBody"></tbody>
+            </table>
+          </div>
+          <p class="no-data hidden" id="noModuleAnalyticsData">No module analytics available yet.</p>
+        </div>
       </section>
 
       <!-- TAB: USERS -->
@@ -635,6 +659,10 @@
             <label for="autoEnrollSampleDepartment">Sample Department (for dry run)</label>
             <input id="autoEnrollSampleDepartment" type="text" class="admin-input" placeholder="e.g. Nursing, Behavioral Health, Intake">
           </div>
+          <div class="form-field" style="margin-top:10px;max-width:340px;">
+            <label for="autoEnrollSampleRoleTrack">Sample Role Track (for dry run)</label>
+            <input id="autoEnrollSampleRoleTrack" type="text" class="admin-input" placeholder="e.g. Clinical Staff, Leadership">
+          </div>
           <div class="form-actions" style="margin-top:12px;">
             <button class="btn-ghost btn-sm" id="previewAutoEnrollRulesBtn" type="button">Preview Rule Impact</button>
             <button class="btn-solid btn-sm" id="saveAutoEnrollRulesBtn" type="button">Save Auto-Enrollment Rules</button>
@@ -647,6 +675,7 @@
                 <tr>
                   <th>Learner</th>
                   <th>Department</th>
+                  <th>Role Track</th>
                   <th>Potential Assignments</th>
                   <th>Course Codes</th>
                 </tr>
@@ -667,6 +696,7 @@
                   <th>Role</th>
                   <th>Core Codes</th>
                   <th>Department Rules</th>
+                  <th>Role Rules</th>
                 </tr>
               </thead>
               <tbody id="autoEnrollAuditTableBody"></tbody>

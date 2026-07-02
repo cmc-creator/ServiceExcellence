@@ -6,6 +6,31 @@ const router = express.Router();
 
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
+const MODULE_LIBRARY = [
+  { id: "suicide-observation", title: "Suicide Risk and Observation" },
+  { id: "trauma-informed", title: "Trauma-Informed Care" },
+  { id: "medication-safety", title: "Medication Safety" },
+  { id: "workplace-violence", title: "Workplace Violence Prevention" },
+  { id: "legal-rights-consent", title: "Legal Rights and Consent" },
+];
+
+const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
+
+function normalizeModuleId(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function inferModuleIdFromLessonTitle(title) {
+  const normalized = String(title || "").toLowerCase();
+  if (!normalized) return null;
+  if (normalized.includes("suicide") || normalized.includes("observation")) return "suicide-observation";
+  if (normalized.includes("trauma")) return "trauma-informed";
+  if (normalized.includes("medication")) return "medication-safety";
+  if (normalized.includes("violence")) return "workplace-violence";
+  if (normalized.includes("consent") || normalized.includes("rights")) return "legal-rights-consent";
+  return null;
+}
+
 function aggregateAbuseNeglectMastery(events) {
   const requiredByPersona = {
     clinical: 85,
@@ -246,6 +271,90 @@ router.get("/by-course-type", async (req, res) => {
         : 0,
     }))
     .sort((a, b) => b.totalEnrollments - a.totalEnrollments);
+
+  return res.json(rows);
+});
+
+router.get("/by-module", async (req, res) => {
+  const orgId = req.user.organizationId;
+  const events = await db.trainingEvent.findMany({
+    where: {
+      organizationId: orgId,
+      verb: { in: ["answered-core-lesson", "completed-training"] },
+    },
+    select: {
+      verb: true,
+      payload: true,
+    },
+  });
+
+  const rowsByModule = new Map();
+  const ensure = (moduleId) => {
+    const id = normalizeModuleId(moduleId);
+    if (!id) return null;
+    if (!rowsByModule.has(id)) {
+      rowsByModule.set(id, {
+        moduleId: id,
+        moduleTitle: MODULE_LABEL_BY_ID.get(id) || id,
+        lessonAttempts: 0,
+        lessonCorrect: 0,
+        completionAttempts: 0,
+        passCount: 0,
+        failCount: 0,
+      });
+    }
+    return rowsByModule.get(id);
+  };
+
+  for (const evt of events) {
+    const payload = evt.payload || {};
+    const detail = payload?.detail || {};
+
+    if (evt.verb === "answered-core-lesson") {
+      const directModuleId = normalizeModuleId(detail?.moduleId);
+      const inferredModuleId = inferModuleIdFromLessonTitle(detail?.lesson);
+      const moduleAgg = ensure(directModuleId || inferredModuleId);
+      if (!moduleAgg) continue;
+      moduleAgg.lessonAttempts += 1;
+      if (detail?.good === true) moduleAgg.lessonCorrect += 1;
+      continue;
+    }
+
+    if (evt.verb === "completed-training") {
+      const activeModuleIds = Array.isArray(detail?.activeModuleIds)
+        ? detail.activeModuleIds.map((id) => normalizeModuleId(id)).filter(Boolean)
+        : [];
+      const targetModuleIds = activeModuleIds.length
+        ? activeModuleIds
+        : MODULE_LIBRARY.map((item) => item.id);
+
+      targetModuleIds.forEach((moduleId) => {
+        const moduleAgg = ensure(moduleId);
+        if (!moduleAgg) return;
+        moduleAgg.completionAttempts += 1;
+        if (detail?.pass === true) moduleAgg.passCount += 1;
+        if (detail?.pass === false) moduleAgg.failCount += 1;
+      });
+    }
+  }
+
+  const rows = Array.from(rowsByModule.values())
+    .map((row) => {
+      const gradedAttempts = row.passCount + row.failCount;
+      return {
+        ...row,
+        lessonAccuracyRate: row.lessonAttempts
+          ? Number(((row.lessonCorrect / row.lessonAttempts) * 100).toFixed(1))
+          : 0,
+        completionRate: row.completionAttempts
+          ? Number((gradedAttempts / row.completionAttempts * 100).toFixed(1))
+          : 0,
+        passRate: gradedAttempts
+          ? Number((row.passCount / gradedAttempts * 100).toFixed(1))
+          : 0,
+      };
+    })
+    .sort((a, b) => b.completionAttempts - a.completionAttempts || b.lessonAttempts - a.lessonAttempts);
 
   return res.json(rows);
 });
