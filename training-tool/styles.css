@@ -172,6 +172,14 @@ body::before {
   object-fit: cover;
 }
 
+.brand-wordmark {
+  margin: 0 0 2px;
+  font-family: "Cinzel", serif;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
 .eyebrow {
   margin: 0;
   font-size: 0.72rem;
