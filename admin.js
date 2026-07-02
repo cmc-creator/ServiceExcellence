@@ -87,6 +87,51 @@ function statusPill(status) {
   return `<span class="attempt-status ${map[status] || "s-in-progress"}">${labels[status] || status}</span>`;
 }
 
+const COURSE_TEMPLATES = {
+  "annual-compliance": {
+    code: "ANNUAL-COMPLIANCE-CORE",
+    title: "Annual Compliance Core",
+    courseType: "Compliance",
+    version: "2026.1",
+    passPercent: 80,
+  },
+  "abuse-neglect": {
+    code: "ABUSE-NEGLECT-ANNUAL",
+    title: "Abuse and Neglect Recognition and Reporting Annual",
+    courseType: "Safety",
+    version: "2026.1",
+    passPercent: 85,
+  },
+  deescalation: {
+    code: "DEESCALATION-ANNUAL",
+    title: "Behavioral Health De-Escalation Skills",
+    courseType: "Clinical",
+    version: "2026.1",
+    passPercent: 85,
+  },
+  "workplace-violence": {
+    code: "WORKPLACE-VIOLENCE-ANNUAL",
+    title: "Workplace Violence Prevention and Response",
+    courseType: "Safety",
+    version: "2026.1",
+    passPercent: 85,
+  },
+  "hipaa-privacy": {
+    code: "HIPAA-PRIVACY-ANNUAL",
+    title: "HIPAA and Privacy Essentials",
+    courseType: "Compliance",
+    version: "2026.1",
+    passPercent: 90,
+  },
+  "infection-control": {
+    code: "INFECTION-CONTROL-ANNUAL",
+    title: "Infection Control Fundamentals",
+    courseType: "Clinical",
+    version: "2026.1",
+    passPercent: 85,
+  },
+};
+
 // ============================================================
 // TOAST SYSTEM
 // ============================================================
@@ -1125,6 +1170,7 @@ async function loadSettings() {
     tr.innerHTML = `
       <td>${sanitize(c.code)}</td>
       <td>${sanitize(c.title)}</td>
+      <td>${sanitize(c.courseType || "Compliance")}</td>
       <td>${sanitize(c.version)}</td>
       <td>${c.passPercent}%</td>
       <td><label class="toggle-label">
@@ -1132,7 +1178,7 @@ async function loadSettings() {
         <span class="toggle-text ${c.isActive ? "text-green" : "text-muted"}">${c.isActive ? "Active" : "Inactive"}</span>
       </label></td>
       <td><div class="action-cell">
-        <button class="btn-action btn-action-edit course-edit-btn" data-id="${sanitize(c.id)}" data-title="${sanitize(c.title)}" data-pass="${c.passPercent}" data-opens="${c.opensAt ? new Date(c.opensAt).toISOString().slice(0,16) : ''}" data-closes="${c.closesAt ? new Date(c.closesAt).toISOString().slice(0,16) : ''}">Edit</button>
+        <button class="btn-action btn-action-edit course-edit-btn" data-id="${sanitize(c.id)}" data-title="${sanitize(c.title)}" data-type="${sanitize(c.courseType || "Compliance")}" data-pass="${c.passPercent}" data-opens="${c.opensAt ? new Date(c.opensAt).toISOString().slice(0,16) : ''}" data-closes="${c.closesAt ? new Date(c.closesAt).toISOString().slice(0,16) : ''}">Edit</button>
         <button class="btn-action btn-action-delete course-delete-btn" data-id="${sanitize(c.id)}" data-title="${sanitize(c.title)}">Delete</button>
       </div></td>
     `;
@@ -1161,6 +1207,7 @@ async function loadSettings() {
     btn.addEventListener("click", () => {
       document.getElementById("editCourseId").value = btn.dataset.id;
       document.getElementById("ecTitle").value = btn.dataset.title;
+      document.getElementById("ecCourseType").value = btn.dataset.type || "Compliance";
       document.getElementById("ecPassPercent").value = btn.dataset.pass;
       document.getElementById("ecOpensAt").value = btn.dataset.opens || "";
       document.getElementById("ecClosesAt").value = btn.dataset.closes || "";
@@ -1195,6 +1242,7 @@ async function loadSettings() {
   const cancelAddCourseBtn = document.getElementById("cancelAddCourseBtn");
   const saveAddCourseBtn = document.getElementById("saveAddCourseBtn");
   const addCourseStatus = document.getElementById("addCourseStatus");
+  const templateStatus = document.getElementById("courseTemplateStatus");
 
   if (addAbuseNeglectCourseBtn) {
     const hasAbuseNeglectCourse = courses.some((c) =>
@@ -1202,6 +1250,52 @@ async function loadSettings() {
     );
     addAbuseNeglectCourseBtn.classList.toggle("hidden", hasAbuseNeglectCourse);
   }
+
+  document.querySelectorAll(".quick-template-btn").forEach((btn) => {
+    const key = btn.dataset.template;
+    const tpl = COURSE_TEMPLATES[key];
+    if (!tpl) return;
+
+    if (!btn.dataset.baseLabel) {
+      btn.dataset.baseLabel = btn.textContent;
+    }
+    btn.textContent = btn.dataset.baseLabel;
+
+    const exists = courses.some((c) => c.code === tpl.code);
+    btn.disabled = exists;
+    if (exists) btn.textContent = `${btn.dataset.baseLabel} ✓`;
+
+    btn.onclick = async () => {
+      btn.disabled = true;
+      if (templateStatus) {
+        templateStatus.textContent = `Adding ${tpl.title}...`;
+        templateStatus.className = "form-status";
+      }
+      try {
+        await api("/api/admin/courses", {
+          method: "POST",
+          body: {
+            code: tpl.code,
+            title: tpl.title,
+            courseType: tpl.courseType,
+            version: tpl.version,
+            passPercent: tpl.passPercent,
+            opensAt: null,
+            closesAt: null,
+          },
+        });
+        showToast(`${tpl.title} added.`, "success");
+        if (templateStatus) templateStatus.textContent = "";
+        await loadSettings();
+      } catch (err) {
+        if (templateStatus) {
+          templateStatus.textContent = err.message || "Failed to add template course.";
+          templateStatus.className = "form-status is-error";
+        }
+        btn.disabled = false;
+      }
+    };
+  });
 
   showAddCourseBtn.onclick = () => {
     addCourseForm.classList.toggle("hidden");
@@ -1217,6 +1311,7 @@ async function loadSettings() {
   saveAddCourseBtn.onclick = async () => {
     const code = document.getElementById("acCode").value.trim();
     const title = document.getElementById("acTitle").value.trim();
+    const courseType = document.getElementById("acCourseType")?.value || "Compliance";
     const version = document.getElementById("acVersion").value.trim();
     const passPercent = parseInt(document.getElementById("acPassPercent").value, 10);
 
@@ -1240,11 +1335,12 @@ async function loadSettings() {
     addCourseStatus.textContent = "Creating...";
     addCourseStatus.className = "form-status";
     try {
-      await api("/api/admin/courses", { method: "POST", body: { code, title, version, passPercent, opensAt, closesAt } });
+      await api("/api/admin/courses", { method: "POST", body: { code, title, courseType, version, passPercent, opensAt, closesAt } });
       showToast("Course created.", "success");
       addCourseForm.classList.add("hidden");
       document.getElementById("acCode").value = "";
       document.getElementById("acTitle").value = "";
+      if (document.getElementById("acCourseType")) document.getElementById("acCourseType").value = "Compliance";
       document.getElementById("acVersion").value = "";
       document.getElementById("acPassPercent").value = "80";
       if (document.getElementById("acOpensAt")) document.getElementById("acOpensAt").value = "";
@@ -1270,6 +1366,7 @@ async function loadSettings() {
           body: {
             code: "ABUSE-NEGLECT-ANNUAL",
             title: "Abuse and Neglect Recognition and Reporting Annual",
+            courseType: "Safety",
             version: "2026.1",
             passPercent: 85,
             opensAt: null,
@@ -1676,6 +1773,7 @@ document.getElementById("cancelEditCourseBtn").addEventListener("click", () => {
 document.getElementById("saveEditCourseBtn").addEventListener("click", async () => {
   const id = document.getElementById("editCourseId").value;
   const title = document.getElementById("ecTitle").value.trim();
+  const courseType = document.getElementById("ecCourseType")?.value || "Compliance";
   const passPercent = parseInt(document.getElementById("ecPassPercent").value, 10);
   if (!title) {
     editCourseStatus.textContent = "Title is required.";
@@ -1696,7 +1794,7 @@ document.getElementById("saveEditCourseBtn").addEventListener("click", async () 
   editCourseStatus.textContent = "Saving...";
   editCourseStatus.className = "form-status";
   try {
-    await api(`/api/admin/courses/${id}`, { method: "PATCH", body: { title, passPercent, opensAt, closesAt } });
+    await api(`/api/admin/courses/${id}`, { method: "PATCH", body: { title, courseType, passPercent, opensAt, closesAt } });
     showToast("Course updated.", "success");
     editCourseForm.classList.add("hidden");
     editCourseStatus.textContent = "";

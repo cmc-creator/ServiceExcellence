@@ -27,6 +27,7 @@ const enrollmentSchema = z.object({
 const courseCreateSchema = z.object({
   code: z.string().min(2),
   title: z.string().min(2),
+  courseType: z.string().min(2).default("Compliance"),
   version: z.string().min(1),
   passPercent: z.number().int().min(0).max(100).default(80),
   opensAt: z.string().datetime().nullable().optional(),
@@ -459,6 +460,7 @@ router.post("/courses", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
     data: {
       code: parsed.data.code,
       title: parsed.data.title,
+      courseType: parsed.data.courseType || "Compliance",
       version: parsed.data.version,
       passPercent: parsed.data.passPercent,
       opensAt: parseOptionalIso(parsed.data.opensAt),
@@ -473,6 +475,7 @@ router.post("/courses", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
 router.patch("/courses/:id", requireRole(["OWNER", "ADMIN"]), async (req, res) => {
   const schema = z.object({
     title: z.string().min(2).optional(),
+    courseType: z.string().min(2).optional(),
     passPercent: z.number().int().min(0).max(100).optional(),
     opensAt: z.string().datetime().nullable().optional(),
     closesAt: z.string().datetime().nullable().optional(),
@@ -494,6 +497,7 @@ router.patch("/courses/:id", requireRole(["OWNER", "ADMIN"]), async (req, res) =
     where: { id: course.id },
     data: {
       ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
+      ...(parsed.data.courseType !== undefined ? { courseType: parsed.data.courseType } : {}),
       ...(parsed.data.passPercent !== undefined ? { passPercent: parsed.data.passPercent } : {}),
       ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
       ...(parsed.data.opensAt !== undefined ? { opensAt: parseOptionalIso(parsed.data.opensAt) } : {}),

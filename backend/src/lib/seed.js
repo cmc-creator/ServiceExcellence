@@ -54,6 +54,7 @@ async function main() {
     },
     update: {
       title: "Annual Workforce Training and Compliance",
+      courseType: "Compliance",
       passPercent: 80,
       isActive: true,
     },
@@ -61,6 +62,7 @@ async function main() {
       organizationId: org.id,
       code: "SE-COC-ANNUAL",
       title: "Annual Workforce Training and Compliance",
+      courseType: "Compliance",
       version: "2026.1",
       passPercent: 80,
       isActive: true,
