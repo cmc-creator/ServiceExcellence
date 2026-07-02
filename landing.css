@@ -117,7 +117,8 @@ main,
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
+  background: rgba(8, 20, 32, 0.8);
 }
 
 .brand-copy {
@@ -337,6 +338,11 @@ main,
   border-bottom-right-radius: 14px;
 }
 
+.hero-stage-stack {
+  display: grid;
+  gap: 12px;
+}
+
 .panel-eyebrow {
   margin: 0;
   text-transform: uppercase;
@@ -365,6 +371,28 @@ main,
   max-height: 300px;
   object-fit: contain;
   display: block;
+}
+
+.hero-stage-image {
+  margin: 0;
+  padding: 10px;
+  border-radius: 16px;
+}
+
+.hero-stage-image img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: block;
+}
+
+.hero-stage-image figcaption {
+  margin-top: 8px;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  letter-spacing: 0.03rem;
 }
 
 .stage-stats {
@@ -823,6 +851,10 @@ main,
 @media (max-width: 980px) {
   .hero {
     grid-template-columns: 1fr;
+  }
+
+  .hero-stage-image img {
+    height: 200px;
   }
 
   .metrics,
