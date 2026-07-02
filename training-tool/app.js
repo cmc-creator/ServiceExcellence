@@ -699,10 +699,10 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Nursing Unit Conduct Example",
+      title: "Abuse or Neglect Reporting Example",
       points: [
-        "Stop disrespectful language immediately and redirect to professional communication.",
-        "Document repeated behavior concerns through approved reporting channels.",
+        "If neglect is suspected, secure immediate patient safety before continuing routine tasks.",
+        "Document objective observations and direct statements, then initiate mandatory reporting without delay.",
       ],
     },
     {
@@ -713,17 +713,17 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Abuse or Neglect Reporting Example",
+      title: "Nursing Unit Conduct Example",
       points: [
-        "If neglect is suspected, secure immediate patient safety before continuing routine tasks.",
-        "Document objective observations and direct statements, then initiate mandatory reporting without delay.",
+        "Stop disrespectful language immediately and redirect to professional communication.",
+        "Document repeated behavior concerns through approved reporting channels.",
       ],
     },
     {
-      title: "Handoff Example",
+      title: "Documentation and Handoff Example",
       points: [
+        "Document high-risk indicators immediately using factual, objective language.",
         "Use closed-loop read-back for suicide risk triggers and observation level changes.",
-        "Confirm receiving clinician repeats key risks and follow-up tasks.",
       ],
     },
   ],
@@ -736,10 +736,10 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "EVS and Support Services Conduct Example",
+      title: "Support Services Reporting Example",
       points: [
-        "Maintain respectful language in all shared spaces, even under pressure.",
-        "Report recurring disrespectful conduct through the same channels as clinical teams.",
+        "If you witness possible rough handling or neglect cues, notify a supervisor and follow reporting pathway immediately.",
+        "Record what you saw or heard factually; avoid assumptions or private investigations.",
       ],
     },
     {
@@ -750,17 +750,17 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Support Services Reporting Example",
+      title: "EVS and Support Services Conduct Example",
       points: [
-        "If you witness possible rough handling or neglect cues, notify a supervisor and follow reporting pathway immediately.",
-        "Record what you saw or heard factually; avoid assumptions or private investigations.",
+        "Maintain respectful language in all shared spaces, even under pressure.",
+        "Report recurring disrespectful conduct through the same channels as clinical teams.",
       ],
     },
     {
-      title: "Cross-Team Handoff Example",
+      title: "Documentation and Handoff Example",
       points: [
-        "Transfer requests with accurate context, not partial summaries.",
-        "Confirm receiving team understands urgency and required actions.",
+        "Capture requests and updates in the system immediately, not at end of shift.",
+        "Transfer requests with accurate context and confirm receiving team action ownership.",
       ],
     },
   ],
@@ -773,10 +773,10 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Leadership Conduct Example",
+      title: "Abuse or Neglect Governance Example",
       points: [
-        "Address policy violations consistently across all departments.",
-        "Model visible accountability to set culture standards.",
+        "Do not delay escalation because of hierarchy, tenure, or reputational concern.",
+        "Ensure protective actions, mandated notifications, and follow-up documentation are completed and closed.",
       ],
     },
     {
@@ -787,16 +787,16 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Abuse or Neglect Governance Example",
+      title: "Leadership Conduct Example",
       points: [
-        "Do not delay escalation because of hierarchy, tenure, or reputational concern.",
-        "Ensure protective actions, mandated notifications, and follow-up documentation are completed and closed.",
+        "Address policy violations consistently across all departments.",
+        "Model visible accountability to set culture standards.",
       ],
     },
     {
-      title: "Reliability Leadership Example",
+      title: "Documentation and Reliability Leadership Example",
       points: [
-        "Require handoff read-back norms in daily operations.",
+        "Require timely objective charting and handoff read-back norms in daily operations.",
         "Monitor misses and coach teams on prevention patterns.",
       ],
     },
@@ -805,24 +805,24 @@ const roleDepartmentSpotlights = {
 
 const TRAINING_CATEGORIES = {
   communication: {
-    label: "Communication and De-escalation",
-    retryModule: "Revisit Lesson 1 and Scenario 1 for first-minute response structure.",
+    label: "De-escalation and Crisis Response",
+    retryModule: "Revisit Lesson 1 and Scenario 1 for first-minute de-escalation response structure.",
   },
   conduct: {
-    label: "Professional Conduct and Integrity",
-    retryModule: "Review Lesson 2 and conflict-of-interest scenarios for policy-consistent actions.",
+    label: "Professional Boundaries and Conduct",
+    retryModule: "Review Lesson 4 and conduct scenarios for policy-consistent boundary decisions.",
   },
   privacy: {
-    label: "Privacy and Minimum Necessary",
-    retryModule: "Repeat Lesson 3 and privacy scenarios, focusing on authorization checks.",
+    label: "HIPAA and Privacy Refresh",
+    retryModule: "Repeat Lesson 3 and privacy scenarios, focusing on authorization and minimum-necessary checks.",
   },
   reporting: {
     label: "Reporting and Escalation",
     retryModule: "Re-run Lesson 4 and reporting prompts to practice factual escalation.",
   },
   safety: {
-    label: "Safe Handoffs and Reliability",
-    retryModule: "Revisit Lesson 5 and handoff scenarios with closed-loop communication.",
+    label: "Documentation Essentials and Handoff Reliability",
+    retryModule: "Revisit Lesson 5 and handoff scenarios with closed-loop documentation and read-back.",
   },
   abuseNeglect: {
     label: "Abuse or Neglect Recognition",
@@ -1052,20 +1052,46 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
 
 const coreLessons = [
   {
-    title: "Lesson 1: First-Contact Communication",
-    body: "Early interactions in psychiatric acute inpatient care set tone for safety and trust. The most reliable approach is acknowledge emotion, clarify immediate needs, and provide one concrete next step with timing.",
-    check: "A family member says, 'No one tells us anything.' What is the strongest first response?",
+    title: "Lesson 1: De-escalation and Crisis Response",
+    body: "Early interactions in psychiatric acute inpatient care set tone for safety and trust. In escalated moments, use calm acknowledgment, immediate safety orientation, and one concrete next step with timing.",
+    check: "A family member says, 'No one tells us anything and this is getting out of control.' What is the strongest first response?",
     answers: [
       { text: "Acknowledge the frustration, apologize for uncertainty, and commit to an update time in the next 10 minutes.", good: true, score: 8 },
       { text: "Provide full unit policy details before discussing their concern so expectations are clear.", good: false, score: 3 },
       { text: "Tell them the care team is busy and ask them to wait until rounds finish.", good: false, score: 1 },
     ],
-    why: "Empathy plus a clear plan lowers tension and builds confidence.",
+    why: "Calm acknowledgment plus a clear next step lowers tension and protects safety.",
     categoryKey: "communication",
-    recap: "Checkpoint: first-contact reliability = acknowledge, orient, and give a timed next step.",
+    recap: "Checkpoint: de-escalation reliability = acknowledge, orient to safety, and give a timed next step.",
   },
   {
-    title: "Lesson 2: Professional Conduct Under Pressure",
+    title: "Lesson 2: Abuse or Neglect Recognition and Reporting",
+    body: "Use the SAFE response model: Secure immediate safety, Assess urgency and reporting threshold, capture Facts objectively, and Escalate through mandatory pathways now. Potential abuse or neglect concerns are time-sensitive and must not be handled informally.",
+    check: "A patient reports possible neglect by a caregiver and appears fearful. What is the strongest immediate action?",
+    answers: [
+      { text: "Ensure immediate safety, document objective facts, and report through mandatory pathways without delay.", good: true, score: 8 },
+      { text: "Collect informal coworker opinions first to avoid overreacting.", good: false, score: 2 },
+      { text: "Wait for the next shift lead so one person can decide later.", good: false, score: 1 },
+    ],
+    why: "Prompt transparent reporting is a patient-safety and compliance expectation.",
+    categoryKey: "abuseNeglect",
+    recap: "Checkpoint: suspected abuse or neglect requires immediate safety action plus formal reporting.",
+  },
+  {
+    title: "Lesson 3: HIPAA and Privacy Refresh",
+    body: "Privacy discipline means sharing only what is necessary for the current task, with authorized individuals, in an appropriate setting. Urgency and familiarity do not replace authorization.",
+    check: "Which response best reflects HIPAA-aligned minimum-necessary practice?",
+    answers: [
+      { text: "Share only information required for the specific task with authorized personnel.", good: true, score: 8 },
+      { text: "Share enough context with nearby team members so they can help if needed.", good: false, score: 2 },
+      { text: "Confirm caller confidence, then disclose limited details to keep the interaction moving.", good: false, score: 1 },
+    ],
+    why: "Minimum necessary protects patients and reduces compliance risk.",
+    categoryKey: "privacy",
+    recap: "Checkpoint: always validate authorization and purpose before sharing protected information.",
+  },
+  {
+    title: "Lesson 4: Professional Boundaries and Conduct",
     body: "Professional standards apply in high-stress moments, not only during audits. Consistent language, non-retaliation, and accountable behavior protect both team culture and patient outcomes.",
     check: "You hear a repeated disrespectful comment about a patient in a shared workspace. Best response?",
     answers: [
@@ -1078,43 +1104,17 @@ const coreLessons = [
     recap: "Checkpoint: conduct standards are enforced in real time, with documentation when patterns persist.",
   },
   {
-    title: "Lesson 3: Privacy and Minimum Necessary",
-    body: "Privacy discipline means sharing only what is necessary for the current task, with authorized individuals, in an appropriate setting. Urgency and familiarity do not replace authorization.",
-    check: "Which response best reflects minimum necessary practice?",
+    title: "Lesson 5: Documentation Essentials",
+    body: "Documentation should be timely, objective, and complete enough for immediate continuity. High-reliability handoffs use closed-loop communication: state key risk facts, confirm understanding, and verify next actions.",
+    check: "What creates the strongest documentation and handoff standard?",
     answers: [
-      { text: "Share only information required for the specific task with authorized personnel.", good: true, score: 8 },
-      { text: "Share enough context with nearby team members so they can help if needed.", good: false, score: 2 },
-      { text: "Confirm caller confidence, then disclose limited details to keep the interaction moving.", good: false, score: 1 },
+      { text: "Prompt objective charting plus closed-loop read-back on risks and next actions.", good: true, score: 8 },
+      { text: "Verbal summary now and finish charting when time allows.", good: false, score: 2 },
+      { text: "Quick transfer of accountability with details to be filled in later by receiving staff.", good: false, score: 1 },
     ],
-    why: "Minimum necessary protects patients and reduces compliance risk.",
-    categoryKey: "privacy",
-    recap: "Checkpoint: always validate authorization and purpose before sharing protected information.",
-  },
-  {
-    title: "Lesson 4: Reporting Risk, Abuse, or Neglect",
-    body: "Use the SAFE response model: Secure immediate safety, Assess urgency and reporting threshold, capture Facts objectively, and Escalate through mandatory pathways now. Potential abuse or neglect concerns are time-sensitive and must not be handled informally.",
-    check: "A patient shares details suggesting possible neglect by a caregiver. What is the strongest immediate action?",
-    answers: [
-      { text: "Ensure immediate safety, document objective facts, and report using mandatory pathways without delay.", good: true, score: 8 },
-      { text: "Gather informal opinions from coworkers first to avoid overreacting.", good: false, score: 2 },
-      { text: "Wait for the next shift lead so one person can own the decision.", good: false, score: 1 },
-    ],
-    why: "Prompt transparent reporting is a patient-safety and compliance expectation.",
-    categoryKey: "abuseNeglect",
-    recap: "Checkpoint: suspected abuse or neglect requires immediate safety action plus formal reporting.",
-  },
-  {
-    title: "Lesson 5: Safe Handoffs and Reliability",
-    body: "High-reliability handoffs use closed-loop communication: state key risk facts, confirm understanding, and verify next actions. Documentation should be complete enough for immediate continuity.",
-    check: "What creates the safest handoff?",
-    answers: [
-      { text: "Closed-loop read-back with documented risks and plans.", good: true, score: 8 },
-      { text: "Verbal summary plus chart note later once immediate tasks settle.", good: false, score: 2 },
-      { text: "Transfer accountability quickly and let receiving staff clarify details as needed.", good: false, score: 1 },
-    ],
-    why: "Read-back prevents omissions and reduces patient harm.",
+    why: "Accurate timely documentation and read-back prevent omissions and reduce harm.",
     categoryKey: "safety",
-    recap: "Checkpoint: reliable handoffs require explicit risk transfer, read-back, and clear ownership.",
+    recap: "Checkpoint: documentation essentials include timely facts, risk visibility, and closed-loop handoffs.",
   },
 ];
 

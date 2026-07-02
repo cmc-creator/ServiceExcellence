@@ -4,6 +4,7 @@ White-label product edition for Destiny Springs Healthcare.
 Trademark and Copyright (c) NyxArete.
 
 This prototype demonstrates a premium interactive training experience for:
+
 - Service Excellence
 - Code of Conduct
 - Psychiatric acute care inpatient environment
@@ -17,6 +18,12 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 ## Included
 
 - Luxury glassmorphism visual style with animated effects
+- Five built-in annual modules:
+  - De-escalation and crisis response
+  - Abuse/neglect recognition and reporting
+  - HIPAA/privacy refresh
+  - Professional boundaries and conduct
+  - Documentation essentials
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round
 - Full final assessment with 25 questions
@@ -34,7 +41,8 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 pwsh ./tools/extract-pptx-slides.ps1
 ```
 
-3. Review generated files:
+1. Review generated files:
+
 - `docs/deck-slide-inventory.csv`
 - `docs/deck-merge-map.csv`
 
