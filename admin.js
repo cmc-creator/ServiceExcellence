@@ -274,6 +274,7 @@ let allCourses = [];
 let allEnrollments = [];
 let analyticsCompletion = null;
 let analyticsTrends = [];
+let analyticsMastery = null;
 let learnerNextCursor = null;
 let learnerHasMore = false;
 
@@ -745,15 +746,17 @@ function destroyChart(ref) {
 }
 
 async function loadAnalytics() {
-  const [completion, events, trends, deptData] = await Promise.all([
+  const [completion, events, trends, deptData, mastery] = await Promise.all([
     api("/api/analytics/completion"),
     api("/api/analytics/events/top"),
     api("/api/analytics/trends"),
     api("/api/analytics/by-department").catch(() => []),
+    api("/api/analytics/mastery/abuse-neglect").catch(() => null),
   ]);
 
   analyticsCompletion = completion || null;
   analyticsTrends = trends || [];
+  analyticsMastery = mastery || null;
 
   if (completion) {
     document.getElementById("anTotal").textContent = completion.totalEnrollments;
@@ -761,6 +764,15 @@ async function loadAnalytics() {
     document.getElementById("anRate").textContent = `${completion.completionRate}%`;
     document.getElementById("anPassed").textContent = completion.passCount;
     document.getElementById("anFailed").textContent = completion.failCount;
+  }
+
+  const masteryMetric = document.getElementById("anAbuseMastery");
+  if (masteryMetric) {
+    if (analyticsMastery?.overall?.attempts > 0) {
+      masteryMetric.textContent = `${analyticsMastery.overall.masteryRate}%`;
+    } else {
+      masteryMetric.textContent = "-";
+    }
   }
 
   // --- Completion donut chart ---
@@ -869,6 +881,29 @@ async function loadAnalytics() {
     });
   } else if (noDeptMsg) {
     noDeptMsg.classList.remove("hidden");
+  }
+
+  // --- Abuse/Neglect mastery by role table ---
+  const masteryTbody = document.getElementById("masteryRoleTableBody");
+  const noMasteryMsg = document.getElementById("noMasteryData");
+  if (analyticsMastery?.roles?.length && masteryTbody) {
+    noMasteryMsg?.classList.add("hidden");
+    masteryTbody.innerHTML = "";
+    analyticsMastery.roles.forEach((row) => {
+      const rateCls = row.masteryRate >= row.requiredThreshold ? "s-passed" : row.masteryRate >= Math.max(row.requiredThreshold - 15, 50) ? "s-in-progress" : "s-failed";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${sanitize(row.roleTrack)}</td>
+        <td>${row.attempts}</td>
+        <td>${row.masteredCount}</td>
+        <td>${row.avgMasteryPct}%</td>
+        <td>${row.requiredThreshold}%</td>
+        <td><span class="attempt-status ${rateCls}">${row.masteryRate}%</span></td>
+      `;
+      masteryTbody.appendChild(tr);
+    });
+  } else if (noMasteryMsg) {
+    noMasteryMsg.classList.remove("hidden");
   }
 }
 
@@ -1570,7 +1605,7 @@ document.getElementById("saveBulkEnrollBtn").addEventListener("click", async () 
 // ANALYTICS EXPORT (module-level)
 // ============================================================
 document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
-  if (!analyticsCompletion && !analyticsTrends.length) {
+  if (!analyticsCompletion && !analyticsTrends.length && !analyticsMastery?.roles?.length) {
     showToast("Open the Analytics tab first to load data.", "error");
     return;
   }
@@ -1591,6 +1626,14 @@ document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
       const label = new Date(parseInt(year), parseInt(month) - 1, 1)
         .toLocaleDateString("en-US", { month: "long", year: "numeric" });
       rows.push([label, t.count]);
+    });
+    rows.push([]);
+  }
+  if (analyticsMastery?.roles?.length) {
+    rows.push(["Abuse/Neglect Mastery", ""]);
+    rows.push(["Role Track", "Attempts", "Mastered", "Avg Mastery %", "Target %", "Mastery Rate %"]);
+    analyticsMastery.roles.forEach((r) => {
+      rows.push([r.roleTrack, r.attempts, r.masteredCount, r.avgMasteryPct, r.requiredThreshold, r.masteryRate]);
     });
   }
   const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");

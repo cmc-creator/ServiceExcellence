@@ -3,6 +3,7 @@ const metricNodes = document.querySelectorAll(".metric-value");
 const sectionAnchors = document.querySelectorAll(".nav-links a[href^='#']");
 const orbA = document.querySelector(".orb-a");
 const orbB = document.querySelector(".orb-b");
+const tiltCards = document.querySelectorAll("[data-tilt]");
 const observedSections = Array.from(sectionAnchors)
   .map((link) => document.querySelector(link.getAttribute("href")))
   .filter(Boolean);
@@ -107,3 +108,28 @@ window.addEventListener("scroll", () => {
   const y = Math.min(window.scrollY / 1200, 1);
   updateOrbsParallax(0, y);
 });
+
+function bindTiltCard(card) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  card.addEventListener("pointermove", (event) => {
+    const bounds = card.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+    const rotateY = (x * 7).toFixed(2);
+    const rotateX = (-y * 6).toFixed(2);
+
+    card.style.setProperty("--ry", `${rotateY}deg`);
+    card.style.setProperty("--rx", `${rotateX}deg`);
+  });
+
+  const reset = () => {
+    card.style.setProperty("--ry", "0deg");
+    card.style.setProperty("--rx", "0deg");
+  };
+
+  card.addEventListener("pointerleave", reset);
+  card.addEventListener("pointercancel", reset);
+}
+
+tiltCards.forEach(bindTiltCard);

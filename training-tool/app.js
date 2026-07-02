@@ -35,6 +35,8 @@ const state = {
     precision: 0,
     courage: 0,
   },
+  categoryStats: {},
+  retryRecommendations: [],
 };
 
 const ROLE_CONFIG_KEY = "nyxRoleConfigs";
@@ -711,10 +713,10 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Safety Reporting Example",
+      title: "Abuse or Neglect Reporting Example",
       points: [
-        "Escalate missing safety-plan documentation as a reportable reliability event.",
-        "Capture facts quickly to support immediate corrective action.",
+        "If neglect is suspected, secure immediate patient safety before continuing routine tasks.",
+        "Document objective observations and direct statements, then initiate mandatory reporting without delay.",
       ],
     },
     {
@@ -748,10 +750,10 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Operational Reporting Example",
+      title: "Support Services Reporting Example",
       points: [
-        "If you see compliance drift, report facts instead of assuming someone else will.",
-        "Protect non-retaliation by using formal pathways.",
+        "If you witness possible rough handling or neglect cues, notify a supervisor and follow reporting pathway immediately.",
+        "Record what you saw or heard factually; avoid assumptions or private investigations.",
       ],
     },
     {
@@ -785,10 +787,10 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Escalation Governance Example",
+      title: "Abuse or Neglect Governance Example",
       points: [
-        "Do not suppress reportable concerns for optics.",
-        "Track corrective actions and close the loop with documented outcomes.",
+        "Do not delay escalation because of hierarchy, tenure, or reputational concern.",
+        "Ensure protective actions, mandated notifications, and follow-up documentation are completed and closed.",
       ],
     },
     {
@@ -801,130 +803,451 @@ const roleDepartmentSpotlights = {
   ],
 };
 
+const TRAINING_CATEGORIES = {
+  communication: {
+    label: "Communication and De-escalation",
+    retryModule: "Revisit Lesson 1 and Scenario 1 for first-minute response structure.",
+  },
+  conduct: {
+    label: "Professional Conduct and Integrity",
+    retryModule: "Review Lesson 2 and conflict-of-interest scenarios for policy-consistent actions.",
+  },
+  privacy: {
+    label: "Privacy and Minimum Necessary",
+    retryModule: "Repeat Lesson 3 and privacy scenarios, focusing on authorization checks.",
+  },
+  reporting: {
+    label: "Reporting and Escalation",
+    retryModule: "Re-run Lesson 4 and reporting prompts to practice factual escalation.",
+  },
+  safety: {
+    label: "Safe Handoffs and Reliability",
+    retryModule: "Revisit Lesson 5 and handoff scenarios with closed-loop communication.",
+  },
+  abuseNeglect: {
+    label: "Abuse or Neglect Recognition",
+    retryModule: "Repeat incident-recognition scenarios and reporting steps for immediate response confidence.",
+  },
+  knowledgeCheck: {
+    label: "Knowledge Check Mastery",
+    retryModule: "Retry assessment-prep items in weak domains before reattempting final assessment.",
+  },
+};
+
+const ROLE_MASTERY_THRESHOLDS = {
+  clinical: {
+    abuseNeglect: 85,
+  },
+  nonclinical: {
+    abuseNeglect: 80,
+  },
+  leadership: {
+    abuseNeglect: 90,
+  },
+};
+
+const roleFeedbackSnippets = {
+  clinical: {
+    communication: {
+      good: "Clinical lens: you prioritized emotional safety before operational details, which lowers escalation risk.",
+      bad: "Clinical lens: start with emotional containment, then align on concrete care next steps.",
+    },
+    conduct: {
+      good: "Clinical lens: this protects team culture and patient dignity under pressure.",
+      bad: "Clinical lens: unresolved conduct drift usually shows up as care reliability drift.",
+    },
+    privacy: {
+      good: "Clinical lens: minimum-necessary sharing protects therapeutic trust.",
+      bad: "Clinical lens: privacy misses can break patient engagement and continuity.",
+    },
+    reporting: {
+      good: "Clinical lens: factual escalation protects patients and supports rapid correction.",
+      bad: "Clinical lens: delay can compound clinical and legal exposure.",
+    },
+    safety: {
+      good: "Clinical lens: closed-loop handoffs are critical in psychiatric acute care transitions.",
+      bad: "Clinical lens: handoff ambiguity is a top preventable safety risk.",
+    },
+    abuseNeglect: {
+      good: "Clinical lens: immediate safety check plus reporting is the correct protective sequence.",
+      bad: "Clinical lens: suspected abuse or neglect requires urgent documentation and escalation.",
+    },
+    knowledgeCheck: {
+      good: "Clinical lens: solid retention of high-risk decision points.",
+      bad: "Clinical lens: review the rationale, then reattempt with policy-first framing.",
+    },
+  },
+  nonclinical: {
+    communication: {
+      good: "Access-point lens: you protected trust while keeping workflow clear.",
+      bad: "Access-point lens: acknowledge first, then provide a concrete next update.",
+    },
+    conduct: {
+      good: "Access-point lens: consistent professionalism sets the tone for the entire facility.",
+      bad: "Access-point lens: informal workarounds create avoidable compliance and trust risk.",
+    },
+    privacy: {
+      good: "Access-point lens: verifying authorization before disclosure is exactly right.",
+      bad: "Access-point lens: caller urgency does not replace authorization checks.",
+    },
+    reporting: {
+      good: "Access-point lens: documenting facts protects teams and patients.",
+      bad: "Access-point lens: waiting for someone else to report can delay critical action.",
+    },
+    safety: {
+      good: "Access-point lens: complete transfers prevent downstream confusion and delay.",
+      bad: "Access-point lens: partial handoffs can produce major safety misses.",
+    },
+    abuseNeglect: {
+      good: "Access-point lens: your response balanced immediate support with proper escalation.",
+      bad: "Access-point lens: potential abuse or neglect must never stay informal or undocumented.",
+    },
+    knowledgeCheck: {
+      good: "Access-point lens: strong recall across policy and communication expectations.",
+      bad: "Access-point lens: use policy anchors, then select the most protective action.",
+    },
+  },
+  leadership: {
+    communication: {
+      good: "Leadership lens: this models calm, accountable communication for the team.",
+      bad: "Leadership lens: teams mirror your first response under pressure.",
+    },
+    conduct: {
+      good: "Leadership lens: consistent enforcement is culture-building behavior.",
+      bad: "Leadership lens: selective enforcement weakens accountability standards.",
+    },
+    privacy: {
+      good: "Leadership lens: this decision reinforces privacy as an operational discipline.",
+      bad: "Leadership lens: privacy inconsistency erodes trust and regulatory posture.",
+    },
+    reporting: {
+      good: "Leadership lens: transparent escalation signals non-retaliation in practice.",
+      bad: "Leadership lens: suppressing reportable concerns multiplies risk.",
+    },
+    safety: {
+      good: "Leadership lens: read-back expectations improve reliability across shifts.",
+      bad: "Leadership lens: unmanaged handoff gaps become repeatable system defects.",
+    },
+    abuseNeglect: {
+      good: "Leadership lens: this protects vulnerable patients and sets a clear reporting standard.",
+      bad: "Leadership lens: delayed action on suspected abuse or neglect is unacceptable risk.",
+    },
+    knowledgeCheck: {
+      good: "Leadership lens: strong decision consistency across governance topics.",
+      bad: "Leadership lens: revisit weak domains before re-engaging the assessment.",
+    },
+  },
+};
+
+const adaptiveHintBank = {
+  communication: "Hint: Lead with acknowledgment first, then give one concrete next step and timing.",
+  conduct: "Hint: Choose the action that is transparent, respectful, and formally accountable.",
+  privacy: "Hint: Ask who is authorized, what is necessary, and where the conversation should occur.",
+  reporting: "Hint: If facts suggest risk, document and escalate now, not later.",
+  safety: "Hint: Look for read-back, risk confirmation, and explicit task ownership.",
+  abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and mandatory reporting pathways.",
+  knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
+};
+
+function createCategoryStats() {
+  return Object.fromEntries(
+    Object.entries(TRAINING_CATEGORIES).map(([key, cfg]) => [
+      key,
+      { label: cfg.label, attempts: 0, correct: 0 },
+    ])
+  );
+}
+
+function trackCategoryResult(categoryKey, correct) {
+  const key = categoryKey || "knowledgeCheck";
+  const entry = state.categoryStats[key];
+  if (!entry) return;
+  entry.attempts += 1;
+  if (correct) entry.correct += 1;
+}
+
+function getRoleSpecificSnippet(categoryKey, correct) {
+  const persona = getCurrentRolePersona();
+  const personaSnippets = roleFeedbackSnippets[persona] || roleFeedbackSnippets.clinical;
+  const domainSnippets = personaSnippets[categoryKey] || personaSnippets.knowledgeCheck;
+  return correct ? domainSnippets.good : domainSnippets.bad;
+}
+
+function getAdaptiveHint(categoryKey) {
+  if (state.missStreak < 2) return "";
+  return adaptiveHintBank[categoryKey] || adaptiveHintBank.knowledgeCheck;
+}
+
+function setFeedbackNode(node, message, className) {
+  if (!node) return;
+  if (!message) {
+    node.className = "feedback hidden";
+    node.textContent = "";
+    return;
+  }
+  node.textContent = message;
+  node.className = `feedback ${className}`;
+}
+
+function getCategoryPercent(categoryKey) {
+  const entry = state.categoryStats[categoryKey];
+  if (!entry || entry.attempts === 0) return null;
+  return Math.round((entry.correct / entry.attempts) * 100);
+}
+
+function getRoleMasteryThreshold(categoryKey) {
+  const persona = getCurrentRolePersona();
+  return ROLE_MASTERY_THRESHOLDS[persona]?.[categoryKey] || 80;
+}
+
+function getRoleMasteryRequirementText(categoryKey) {
+  const cfg = TRAINING_CATEGORIES[categoryKey];
+  const threshold = getRoleMasteryThreshold(categoryKey);
+  return `${cfg?.label || categoryKey} mastery target: ${threshold}% for ${getCurrentRoleName()}.`;
+}
+
+function getRetryRecommendations() {
+  const weak = Object.entries(state.categoryStats)
+    .filter(([, stats]) => stats.attempts >= 2)
+    .map(([key, stats]) => ({
+      key,
+      pct: Math.round((stats.correct / stats.attempts) * 100),
+      attempts: stats.attempts,
+      requiredPct: getRoleMasteryThreshold(key),
+    }))
+    .filter((item) => item.pct < item.requiredPct)
+    .sort((a, b) => a.pct - b.pct)
+    .slice(0, 3)
+    .map((item) => {
+      const cfg = TRAINING_CATEGORIES[item.key];
+      return {
+        key: item.key,
+        label: cfg?.label || item.key,
+        pct: item.pct,
+        requiredPct: item.requiredPct,
+        module: cfg?.retryModule || "Review recent misses and retry this domain.",
+      };
+    });
+
+  state.retryRecommendations = weak;
+  return weak;
+}
+
+function buildNextStepGuidance(pass, assessmentPct, recommendations) {
+  const roleName = getCurrentRoleName();
+  const abuseNeglectThreshold = getRoleMasteryThreshold("abuseNeglect");
+  const abuseNeglectPct = getCategoryPercent("abuseNeglect");
+  const abuseNeglectClause = abuseNeglectPct === null
+    ? `Complete abuse or neglect practice items to establish the ${abuseNeglectThreshold}% mastery target.`
+    : `Abuse or neglect mastery finished at ${abuseNeglectPct}% against a ${abuseNeglectThreshold}% target.`;
+
+  if (pass && recommendations.length === 0) {
+    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a quarterly 10-minute refresh focused on incident recognition and reporting consistency.`;
+  }
+  if (pass && recommendations.length > 0) {
+    return `${roleName}: you passed, and targeted reinforcement is recommended in ${recommendations.map((item) => item.label).join(", ")}. ${abuseNeglectClause} Re-run those modules this week for stronger retention.`;
+  }
+  return `${roleName}: assessment at ${assessmentPct}%. ${abuseNeglectClause} Complete recommended retry modules, then reattempt the full assessment with focus on policy-first escalation decisions.`;
+}
+
 const coreLessons = [
   {
-    title: "Lesson 1: Service Excellence Foundation",
-    body: "Service excellence in psychiatric acute inpatient care starts with calm presence, empathy, and clear ownership. Every interaction should reduce uncertainty and build patient and family trust.",
-    check: "Which action best reflects service excellence in the first minute of a tense interaction?",
+    title: "Lesson 1: First-Contact Communication",
+    body: "Early interactions in psychiatric acute inpatient care set tone for safety and trust. The most reliable approach is acknowledge emotion, clarify immediate needs, and provide one concrete next step with timing.",
+    check: "A family member says, 'No one tells us anything.' What is the strongest first response?",
     answers: [
-      { text: "Acknowledge concerns, apologize for delays, and give a specific next step.", good: true, score: 8 },
-      { text: "Explain policies first and skip emotions to stay efficient.", good: false, score: 1 },
-      { text: "Redirect to another team member without context.", good: false, score: 0 },
+      { text: "Acknowledge the frustration, apologize for uncertainty, and commit to an update time in the next 10 minutes.", good: true, score: 8 },
+      { text: "Provide full unit policy details before discussing their concern so expectations are clear.", good: false, score: 3 },
+      { text: "Tell them the care team is busy and ask them to wait until rounds finish.", good: false, score: 1 },
     ],
     why: "Empathy plus a clear plan lowers tension and builds confidence.",
+    categoryKey: "communication",
+    recap: "Checkpoint: first-contact reliability = acknowledge, orient, and give a timed next step.",
   },
   {
-    title: "Lesson 2: Code of Conduct Essentials",
-    body: "Code of Conduct means acting with integrity even under pressure: respect for every person, professional language, and policy-aligned behavior across clinical and non-clinical roles.",
-    check: "What is the strongest conduct response when witnessing inappropriate behavior?",
+    title: "Lesson 2: Professional Conduct Under Pressure",
+    body: "Professional standards apply in high-stress moments, not only during audits. Consistent language, non-retaliation, and accountable behavior protect both team culture and patient outcomes.",
+    check: "You hear a repeated disrespectful comment about a patient in a shared workspace. Best response?",
     answers: [
-      { text: "Address respectfully in the moment and report repeated patterns.", good: true, score: 8 },
-      { text: "Ignore it if patient care is not directly affected.", good: false, score: 0 },
-      { text: "Discuss it informally with peers only.", good: false, score: 1 },
+      { text: "Address it respectfully in the moment, then document and report if the pattern continues.", good: true, score: 8 },
+      { text: "Handle it privately with peers only to avoid escalating unit tension.", good: false, score: 3 },
+      { text: "Ignore it unless a formal complaint is filed by a patient.", good: false, score: 0 },
     ],
     why: "Respect and accountability require action, not passive observation.",
+    categoryKey: "conduct",
+    recap: "Checkpoint: conduct standards are enforced in real time, with documentation when patterns persist.",
   },
   {
-    title: "Lesson 3: Confidentiality and Minimum Necessary",
-    body: "Protected information must stay private. Share only what is required for care operations, and only with authorized individuals in appropriate settings.",
-    check: "Which statement matches minimum necessary access?",
+    title: "Lesson 3: Privacy and Minimum Necessary",
+    body: "Privacy discipline means sharing only what is necessary for the current task, with authorized individuals, in an appropriate setting. Urgency and familiarity do not replace authorization.",
+    check: "Which response best reflects minimum necessary practice?",
     answers: [
       { text: "Share only information required for the specific task with authorized personnel.", good: true, score: 8 },
-      { text: "Share full context with any coworker to avoid repeat questions.", good: false, score: 0 },
-      { text: "Share details if a caller sounds confident.", good: false, score: 0 },
+      { text: "Share enough context with nearby team members so they can help if needed.", good: false, score: 2 },
+      { text: "Confirm caller confidence, then disclose limited details to keep the interaction moving.", good: false, score: 1 },
     ],
     why: "Minimum necessary protects patients and reduces compliance risk.",
+    categoryKey: "privacy",
+    recap: "Checkpoint: always validate authorization and purpose before sharing protected information.",
   },
   {
-    title: "Lesson 4: Speaking Up and Reporting",
-    body: "Potential misconduct, safety risks, or retaliation concerns must be escalated through approved channels. Timely factual reporting protects patients, staff, and the organization.",
-    check: "What is the correct response to a potentially reportable concern?",
+    title: "Lesson 4: Reporting Risk, Abuse, or Neglect",
+    body: "Use the SAFE response model: Secure immediate safety, Assess urgency and reporting threshold, capture Facts objectively, and Escalate through mandatory pathways now. Potential abuse or neglect concerns are time-sensitive and must not be handled informally.",
+    check: "A patient shares details suggesting possible neglect by a caregiver. What is the strongest immediate action?",
     answers: [
-      { text: "Document facts and report promptly using approved pathways.", good: true, score: 8 },
-      { text: "Wait to see if it resolves itself before saying anything.", good: false, score: 1 },
-      { text: "Keep it within your team to avoid visibility.", good: false, score: 0 },
+      { text: "Ensure immediate safety, document objective facts, and report using mandatory pathways without delay.", good: true, score: 8 },
+      { text: "Gather informal opinions from coworkers first to avoid overreacting.", good: false, score: 2 },
+      { text: "Wait for the next shift lead so one person can own the decision.", good: false, score: 1 },
     ],
-    why: "Prompt transparent reporting is a core compliance expectation.",
+    why: "Prompt transparent reporting is a patient-safety and compliance expectation.",
+    categoryKey: "abuseNeglect",
+    recap: "Checkpoint: suspected abuse or neglect requires immediate safety action plus formal reporting.",
   },
   {
-    title: "Lesson 5: Communication and Safe Handoffs",
-    body: "High-reliability handoffs use closed-loop communication: state key risk facts, confirm understanding, and verify next actions. Documentation should be timely and accurate.",
+    title: "Lesson 5: Safe Handoffs and Reliability",
+    body: "High-reliability handoffs use closed-loop communication: state key risk facts, confirm understanding, and verify next actions. Documentation should be complete enough for immediate continuity.",
     check: "What creates the safest handoff?",
     answers: [
       { text: "Closed-loop read-back with documented risks and plans.", good: true, score: 8 },
-      { text: "Quick verbal summary without confirmation.", good: false, score: 1 },
-      { text: "Assume the next shift can review charts later.", good: false, score: 0 },
+      { text: "Verbal summary plus chart note later once immediate tasks settle.", good: false, score: 2 },
+      { text: "Transfer accountability quickly and let receiving staff clarify details as needed.", good: false, score: 1 },
     ],
     why: "Read-back prevents omissions and reduces patient harm.",
+    categoryKey: "safety",
+    recap: "Checkpoint: reliable handoffs require explicit risk transfer, read-back, and clear ownership.",
   },
 ];
 
 const scenarios = [
   {
     title: "Scenario 1: Waiting Room Heat",
-    category: "Service Excellence - De-escalation",
+    category: "Communication - De-escalation",
     roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "In the behavioral health intake area, a family member says they have been waiting forever while others watch. What is your best first move?",
+    prompt: "In intake, a family member raises their voice: 'No one has updated us in over an hour.' Several patients are watching. What should you do first?",
     choices: [
-      { text: "Lead with staffing excuses.", score: 4, good: false, feedback: "Context helps, but empathy and a clear next step should come first." },
-      { text: "Acknowledge frustration, apologize, and provide a specific update time.", score: 16, good: true, feedback: "Excellent service recovery opener." },
-      { text: "Avoid engagement and look for someone else to handle it.", score: 2, good: false, feedback: "Ownership is critical for trust." },
+      { text: "Acknowledge their frustration, apologize for the uncertainty, and commit to a specific update window.", score: 16, good: true, feedback: "Strong first-minute de-escalation and ownership response." },
+      { text: "Explain current patient acuity and staffing constraints so they understand why the delay happened.", score: 7, good: false, feedback: "Useful context, but this should follow acknowledgment and next-step clarity." },
+      { text: "Ask them to return to seating and wait for the next available update.", score: 3, good: false, feedback: "This may contain the moment, but it does not actively recover trust." },
     ],
+    categoryKey: "communication",
+    recap: "Scenario recap: emotional acknowledgment plus specific timing is the most reliable de-escalation opener.",
   },
   {
     title: "Scenario 2: Hallway Confidentiality",
-    category: "Code of Conduct - Privacy",
+    category: "Privacy - Protected Information",
     roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "Behavioral health details are being discussed in a public hallway near visitors. What should you do?",
+    prompt: "You hear team members discussing sensitive psychiatric details in a hallway near visitors and contractors. What should you do now?",
     choices: [
-      { text: "Walk away and assume they know policy.", score: 0, good: false, feedback: "Silence can normalize risk." },
-      { text: "Interrupt respectfully, move to private space, and remind of policy.", score: 18, good: true, feedback: "Correct. Immediate intervention protects patient trust." },
-      { text: "Post a generic reminder later.", score: 4, good: false, feedback: "Indirect delayed response is not enough." },
+      { text: "Interrupt respectfully, relocate the conversation, and reinforce minimum-necessary communication expectations.", score: 18, good: true, feedback: "Correct. Immediate intervention prevents further disclosure risk." },
+      { text: "Send a private message to one person and address it during the next team huddle.", score: 8, good: false, feedback: "Helpful follow-up, but it misses immediate containment of the active privacy risk." },
+      { text: "Avoid intervening and document only if a complaint is filed.", score: 1, good: false, feedback: "Waiting for complaint allows avoidable exposure to continue." },
     ],
+    categoryKey: "privacy",
+    recap: "Scenario recap: active privacy risk requires immediate intervention, not delayed reminders.",
   },
   {
     title: "Scenario 3: Clinical Handoff Gaps",
-    category: "Service Excellence - Communication",
+    category: "Safety - Handoff Reliability",
     roles: ["clinical"],
-    prompt: "A shift handoff missed a recent self-harm risk trigger and safety plan note. What is your best immediate action?",
+    prompt: "During change-of-shift, you discover a missed note on new self-harm risk indicators and an incomplete observation-level update. Best immediate action?",
     choices: [
-      { text: "Wait for next shift and avoid blame.", score: 1, good: false, feedback: "Delay creates avoidable risk." },
-      { text: "Correct the record now, notify team, and use closed-loop read-back.", score: 18, good: true, feedback: "Right move for safety and reliability." },
-      { text: "Message one colleague and hope it spreads.", score: 4, good: false, feedback: "Critical updates need clear accountable communication." },
+      { text: "Correct documentation now, notify receiving staff immediately, and complete read-back on risk and observation level.", score: 18, good: true, feedback: "Right move for immediate safety and continuity." },
+      { text: "Flag the chart for review and cover the gap in the next interdisciplinary huddle.", score: 7, good: false, feedback: "Reasonable follow-up, but immediate closed-loop communication is required now." },
+      { text: "Send a summary message to the charge nurse and continue current assignments.", score: 4, good: false, feedback: "One-way messaging is not enough for high-risk handoff correction." },
     ],
+    categoryKey: "safety",
+    recap: "Scenario recap: urgent handoff risks demand immediate documentation correction and read-back.",
   },
   {
     title: "Scenario 4: Front Desk Data Request",
-    category: "Code of Conduct - Minimum Necessary Access",
+    category: "Privacy - Authorization Check",
     roles: ["nonclinical"],
-    prompt: "A caller asks if a patient is currently admitted to the behavioral health unit and claims to be a relative. What do you do first?",
+    prompt: "A caller requests confirmation that a patient is admitted and says they are immediate family. What should happen first?",
     choices: [
-      { text: "Share details quickly to be helpful.", score: 0, good: false, feedback: "Speed does not override privacy rules." },
-      { text: "Verify identity and authorization before sharing any protected details.", score: 18, good: true, feedback: "Correct and compliant response." },
-      { text: "Transfer without notes and move on.", score: 5, good: false, feedback: "Transfer alone does not close the risk." },
+      { text: "Verify identity and authorization first, then share only minimum-necessary information allowed by policy.", score: 18, good: true, feedback: "Correct and policy-aligned." },
+      { text: "Confirm only broad status information since they sound legitimate and urgent.", score: 5, good: false, feedback: "Intent and urgency do not replace authorization controls." },
+      { text: "Transfer the call to clinical staff without documenting the request.", score: 4, good: false, feedback: "Transfer without context can still propagate privacy and workflow risks." },
     ],
+    categoryKey: "privacy",
+    recap: "Scenario recap: verify authorization before disclosure, then apply minimum-necessary rules.",
   },
   {
     title: "Scenario 5: Vendor Gift Basket",
-    category: "Code of Conduct - Conflict of Interest",
+    category: "Conduct - Conflict of Interest",
     roles: ["leadership", "nonclinical"],
-    prompt: "A vendor sends an expensive gift with language implying influence. Best action?",
+    prompt: "A vendor sends a high-value gift and hints that continued referrals should be 'mutually beneficial.' Best action?",
     choices: [
-      { text: "Share it quietly with the team.", score: 1, good: false, feedback: "A hidden gift is still a policy issue." },
-      { text: "Decline or return, disclose, and document through proper channel.", score: 18, good: true, feedback: "Correct transparent action." },
-      { text: "Keep it offsite to avoid optics.", score: 0, good: false, feedback: "Optics are not the only problem, policy is." },
+      { text: "Decline or return, disclose immediately, and document through the required channel.", score: 18, good: true, feedback: "Correct transparent action." },
+      { text: "Accept temporarily and ask compliance later whether disclosure is needed.", score: 6, good: false, feedback: "Deferring disclosure creates avoidable integrity risk." },
+      { text: "Distribute it equally so no individual receives personal benefit.", score: 2, good: false, feedback: "Distribution does not resolve the underlying conflict-of-interest concern." },
     ],
+    categoryKey: "conduct",
+    recap: "Scenario recap: conflict-of-interest concerns require immediate transparency and documentation.",
   },
   {
     title: "Scenario 6: Manager Pressure",
-    category: "Code of Conduct - Speak Up",
+    category: "Reporting - Speak Up",
     roles: ["leadership"],
-    prompt: "A supervisor asks to keep a reportable issue internal to avoid attention. What is the right response?",
+    prompt: "A peer leader asks to keep a reportable event internal until 'we know more' to avoid scrutiny. What is the right response?",
     choices: [
-      { text: "Agree to avoid conflict.", score: 0, good: false, feedback: "Suppression of reportable concerns is high risk." },
-      { text: "Escalate through approved reporting channels and document facts.", score: 20, good: true, feedback: "Correct, this supports non-retaliation and integrity." },
-      { text: "Wait a week and see if it resolves itself.", score: 2, good: false, feedback: "Delay can worsen impact and exposure." },
+      { text: "Escalate through approved channels now and document objective facts plus timeline.", score: 20, good: true, feedback: "Correct, this supports non-retaliation and integrity." },
+      { text: "Collect internal context first, then decide whether formal reporting is necessary.", score: 8, good: false, feedback: "Context matters, but reportable concerns should not be delayed." },
+      { text: "Keep a private note and monitor for another occurrence.", score: 3, good: false, feedback: "Private monitoring does not satisfy reporting obligations." },
     ],
+    categoryKey: "reporting",
+    recap: "Scenario recap: reportable concerns must be escalated promptly with factual documentation.",
+  },
+  {
+    title: "Scenario 7: Possible Neglect Signal",
+    category: "Abuse or Neglect - Recognition and Reporting",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A patient reports being left without needed support for long periods and shows fear about returning to a specific caregiver. What is the strongest response?",
+    choices: [
+      { text: "Treat it as dissatisfaction only and route to routine service-recovery follow-up.", score: 4, good: false, feedback: "Service recovery may be needed, but potential neglect indicators require immediate safety and reporting review." },
+      { text: "Complete immediate safety check, document objective statements and observations, and initiate mandatory reporting pathway.", score: 20, good: true, feedback: "Correct. This protects the patient and aligns with mandatory reporting responsibilities." },
+      { text: "Ask the patient to provide more detail later so the report can be more complete.", score: 6, good: false, feedback: "Additional detail can follow, but immediate safety and timely reporting come first." },
+    ],
+    categoryKey: "abuseNeglect",
+    recap: "Scenario recap: when abuse or neglect may be present, act now on safety, documentation, and mandated escalation.",
+  },
+  {
+    title: "Scenario 8: Clinical Observation Concern",
+    category: "Abuse or Neglect - Clinical Escalation",
+    roles: ["clinical"],
+    prompt: "During medication pass, you observe unexplained bruising and the patient becomes visibly fearful when a caregiver is mentioned. What is the best immediate response?",
+    choices: [
+      { text: "Complete immediate safety assessment, document objective findings, notify charge leadership, and trigger mandatory reporting workflow.", score: 20, good: true, feedback: "Correct. This prioritizes safety, objective documentation, and required escalation." },
+      { text: "Wait for physician rounds so findings can be reviewed once by the full team.", score: 5, good: false, feedback: "Team coordination matters, but immediate reporting steps should not be delayed." },
+      { text: "Ask peers for informal consensus before documenting to avoid overcalling risk.", score: 3, good: false, feedback: "Consensus seeking can delay protective action and mandated reporting timelines." },
+    ],
+    categoryKey: "abuseNeglect",
+    recap: "Scenario recap: clinical teams should document objective indicators and escalate immediately when concern is credible.",
+  },
+  {
+    title: "Scenario 9: Non-Clinical Witness Report",
+    category: "Abuse or Neglect - Witness Response",
+    roles: ["nonclinical"],
+    prompt: "A support-services staff member reports hearing a caregiver threaten to withhold basic needs from a patient. What should happen first?",
+    choices: [
+      { text: "Report immediately through supervisor and mandated pathway, document exact wording, and support immediate safety check.", score: 20, good: true, feedback: "Correct. Non-clinical teams still have direct reporting responsibility for credible concerns." },
+      { text: "Tell the witness to monitor for a second event before escalating.", score: 4, good: false, feedback: "Waiting for repeat behavior can expose patients to preventable harm." },
+      { text: "Escalate only to a coworker from the same department to keep the issue contained.", score: 2, good: false, feedback: "Containment without formal reporting is not acceptable for potential neglect." },
+    ],
+    categoryKey: "abuseNeglect",
+    recap: "Scenario recap: non-clinical staff should escalate credible concerns immediately with factual documentation.",
+  },
+  {
+    title: "Scenario 10: Leadership Conflict Pressure",
+    category: "Abuse or Neglect - Leadership Accountability",
+    roles: ["leadership"],
+    prompt: "An allegation involves a high-performing senior employee and a leader suggests delaying formal reporting until internal review is complete. Best action?",
+    choices: [
+      { text: "Initiate mandated reporting and protective actions immediately, then run internal review in parallel.", score: 20, good: true, feedback: "Correct. Leadership accountability requires immediate formal action independent of rank." },
+      { text: "Delay formal reporting 24 hours while gathering additional context from leadership peers.", score: 6, good: false, feedback: "Context gathering can continue, but mandated escalation should not wait." },
+      { text: "Reassign the employee quietly and document internally only.", score: 3, good: false, feedback: "Reassignment without formal pathway activation leaves significant risk unresolved." },
+    ],
+    categoryKey: "abuseNeglect",
+    recap: "Scenario recap: leadership must not delay mandated reporting due to hierarchy or optics.",
   },
 ];
 
@@ -932,58 +1255,71 @@ const lightningQuestions = [
   {
     q: "A coworker makes an inappropriate joke targeting a protected group. Best response?",
     answers: [
-      { text: "Ignore it.", score: 0, good: false },
-      { text: "Address respectfully and report patterns.", score: 12, good: true },
-      { text: "Record for social media.", score: 0, good: false },
+      { text: "Address it respectfully, then report if the behavior continues.", score: 12, good: true },
+      { text: "Address it privately only if someone formally complains.", score: 5, good: false },
+      { text: "Log it informally with peers and avoid formal channels.", score: 2, good: false },
     ],
     why: "Respect standards apply in every setting.",
+    categoryKey: "conduct",
   },
   {
     q: "You are asked to chart a task you did not complete. Best action?",
     answers: [
-      { text: "Chart anyway to avoid delay.", score: 0, good: false },
       { text: "Refuse inaccurate charting and escalate appropriately.", score: 12, good: true },
-      { text: "Ask someone else to sign it.", score: 0, good: false },
+      { text: "Chart with a clarifying note and update later.", score: 4, good: false },
+      { text: "Ask a coworker to co-sign so accountability is shared.", score: 1, good: false },
     ],
     why: "Documentation integrity is mandatory.",
+    categoryKey: "conduct",
   },
   {
     q: "Feedback says communication felt cold. What improves trust fastest?",
     answers: [
       { text: "Empathy language and clear next steps.", score: 12, good: true },
-      { text: "Longer policy explanations.", score: 3, good: false },
-      { text: "Avoid hard conversations.", score: 0, good: false },
+      { text: "Structured policy script before emotional acknowledgment.", score: 4, good: false },
+      { text: "Escalate all difficult conversations to supervisors.", score: 2, good: false },
     ],
     why: "Clear empathy outperforms scripted formality.",
+    categoryKey: "communication",
+  },
+  {
+    q: "A patient hints they feel unsafe with a caregiver but asks you not to report it yet. Best response?",
+    answers: [
+      { text: "Explain safety duty, complete immediate safety check, and escalate through required reporting channels.", score: 12, good: true },
+      { text: "Respect the request fully and wait for more details next shift.", score: 2, good: false },
+      { text: "Ask a teammate to decide whether reporting is necessary.", score: 3, good: false },
+    ],
+    why: "Safety and mandated reporting obligations override delay requests when risk is credible.",
+    categoryKey: "abuseNeglect",
   },
 ];
 
 const finalAssessment = [
-  { q: "In psychiatric acute inpatient care, service excellence starts with", a: ["Calm empathy and ownership", "Avoiding difficult conversations", "Speed over clarity"], c: 0 },
-  { q: "If a patient complaint escalates, first step is", a: ["Defend your team", "Acknowledge and clarify next action", "Exit conversation"], c: 1 },
-  { q: "Confidentiality should be discussed", a: ["Only in private appropriate settings", "Anywhere if quick", "Only by managers"], c: 0 },
-  { q: "Gift policy concerns should be", a: ["Documented and disclosed", "Ignored if shared", "Handled privately"], c: 0 },
-  { q: "Respectful workplace means", a: ["No harmful jokes or slurs", "Intent matters more than impact", "Humor has no limits"], c: 0 },
-  { q: "When unsure about reporting", a: ["Do nothing", "Use approved channels promptly", "Ask social media"], c: 1 },
-  { q: "Charting should be", a: ["Accurate and truthful", "Adjusted to help team", "Backfilled from memory only"], c: 0 },
-  { q: "Conflict of interest is best handled by", a: ["Disclosure and guidance", "Private side decisions", "Verbal only notice"], c: 0 },
-  { q: "Service recovery includes", a: ["Ownership, apology, follow-through", "Silence", "Transfer blame"], c: 0 },
-  { q: "Minimum necessary data means", a: ["Share all with coworkers", "Share only what is required", "Share if asked twice"], c: 1 },
-  { q: "Retaliation concerns should be", a: ["Reported and documented", "Handled informally only", "Ignored"], c: 0 },
-  { q: "A high-trust handoff uses", a: ["Closed-loop read-back", "Assumptions", "Partial details"], c: 0 },
-  { q: "In tense moments, tone should be", a: ["Calm and clear", "Cold and short", "Defensive"], c: 0 },
-  { q: "If policy and convenience conflict", a: ["Convenience wins", "Policy wins", "Manager mood wins"], c: 1 },
-  { q: "Escalation pathways should be", a: ["Known and practiced", "Used only annually", "Avoided"], c: 0 },
-  { q: "Respect means", a: ["Professional language always", "Only with patients", "Only in meetings"], c: 0 },
-  { q: "A compliance red flag should trigger", a: ["Prompt review or report", "Silence", "Jokes"], c: 0 },
-  { q: "Patient trust grows when teams are", a: ["Transparent and responsive", "Busy and vague", "Detached"], c: 0 },
-  { q: "Annual training objective is", a: ["Behavior change", "Checkbox completion", "Minimal score"], c: 0 },
-  { q: "If you witness possible misconduct", a: ["Report facts through channels", "Investigate privately", "Ignore"], c: 0 },
-  { q: "Manager role in conduct includes", a: ["Modeling and enforcing standards", "Selective enforcement", "Silence"], c: 0 },
-  { q: "Documentation timing should be", a: ["Prompt and accurate", "Delayed weekly", "When convenient"], c: 0 },
-  { q: "Privacy includes", a: ["Verbal, written, and digital safeguards", "Only paper records", "Only nurse stations"], c: 0 },
-  { q: "Humor at work should", a: ["Stay respectful and inclusive", "Target groups", "Bypass policy"], c: 0 },
-  { q: "Best annual completion standard", a: ["Pass score plus acknowledgment", "Attendance only", "No tracking"], c: 0 },
+  { q: "In psychiatric acute inpatient care, reliable staff communication starts with", a: ["Calm empathy and ownership", "Avoiding difficult conversations", "Speed over clarity"], c: 0, k: "communication" },
+  { q: "If a patient complaint escalates, first step is", a: ["Defend your team", "Acknowledge and clarify next action", "Exit conversation"], c: 1, k: "communication" },
+  { q: "Confidentiality should be discussed", a: ["Only in private appropriate settings", "Anywhere if quick", "Only by managers"], c: 0, k: "privacy" },
+  { q: "Gift policy concerns should be", a: ["Documented and disclosed", "Ignored if shared", "Handled privately"], c: 0, k: "conduct" },
+  { q: "Respectful workplace means", a: ["No harmful jokes or slurs", "Intent matters more than impact", "Humor has no limits"], c: 0, k: "conduct" },
+  { q: "When unsure about reporting", a: ["Do nothing", "Use approved channels promptly", "Ask social media"], c: 1, k: "reporting" },
+  { q: "Charting should be", a: ["Accurate and truthful", "Adjusted to help team", "Backfilled from memory only"], c: 0, k: "conduct" },
+  { q: "Conflict of interest is best handled by", a: ["Disclosure and guidance", "Private side decisions", "Verbal only notice"], c: 0, k: "conduct" },
+  { q: "Service recovery includes", a: ["Ownership, apology, follow-through", "Silence", "Transfer blame"], c: 0, k: "communication" },
+  { q: "Minimum necessary data means", a: ["Share all with coworkers", "Share only what is required", "Share if asked twice"], c: 1, k: "privacy" },
+  { q: "Retaliation concerns should be", a: ["Reported and documented", "Handled informally only", "Ignored"], c: 0, k: "reporting" },
+  { q: "A high-trust handoff uses", a: ["Closed-loop read-back", "Assumptions", "Partial details"], c: 0, k: "safety" },
+  { q: "In tense moments, tone should be", a: ["Calm and clear", "Cold and short", "Defensive"], c: 0, k: "communication" },
+  { q: "If policy and convenience conflict", a: ["Convenience wins", "Policy wins", "Manager mood wins"], c: 1, k: "conduct" },
+  { q: "Escalation pathways should be", a: ["Known and practiced", "Used only annually", "Avoided"], c: 0, k: "reporting" },
+  { q: "Respect means", a: ["Professional language always", "Only with patients", "Only in meetings"], c: 0, k: "conduct" },
+  { q: "A compliance red flag should trigger", a: ["Prompt review or report", "Silence", "Jokes"], c: 0, k: "reporting" },
+  { q: "Patient trust grows when teams are", a: ["Transparent and responsive", "Busy and vague", "Detached"], c: 0, k: "communication" },
+  { q: "Annual training objective is", a: ["Behavior change", "Checkbox completion", "Minimal score"], c: 0, k: "knowledgeCheck" },
+  { q: "If you witness possible misconduct", a: ["Report facts through channels", "Investigate privately", "Ignore"], c: 0, k: "reporting" },
+  { q: "Manager role in conduct includes", a: ["Modeling and enforcing standards", "Selective enforcement", "Silence"], c: 0, k: "conduct" },
+  { q: "Documentation timing should be", a: ["Prompt and accurate", "Delayed weekly", "When convenient"], c: 0, k: "safety" },
+  { q: "Privacy includes", a: ["Verbal, written, and digital safeguards", "Only paper records", "Only nurse stations"], c: 0, k: "privacy" },
+  { q: "If abuse or neglect is suspected, the first priority is", a: ["Immediate safety and required escalation", "Collect informal opinions first", "Wait for next leadership meeting"], c: 0, k: "abuseNeglect" },
+  { q: "Best annual completion standard", a: ["Pass score plus acknowledgment", "Attendance only", "No tracking"], c: 0, k: "knowledgeCheck" },
 ];
 
 const panels = {
@@ -1022,6 +1358,8 @@ const lessonSpotlightList = document.getElementById("lessonSpotlightList");
 const lessonCheckPrompt = document.getElementById("lessonCheckPrompt");
 const lessonChoices = document.getElementById("lessonChoices");
 const lessonFeedback = document.getElementById("lessonFeedback");
+const lessonRecap = document.getElementById("lessonRecap");
+const lessonHint = document.getElementById("lessonHint");
 const retryLessonBtn = document.getElementById("retryLessonBtn");
 const nextLessonBtn = document.getElementById("nextLessonBtn");
 const scoreChip = document.getElementById("scoreChip");
@@ -1033,21 +1371,27 @@ const scenarioCategory = document.getElementById("scenarioCategory");
 const scenarioPrompt = document.getElementById("scenarioPrompt");
 const choiceList = document.getElementById("choiceList");
 const feedbackBox = document.getElementById("feedbackBox");
+const scenarioRecap = document.getElementById("scenarioRecap");
+const scenarioHint = document.getElementById("scenarioHint");
 const nextScenarioBtn = document.getElementById("nextScenarioBtn");
 const lightningQuestion = document.getElementById("lightningQuestion");
 const lightningChoices = document.getElementById("lightningChoices");
 const lightningFeedback = document.getElementById("lightningFeedback");
+const lightningHint = document.getElementById("lightningHint");
 const finishBtn = document.getElementById("finishBtn");
 const assessmentProgress = document.getElementById("assessmentProgress");
 const assessmentQuestion = document.getElementById("assessmentQuestion");
 const assessmentChoices = document.getElementById("assessmentChoices");
 const assessmentFeedback = document.getElementById("assessmentFeedback");
+const assessmentHint = document.getElementById("assessmentHint");
 const nextAssessmentBtn = document.getElementById("nextAssessmentBtn");
 const resultSummary = document.getElementById("resultSummary");
 const badgeRow = document.getElementById("badgeRow");
 const attestCheckbox = document.getElementById("attestCheckbox");
 const submissionStatus = document.getElementById("submissionStatus");
 const submitCompletionBtn = document.getElementById("submitCompletionBtn");
+const retryModulesList = document.getElementById("retryModulesList");
+const nextStepGuidance = document.getElementById("nextStepGuidance");
 const dashboardBtn = document.getElementById("dashboardBtn");
 const viewCertBtn = document.getElementById("viewCertBtn");
 
@@ -1396,6 +1740,8 @@ function renderLesson() {
   });
   lessonCheckPrompt.textContent = lesson.check;
   lessonFeedback.className = "feedback hidden";
+  setFeedbackNode(lessonRecap, "", "recap");
+  setFeedbackNode(lessonHint, "", "hint");
   nextLessonBtn.classList.add("hidden");
   retryLessonBtn.classList.add("hidden");
   lessonChoices.innerHTML = "";
@@ -1417,6 +1763,7 @@ function renderLesson() {
 function evaluateLessonChoice(answer, lesson) {
   const lessonKey = `lesson-${state.lessonIndex}`;
   state.lessonAttempts[lessonKey] = (state.lessonAttempts[lessonKey] || 0) + 1;
+  trackCategoryResult(lesson.categoryKey, answer.good);
 
   if (answer.good) {
     if (!state.lessonPassed.has(lessonKey)) {
@@ -1455,10 +1802,19 @@ function evaluateLessonChoice(answer, lesson) {
   handleComebackIfNeeded(answer.good);
 
   const humor = getRoleHumor(answer.good);
+  const roleSnippet = getRoleSpecificSnippet(lesson.categoryKey, answer.good);
   const golden = maybeGoldenFeedback(answer.good);
-  const feedbackText = `${answer.good ? "Correct." : "Not quite."} ${lesson.why}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
+  const feedbackText = `${answer.good ? "Correct." : "Not quite."} ${lesson.why} ${roleSnippet}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
   lessonFeedback.textContent = feedbackText;
   lessonFeedback.className = `feedback ${answer.good ? "good" : "warn"}`;
+
+  const recapCopy = answer.good
+    ? lesson.recap
+    : `Recap before retry: ${lesson.recap}`;
+  setFeedbackNode(lessonRecap, recapCopy, "recap");
+
+  const hintCopy = answer.good ? "" : getAdaptiveHint(lesson.categoryKey);
+  setFeedbackNode(lessonHint, hintCopy, "hint");
 
   Array.from(lessonChoices.querySelectorAll("button")).forEach((button) => {
     button.disabled = true;
@@ -1503,6 +1859,8 @@ function renderScenario() {
   scenarioCategory.textContent = scenario.category;
   scenarioPrompt.textContent = scenario.prompt;
   feedbackBox.className = "feedback hidden";
+  setFeedbackNode(scenarioRecap, "", "recap");
+  setFeedbackNode(scenarioHint, "", "hint");
   nextScenarioBtn.classList.add("hidden");
   choiceList.innerHTML = "";
 
@@ -1516,6 +1874,9 @@ function renderScenario() {
 }
 
 function evaluateScenarioChoice(choice, scenarioTitleValue) {
+  const scenario = state.activeScenarios[state.scenarioIndex];
+  trackCategoryResult(scenario.categoryKey, choice.good);
+
   let points = choice.score;
   if (state.difficulty === "challenge") {
     points = Math.floor(points * 1.2); // 20% bonus for challenge mode
@@ -1553,11 +1914,19 @@ function evaluateScenarioChoice(choice, scenarioTitleValue) {
   handleComebackIfNeeded(choice.good);
 
   const humor = getRoleHumor(choice.good);
+  const roleSnippet = getRoleSpecificSnippet(scenario.categoryKey, choice.good);
   const golden = maybeGoldenFeedback(choice.good);
-  const feedbackText = `${choice.feedback}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
+  const feedbackText = `${choice.feedback} ${roleSnippet}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
   feedbackBox.textContent = feedbackText;
   feedbackBox.classList.remove("hidden");
   feedbackBox.classList.add(choice.good ? "good" : "warn");
+
+  setFeedbackNode(
+    scenarioRecap,
+    choice.good ? scenario.recap : `Recap before next attempt: ${scenario.recap}`,
+    "recap"
+  );
+  setFeedbackNode(scenarioHint, choice.good ? "" : getAdaptiveHint(scenario.categoryKey), "hint");
 
   Array.from(choiceList.querySelectorAll("button")).forEach((button) => {
     button.disabled = true;
@@ -1610,6 +1979,8 @@ function renderBonusScenario() {
 }
 
 function evaluateBonusScenario(choice, bonusTitle) {
+  trackCategoryResult("abuseNeglect", choice.good);
+
   let points = choice.score;
   if (state.difficulty === "challenge") {
     points = Math.floor(points * 1.25); // 25% bonus for challenge mode on bonus
@@ -1629,6 +2000,12 @@ function evaluateBonusScenario(choice, bonusTitle) {
   feedbackBox.textContent = choice.feedback;
   feedbackBox.classList.remove("hidden");
   feedbackBox.classList.add(choice.good ? "good" : "warn");
+  setFeedbackNode(
+    scenarioRecap,
+    "Scenario recap: when abuse or neglect may be present, safety and formal reporting come first.",
+    "recap"
+  );
+  setFeedbackNode(scenarioHint, choice.good ? "" : getAdaptiveHint("abuseNeglect"), "hint");
 
   Array.from(choiceList.querySelectorAll("button")).forEach((button) => {
     button.disabled = true;
@@ -1670,6 +2047,7 @@ function renderLightning() {
   const item = lightningQuestions[state.lightningIndex];
   lightningQuestion.textContent = item.q;
   lightningFeedback.className = "feedback hidden";
+  setFeedbackNode(lightningHint, "", "hint");
   finishBtn.classList.add("hidden");
   lightningChoices.innerHTML = "";
 
@@ -1677,13 +2055,14 @@ function renderLightning() {
     const btn = document.createElement("button");
     btn.className = "choice";
     btn.textContent = answer.text;
-    btn.addEventListener("click", () => evaluateLightning(answer, item.why, item.q));
+    btn.addEventListener("click", () => evaluateLightning(answer, item));
     lightningChoices.appendChild(btn);
   });
 }
 
-function evaluateLightning(answer, why, question) {
+function evaluateLightning(answer, item) {
   if (!state.lightningActive) return;
+  trackCategoryResult(item.categoryKey, answer.good);
 
   let points = answer.score;
   if (state.difficulty === "challenge") {
@@ -1706,10 +2085,12 @@ function evaluateLightning(answer, why, question) {
   handleComebackIfNeeded(answer.good);
 
   const humor = getRoleHumor(answer.good);
+  const roleSnippet = getRoleSpecificSnippet(item.categoryKey, answer.good);
   const golden = maybeGoldenFeedback(answer.good);
-  const feedbackText = `${answer.good ? "Correct." : "Not ideal."} ${why}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
+  const feedbackText = `${answer.good ? "Correct." : "Not ideal."} ${item.why} ${roleSnippet}${humor ? " " + humor : ""}${golden ? " " + golden : ""}`;
   lightningFeedback.textContent = feedbackText;
   lightningFeedback.className = `feedback ${answer.good ? "good" : "warn"}`;
+  setFeedbackNode(lightningHint, answer.good ? "" : getAdaptiveHint(item.categoryKey), "hint");
 
   Array.from(lightningChoices.querySelectorAll("button")).forEach((button) => {
     button.disabled = true;
@@ -1717,7 +2098,7 @@ function evaluateLightning(answer, why, question) {
   });
 
   state.lightningIndex += 1;
-  trackEvent("answered-lightning", { question, good: answer.good, points });
+  trackEvent("answered-lightning", { question: item.q, good: answer.good, points });
   updateHUD();
   updateLearnerProfile();
 
@@ -1740,6 +2121,7 @@ function renderAssessmentQuestion() {
   assessmentQuestion.textContent = item.q;
   assessmentChoices.innerHTML = "";
   assessmentFeedback.className = "feedback hidden";
+  setFeedbackNode(assessmentHint, "", "hint");
   nextAssessmentBtn.classList.add("hidden");
 
   item.a.forEach((choiceText, index) => {
@@ -1754,6 +2136,7 @@ function renderAssessmentQuestion() {
 function evaluateAssessment(selectedIndex) {
   const item = finalAssessment[state.assessmentIndex];
   const correct = selectedIndex === item.c;
+  trackCategoryResult(item.k || "knowledgeCheck", correct);
   
   if (correct) {
     state.assessmentCorrect += 1;
@@ -1772,8 +2155,12 @@ function evaluateAssessment(selectedIndex) {
 
   handleComebackIfNeeded(correct);
 
-  assessmentFeedback.textContent = correct ? "Correct." : `Not correct. Best answer: ${item.a[item.c]}`;
+  const roleSnippet = getRoleSpecificSnippet(item.k || "knowledgeCheck", correct);
+  assessmentFeedback.textContent = correct
+    ? `Correct. ${roleSnippet}`
+    : `Not correct. Best answer: ${item.a[item.c]}. ${roleSnippet}`;
   assessmentFeedback.className = `feedback ${correct ? "good" : "warn"}`;
+  setFeedbackNode(assessmentHint, correct ? "" : getAdaptiveHint(item.k || "knowledgeCheck"), "hint");
   Array.from(assessmentChoices.querySelectorAll("button")).forEach((button) => {
     button.disabled = true;
     button.style.opacity = "0.65";
@@ -1819,7 +2206,10 @@ function renderResults() {
 
   const assessmentPct = Math.round((state.assessmentCorrect / finalAssessment.length) * 100);
   const level = state.score >= 200 ? "Gold" : state.score >= 150 ? "Silver" : "Bronze";
-  const pass = assessmentPct >= 80;
+  const abuseNeglectThreshold = getRoleMasteryThreshold("abuseNeglect");
+  const abuseNeglectPct = getCategoryPercent("abuseNeglect");
+  const abuseNeglectMastered = abuseNeglectPct === null ? false : abuseNeglectPct >= abuseNeglectThreshold;
+  const pass = assessmentPct >= 80 && abuseNeglectMastered;
 
   state.pass = pass;
 
@@ -1846,10 +2236,34 @@ function renderResults() {
     }
   }
 
-  resultSummary.textContent = `Track: ${getCurrentRoleName()}. Final Score: ${state.score}. Assessment: ${assessmentPct}% (${state.assessmentCorrect}/${finalAssessment.length}). Tier: ${level}. Status: ${pass ? "PASS ✓" : "REMEDIATE 📚"}.${state.bonusScenarioUnlocked ? " [Secret Master]" : ""} ${state.perfectRun ? "[Perfect Run]" : ""}`;
+  resultSummary.textContent = `Track: ${getCurrentRoleName()}. Final Score: ${state.score}. Assessment: ${assessmentPct}% (${state.assessmentCorrect}/${finalAssessment.length}). Abuse/Neglect Mastery: ${abuseNeglectPct ?? "Not established"}% / required ${abuseNeglectThreshold}%. Tier: ${level}. Status: ${pass ? "PASS ✓" : "REMEDIATE 📚"}.${state.bonusScenarioUnlocked ? " [Secret Master]" : ""} ${state.perfectRun ? "[Perfect Run]" : ""}`;
+
+  if (!abuseNeglectMastered) {
+    resultSummary.textContent += ` ${getRoleMasteryRequirementText("abuseNeglect")}`;
+  }
 
   const recap = getPersonalityRecap();
   resultSummary.textContent += ` Personality recap: ${recap}.`;
+
+  const retryRecommendations = getRetryRecommendations();
+  if (retryModulesList) {
+    retryModulesList.innerHTML = "";
+    if (retryRecommendations.length === 0) {
+      const li = document.createElement("li");
+      li.textContent = "No high-risk weak categories detected. Maintain with periodic refresh drills.";
+      retryModulesList.appendChild(li);
+    } else {
+      retryRecommendations.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = `${item.label} (${item.pct}% / target ${item.requiredPct}%): ${item.module}`;
+        retryModulesList.appendChild(li);
+      });
+    }
+  }
+
+  if (nextStepGuidance) {
+    nextStepGuidance.textContent = buildNextStepGuidance(pass, assessmentPct, retryRecommendations);
+  }
 
   badgeRow.innerHTML = "";
   Array.from(state.badges).forEach((name) => {
@@ -1867,6 +2281,9 @@ function renderResults() {
     assessmentPercent: assessmentPct,
     assessmentCorrect: state.assessmentCorrect,
     assessmentTotal: finalAssessment.length,
+    abuseNeglectPct,
+    abuseNeglectThreshold,
+    abuseNeglectMastered,
     level,
     pass,
     bonusUnlocked: state.bonusScenarioUnlocked,
@@ -1993,8 +2410,12 @@ function resetExperience() {
   state.bonusScenarioCompleted = false;
   state.missStreak = 0;
   state.personality = { calm: 0, precision: 0, courage: 0 };
+  state.categoryStats = createCategoryStats();
+  state.retryRecommendations = [];
   attestCheckbox.checked = false;
   submissionStatus.textContent = "";
+  if (retryModulesList) retryModulesList.innerHTML = "";
+  if (nextStepGuidance) nextStepGuidance.textContent = "";
   dashboardBtn?.classList.add("hidden");
   if (viewCertBtn) {
     viewCertBtn.classList.add("hidden");
@@ -2222,6 +2643,8 @@ async function bootstrap() {
 
   roleConfigs = loadRoleConfigs();
   const loadedFromBackend = await loadRoleConfigsFromBackend();
+
+  state.categoryStats = createCategoryStats();
 
   if (!loadedFromBackend && roleConfigs.length === 0) {
     roleConfigs = [...defaultRoleConfigs];

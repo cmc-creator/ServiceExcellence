@@ -150,6 +150,22 @@ main,
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   box-shadow: 0 20px 46px rgba(2, 8, 15, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-copy::before,
+.hero-panel::before,
+.value-band::before,
+.info-card::before,
+.timeline article::before,
+.final-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 32%);
+  opacity: 0.55;
 }
 
 .hero-copy {
@@ -521,29 +537,90 @@ main,
 .media-grid {
   margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
 }
 
 .media-card {
+  grid-column: span 4;
   border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--card);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 20px 46px rgba(2, 8, 15, 0.35);
+  border-radius: 18px;
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03) 28%, rgba(7, 14, 27, 0.58) 100%),
+    var(--card);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  box-shadow: 0 26px 52px rgba(2, 8, 15, 0.42);
   overflow: hidden;
+  transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--tz, 0px));
+  transform-style: preserve-3d;
+}
+
+.media-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.34), transparent 34%);
+  opacity: 0.45;
+  z-index: 3;
+}
+
+.media-card::after {
+  content: "";
+  position: absolute;
+  inset: -130% -20% auto;
+  height: 210%;
+  background: linear-gradient(90deg, transparent, rgba(137, 221, 204, 0.22), transparent);
+  transform: translateX(-58%) rotate(14deg);
+  transition: transform 700ms ease;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.media-card:hover {
+  border-color: var(--line-strong);
+  --tz: -6px;
+  box-shadow: 0 30px 58px rgba(2, 8, 15, 0.52), 0 0 0 1px rgba(137, 221, 204, 0.14);
+}
+
+.media-card:hover::after {
+  transform: translateX(48%) rotate(14deg);
+}
+
+.media-frame {
+  position: relative;
+}
+
+.media-tag {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  z-index: 5;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(4, 13, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  color: var(--ink-0);
+  font-size: 0.72rem;
+  letter-spacing: 0.04rem;
+  text-transform: uppercase;
+  font-weight: 700;
 }
 
 .media-card img {
   width: 100%;
-  height: 210px;
+  height: 220px;
   object-fit: cover;
   display: block;
+  filter: saturate(1.08) contrast(1.04);
 }
 
 .media-copy {
-  padding: 14px 16px 16px;
+  padding: 16px 16px 17px;
+  position: relative;
+  z-index: 6;
 }
 
 .media-copy h3 {
@@ -668,11 +745,18 @@ main,
   .metrics,
   .facts-grid,
   .card-grid,
-  .media-grid,
   .support-grid,
   .timeline,
   .credibility-band {
     grid-template-columns: 1fr;
+  }
+
+  .media-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .media-card {
+    grid-column: auto;
   }
 
   .top-nav {

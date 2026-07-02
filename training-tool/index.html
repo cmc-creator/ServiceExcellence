@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Destiny Springs Healthcare Psychiatric Acute Inpatient Training</title>
+  <title>Destiny Springs Healthcare Annual Workforce Training</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
       </div>
       <div>
         <p class="eyebrow">Destiny Springs Healthcare</p>
-        <h1>Service Excellence + Code of Conduct</h1>
+        <h1>Comprehensive Annual Workforce Training</h1>
       </div>
     </div>
     <div id="learnerProfile" class="learner-profile hidden">
@@ -48,7 +48,6 @@
       <span class="chip" id="streakChip">Streak: 0</span>
       <span class="chip hidden" id="timerChip">Timer: 60s</span>
       <span class="chip" id="lmsChip">LMS: Not Connected</span>
-      <a class="chip chip-button" href="../dashboard.html" title="Back to your training dashboard" style="text-decoration:none;">Dashboard</a>
       <button class="chip chip-button chip-danger" id="logoutBtn" title="Sign out and return to login">Logout</button>
     </div>
   </header>
@@ -58,10 +57,10 @@
 
   <main class="shell">
     <section class="panel glass" id="welcomePanel">
-      <h2>Annual Mission: The Excellence Vault</h2>
+      <h2>Annual Mission: Workforce Readiness</h2>
       <p>
-        Welcome to your annual training quest for psychiatric acute inpatient care. Build trust, protect people, and keep care exceptional.
-        Make smart decisions, earn badges, and complete all stations to unlock certification.
+        Welcome to your annual workforce training experience for psychiatric acute inpatient care. Build trust, protect people, and strengthen
+        communication, safety, and reporting readiness across every role. Make smart decisions, earn badges, and complete all stations to unlock certification.
       </p>
       <p class="muted seasonal-theme" id="seasonalTheme"></p>
       <div class="field-row">
@@ -207,6 +206,8 @@
       <p id="lessonCheckPrompt" class="scenario-text"></p>
       <div class="choice-list" id="lessonChoices"></div>
       <div class="feedback hidden" id="lessonFeedback"></div>
+      <div class="feedback hidden" id="lessonRecap"></div>
+      <div class="feedback hidden" id="lessonHint"></div>
       <div class="cta-row">
         <button class="btn btn-secondary hidden" id="retryLessonBtn">Review and Retry Lesson Check</button>
         <button class="btn btn-primary hidden" id="nextLessonBtn">Next Lesson</button>
@@ -221,6 +222,8 @@
       <p id="scenarioPrompt" class="scenario-text"></p>
       <div class="choice-list" id="choiceList"></div>
       <div class="feedback hidden" id="feedbackBox"></div>
+      <div class="feedback hidden" id="scenarioRecap"></div>
+      <div class="feedback hidden" id="scenarioHint"></div>
       <div class="cta-row">
         <button class="btn btn-secondary hidden" id="nextScenarioBtn">Next Scenario</button>
       </div>
@@ -232,6 +235,7 @@
       <p class="scenario-text" id="lightningQuestion"></p>
       <div class="choice-list" id="lightningChoices"></div>
       <div class="feedback hidden" id="lightningFeedback"></div>
+      <div class="feedback hidden" id="lightningHint"></div>
       <div class="cta-row">
         <button class="btn btn-primary hidden" id="finishBtn">Start Final Assessment</button>
       </div>
@@ -243,6 +247,7 @@
       <p class="scenario-text" id="assessmentQuestion"></p>
       <div class="choice-list" id="assessmentChoices"></div>
       <div class="feedback hidden" id="assessmentFeedback"></div>
+      <div class="feedback hidden" id="assessmentHint"></div>
       <div class="cta-row">
         <button class="btn btn-secondary hidden" id="nextAssessmentBtn">Next Question</button>
       </div>
@@ -256,15 +261,21 @@
       <div class="field-row">
         <label>
           <input type="checkbox" id="attestCheckbox">
-          I acknowledge completion of the annual Service Excellence and Code of Conduct training.
+          I acknowledge completion of the required annual workforce training.
         </label>
+      </div>
+      <div class="results-guidance">
+        <h3>Recommended Retry Modules</h3>
+        <ul id="retryModulesList" class="guidance-list"></ul>
+        <h3>Your Next Steps</h3>
+        <p class="muted" id="nextStepGuidance"></p>
       </div>
       <div class="cta-row">
         <button class="btn btn-primary" id="submitCompletionBtn">Submit Completion</button>
         <button class="btn btn-secondary" id="exportTrackingBtn">Export Tracking JSON</button>
         <button class="btn btn-primary" id="restartBtn">Replay Experience</button>
-        <a class="btn btn-secondary" id="dashboardBtn" href="../dashboard.html" style="display:none;">View My Dashboard</a>
-        <a class="btn btn-primary" id="viewCertBtn" href="#" style="display:none;">View Certificate</a>
+        <a class="btn btn-secondary hidden" id="dashboardBtn" href="../dashboard.html">View Dashboard</a>
+        <a class="btn btn-primary hidden" id="viewCertBtn" href="#">View Certificate</a>
       </div>
       <p class="muted" id="submissionStatus"></p>
     </section>
