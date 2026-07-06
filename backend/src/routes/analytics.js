@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "infection-outbreak-cohorting", title: "Infection Outbreak Containment and Patient Cohorting" },
-  { id: "patient-rights-grievance-escalation", title: "Patient Rights, Grievance Intake, and Ombuds Escalation" },
-  { id: "telehealth-privacy-session-controls", title: "Telehealth Privacy and Remote Session Controls" },
-  { id: "emergency-transfer-handoff-coordination", title: "Emergency Psychiatric Transfer and Handoff Coordination" },
-  { id: "harassment-retaliation-safeguards", title: "Workplace Harassment Reporting and Anti-Retaliation Safeguards" },
+  { id: "controlled-substance-diversion-audit", title: "Controlled Substance Diversion Prevention and Reconciliation Audits" },
+  { id: "involuntary-hold-court-order-workflow", title: "Involuntary Hold, Court Order, and Legal Documentation Workflow" },
+  { id: "visitor-boundary-de-escalation", title: "Visitor Boundary Management and De-Escalation Controls" },
+  { id: "discharge-safety-plan-followup-closure", title: "Discharge Safety Planning and 72-Hour Follow-Up Closure" },
+  { id: "social-media-boundary-confidentiality", title: "Social Media Boundaries and Patient Confidentiality Safeguards" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("infection") || normalized.includes("outbreak") || normalized.includes("cohort")) return "infection-outbreak-cohorting";
-  if (normalized.includes("patient rights") || normalized.includes("grievance") || normalized.includes("ombuds")) return "patient-rights-grievance-escalation";
-  if (normalized.includes("telehealth") || normalized.includes("privacy") || normalized.includes("remote session")) return "telehealth-privacy-session-controls";
-  if (normalized.includes("transfer") || normalized.includes("handoff") || normalized.includes("sbar")) return "emergency-transfer-handoff-coordination";
-  if (normalized.includes("harassment") || normalized.includes("retaliation") || normalized.includes("workplace conduct")) return "harassment-retaliation-safeguards";
+  if (normalized.includes("diversion") || normalized.includes("controlled substance") || normalized.includes("reconciliation audit")) return "controlled-substance-diversion-audit";
+  if (normalized.includes("involuntary hold") || normalized.includes("court order") || normalized.includes("legal documentation")) return "involuntary-hold-court-order-workflow";
+  if (normalized.includes("visitor") || normalized.includes("boundary") || normalized.includes("de-escalation")) return "visitor-boundary-de-escalation";
+  if (normalized.includes("discharge") || normalized.includes("follow-up") || normalized.includes("72-hour")) return "discharge-safety-plan-followup-closure";
+  if (normalized.includes("social media") || normalized.includes("confidentiality") || normalized.includes("posting")) return "social-media-boundary-confidentiality";
   return null;
 }
 

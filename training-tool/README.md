@@ -19,11 +19,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 
 - Luxury glassmorphism visual style with animated effects
 - Five built-in annual modules:
-  - Infection outbreak containment and patient cohorting
-  - Patient rights, grievance intake, and ombuds escalation
-  - Telehealth privacy and remote session controls
-  - Emergency psychiatric transfer and handoff coordination
-  - Workplace harassment reporting and anti-retaliation safeguards
+  - Controlled substance diversion prevention and reconciliation audits
+  - Involuntary hold, court order, and legal documentation workflow
+  - Visitor boundary management and de-escalation controls
+  - Discharge safety planning and 72-hour follow-up closure
+  - Social media boundaries and patient confidentiality safeguards
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round
