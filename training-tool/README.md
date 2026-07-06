@@ -19,11 +19,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 
 - Luxury glassmorphism visual style with animated effects
 - Five built-in annual modules:
-  - Bloodborne pathogens and exposure control
-  - De-escalation and crisis communication
-  - Safe patient handling and ergonomics
-  - Documentation integrity and legal recordkeeping
-  - Ethics, boundaries, and professional conduct
+  - Patient elopement prevention and search protocols
+  - Suicide reassessment and observation handoffs
+  - High-alert medication reconciliation
+  - Restraint/seclusion standards and least-restrictive alternatives
+  - Cultural competence and interpreter use
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round

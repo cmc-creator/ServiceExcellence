@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "bloodborne-exposure-control", title: "Bloodborne Pathogens and Exposure Control" },
-  { id: "deescalation-crisis-communication", title: "De-escalation and Crisis Communication" },
-  { id: "safe-patient-handling", title: "Safe Patient Handling and Ergonomics" },
-  { id: "documentation-legal-records", title: "Documentation Integrity and Legal Recordkeeping" },
-  { id: "ethics-professional-boundaries", title: "Ethics, Boundaries, and Professional Conduct" },
+  { id: "elopement-prevention-search", title: "Patient Elopement Prevention and Search Protocols" },
+  { id: "suicide-observation-handoffs", title: "Suicide Reassessment and Observation Handoffs" },
+  { id: "high-alert-med-reconciliation", title: "High-Alert Medication Reconciliation" },
+  { id: "restraint-seclusion-alternatives", title: "Restraint/Seclusion Standards and Least-Restrictive Alternatives" },
+  { id: "cultural-competence-interpretation", title: "Cultural Competence and Interpreter Use" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("bloodborne") || normalized.includes("exposure")) return "bloodborne-exposure-control";
-  if (normalized.includes("de-escalation") || normalized.includes("crisis communication") || normalized.includes("aggression")) return "deescalation-crisis-communication";
-  if (normalized.includes("safe patient handling") || normalized.includes("ergonomics") || normalized.includes("transfer")) return "safe-patient-handling";
-  if (normalized.includes("documentation") || normalized.includes("recordkeeping") || normalized.includes("chart")) return "documentation-legal-records";
-  if (normalized.includes("ethics") || normalized.includes("boundaries") || normalized.includes("professional conduct")) return "ethics-professional-boundaries";
+  if (normalized.includes("elopement") || normalized.includes("search protocol") || normalized.includes("missing patient")) return "elopement-prevention-search";
+  if (normalized.includes("suicide") || normalized.includes("observation handoff") || normalized.includes("self-harm")) return "suicide-observation-handoffs";
+  if (normalized.includes("high-alert") || normalized.includes("med reconciliation") || normalized.includes("allergy")) return "high-alert-med-reconciliation";
+  if (normalized.includes("restraint") || normalized.includes("seclusion") || normalized.includes("least-restrictive")) return "restraint-seclusion-alternatives";
+  if (normalized.includes("cultural competence") || normalized.includes("interpreter") || normalized.includes("teach-back")) return "cultural-competence-interpretation";
   return null;
 }
 
