@@ -472,6 +472,87 @@ let analyticsMastery = null;
 let analyticsMasteryLearners = [];
 let analyticsByCourseType = [];
 let analyticsByModule = [];
+let analyticsRoleModuleCoverage = [];
+
+const AUTO_ENROLL_RULE_PRESETS = {
+  baseline: {
+    coreCodes: [
+      "ANNUAL-COMPLIANCE-CORE",
+      "ABUSE-NEGLECT-ANNUAL",
+      "WORKPLACE-VIOLENCE-ANNUAL",
+      "HIPAA-PRIVACY-ANNUAL",
+      "PATIENT-RIGHTS-ANNUAL",
+      "INCIDENT-REPORTING-ANNUAL",
+      "CYBERSECURITY-PHISHING-ANNUAL",
+    ],
+    departmentRules: [
+      {
+        keywords: ["behavioral", "clinical"],
+        codes: ["DEESCALATION-ANNUAL", "RESTRAINT-SECLUSION-ANNUAL"],
+      },
+      {
+        keywords: ["nursing", "patient care"],
+        codes: ["INFECTION-CONTROL-ANNUAL", "BLOODBORNE-PATHOGENS-ANNUAL"],
+      },
+    ],
+    roleTrackRules: [
+      {
+        roleTracks: ["clinical"],
+        codes: ["DEESCALATION-ANNUAL", "RESTRAINT-SECLUSION-ANNUAL"],
+      },
+      {
+        roleTracks: ["leadership"],
+        codes: ["EMTALA-AWARENESS-ANNUAL"],
+      },
+    ],
+  },
+  clinicalHeavy: {
+    coreCodes: [
+      "ANNUAL-COMPLIANCE-CORE",
+      "ABUSE-NEGLECT-ANNUAL",
+      "WORKPLACE-VIOLENCE-ANNUAL",
+      "HIPAA-PRIVACY-ANNUAL",
+      "PATIENT-RIGHTS-ANNUAL",
+      "INCIDENT-REPORTING-ANNUAL",
+      "CYBERSECURITY-PHISHING-ANNUAL",
+      "CULTURAL-COMPETENCY-ANNUAL",
+    ],
+    departmentRules: [
+      {
+        keywords: ["behavioral", "psychi", "mental"],
+        codes: ["DEESCALATION-ANNUAL", "RESTRAINT-SECLUSION-ANNUAL", "INFECTION-CONTROL-ANNUAL"],
+      },
+      {
+        keywords: ["nursing", "emergency", "triage"],
+        codes: ["INFECTION-CONTROL-ANNUAL", "BLOODBORNE-PATHOGENS-ANNUAL", "EMTALA-AWARENESS-ANNUAL"],
+      },
+    ],
+    roleTrackRules: [
+      {
+        roleTracks: ["clinical", "clinical staff"],
+        codes: ["INFECTION-CONTROL-ANNUAL", "BLOODBORNE-PATHOGENS-ANNUAL", "DEESCALATION-ANNUAL"],
+      },
+      {
+        roleTracks: ["leadership"],
+        codes: ["EMTALA-AWARENESS-ANNUAL", "INCIDENT-REPORTING-ANNUAL"],
+      },
+    ],
+  },
+};
+
+function summarizeRuleSet(ruleSet) {
+  const safe = ruleSet || {};
+  const coreCount = Array.isArray(safe.coreCodes) ? safe.coreCodes.length : 0;
+  const deptRules = Array.isArray(safe.departmentRules) ? safe.departmentRules.length : 0;
+  const roleRules = Array.isArray(safe.roleTrackRules) ? safe.roleTrackRules.length : 0;
+  const totalCodes = [
+    ...(Array.isArray(safe.coreCodes) ? safe.coreCodes : []),
+    ...(Array.isArray(safe.departmentRules) ? safe.departmentRules.flatMap((r) => r?.codes || []) : []),
+    ...(Array.isArray(safe.roleTrackRules) ? safe.roleTrackRules.flatMap((r) => r?.codes || []) : []),
+  ].filter(Boolean).length;
+
+  return { coreCount, deptRules, roleRules, totalCodes };
+}
 let learnerNextCursor = null;
 let learnerHasMore = false;
 
@@ -1042,7 +1123,7 @@ function refreshMasteryAuditSummary() {
 }
 
 async function loadAnalytics() {
-  const [completion, events, trends, deptData, mastery, masteryLearners, byCourseType, byModule] = await Promise.all([
+  const [completion, events, trends, deptData, mastery, masteryLearners, byCourseType, byModule, roleModuleCoverage] = await Promise.all([
     api("/api/analytics/completion"),
     api("/api/analytics/events/top"),
     api("/api/analytics/trends"),
@@ -1051,6 +1132,7 @@ async function loadAnalytics() {
     api("/api/analytics/mastery/abuse-neglect/learners").catch(() => null),
     api("/api/analytics/by-course-type").catch(() => []),
     api("/api/analytics/by-module").catch(() => []),
+    api("/api/analytics/role-module-coverage").catch(() => []),
   ]);
 
   analyticsCompletion = completion || null;
@@ -1059,6 +1141,7 @@ async function loadAnalytics() {
   analyticsMasteryLearners = masteryLearners?.learners || [];
   analyticsByCourseType = byCourseType || [];
   analyticsByModule = byModule || [];
+  analyticsRoleModuleCoverage = roleModuleCoverage || [];
   populateMasteryAuditFilters(analyticsMasteryLearners);
 
   if (completion) {
@@ -1222,6 +1305,33 @@ async function loadAnalytics() {
     if (moduleTbody) moduleTbody.innerHTML = "";
   }
 
+  // --- Role module coverage table ---
+  const coverageTbody = document.getElementById("roleModuleCoverageTableBody");
+  const noCoverageMsg = document.getElementById("noRoleModuleCoverageData");
+  if (analyticsRoleModuleCoverage?.length && coverageTbody) {
+    noCoverageMsg?.classList.add("hidden");
+    coverageTbody.innerHTML = "";
+    analyticsRoleModuleCoverage.forEach((row) => {
+      const coverageCls = row.coverageRate >= 90 ? "s-passed" : row.coverageRate >= 70 ? "s-in-progress" : "s-failed";
+      const accuracyCls = row.lessonAccuracyRate >= 85 ? "s-passed" : row.lessonAccuracyRate >= 70 ? "s-in-progress" : "s-failed";
+      const passCls = row.passRate >= 85 ? "s-passed" : row.passRate >= 70 ? "s-in-progress" : "s-failed";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${sanitize(row.roleTrack || "Unassigned")}</td>
+        <td>${sanitize(row.moduleTitle || row.moduleId || "—")}</td>
+        <td>${row.roleLearnerCount || 0}</td>
+        <td>${row.completionLearners || 0}</td>
+        <td><span class="attempt-status ${coverageCls}">${Number(row.coverageRate || 0).toFixed(1)}%</span></td>
+        <td><span class="attempt-status ${accuracyCls}">${Number(row.lessonAccuracyRate || 0).toFixed(1)}%</span></td>
+        <td><span class="attempt-status ${passCls}">${Number(row.passRate || 0).toFixed(1)}%</span></td>
+      `;
+      coverageTbody.appendChild(tr);
+    });
+  } else if (noCoverageMsg) {
+    noCoverageMsg.classList.remove("hidden");
+    if (coverageTbody) coverageTbody.innerHTML = "";
+  }
+
   // --- Abuse/Neglect mastery by role table ---
   const masteryTbody = document.getElementById("masteryRoleTableBody");
   const noMasteryMsg = document.getElementById("noMasteryData");
@@ -1341,6 +1451,9 @@ async function loadSettings() {
   const autoEnrollRulesJson = document.getElementById("autoEnrollRulesJson");
   const autoEnrollSampleDepartment = document.getElementById("autoEnrollSampleDepartment");
   const autoEnrollSampleRoleTrack = document.getElementById("autoEnrollSampleRoleTrack");
+  const applyRulesPresetBaselineBtn = document.getElementById("applyRulesPresetBaselineBtn");
+  const applyRulesPresetClinicalBtn = document.getElementById("applyRulesPresetClinicalBtn");
+  const autoEnrollRulesGuide = document.getElementById("autoEnrollRulesGuide");
   const previewAutoEnrollRulesBtn = document.getElementById("previewAutoEnrollRulesBtn");
   const saveAutoEnrollRulesBtn = document.getElementById("saveAutoEnrollRulesBtn");
   const autoEnrollRulesStatus = document.getElementById("autoEnrollRulesStatus");
@@ -1357,6 +1470,22 @@ async function loadSettings() {
     } catch {
       return { parsed: null, error: "Rules JSON is invalid. Please fix JSON syntax and retry." };
     }
+  };
+
+  const renderRuleSetGuide = (ruleSet) => {
+    if (!autoEnrollRulesGuide) return;
+    const summary = summarizeRuleSet(ruleSet);
+    autoEnrollRulesGuide.textContent = `Core: ${summary.coreCount} | Department rules: ${summary.deptRules} | Role rules: ${summary.roleRules} | Referenced codes: ${summary.totalCodes}.`;
+  };
+
+  const applyPreset = (presetKey) => {
+    if (!autoEnrollRulesJson) return;
+    const preset = AUTO_ENROLL_RULE_PRESETS[presetKey];
+    if (!preset) return;
+    autoEnrollRulesJson.value = JSON.stringify(preset, null, 2);
+    renderRuleSetGuide(preset);
+    autoEnrollRulesStatus.textContent = `Loaded ${presetKey === "baseline" ? "Baseline" : "Clinical-heavy"} preset. Preview and save when ready.`;
+    autoEnrollRulesStatus.className = "form-status";
   };
 
   const renderAuditRows = (auditRows) => {
@@ -1413,7 +1542,20 @@ async function loadSettings() {
   if (autoEnrollRulesJson && settings?.autoEnrollmentRules) {
     autoEnrollRulesJson.value = JSON.stringify(settings.autoEnrollmentRules, null, 2);
     renderAuditRows(settings.autoEnrollmentRuleAudit);
+    renderRuleSetGuide(settings.autoEnrollmentRules);
   }
+
+  autoEnrollRulesJson?.addEventListener("input", () => {
+    const { parsed } = parseRulesJson();
+    if (parsed) {
+      renderRuleSetGuide(parsed);
+      autoEnrollRulesStatus.textContent = "";
+      autoEnrollRulesStatus.className = "form-status";
+    }
+  });
+
+  applyRulesPresetBaselineBtn?.addEventListener("click", () => applyPreset("baseline"));
+  applyRulesPresetClinicalBtn?.addEventListener("click", () => applyPreset("clinicalHeavy"));
 
   previewAutoEnrollRulesBtn.onclick = async () => {
     const { parsed, error } = parseRulesJson();
@@ -1436,6 +1578,7 @@ async function loadSettings() {
         },
       });
       renderPreviewRows(preview);
+      renderRuleSetGuide(parsed);
       autoEnrollRulesStatus.textContent = "Preview ready.";
     } catch (err) {
       autoEnrollRulesStatus.textContent = err.message || "Failed to preview rules.";
@@ -1458,6 +1601,7 @@ async function loadSettings() {
     autoEnrollRulesStatus.className = "form-status";
     try {
       await api("/api/admin/settings", { method: "PATCH", body: { autoEnrollmentRules: parsed } });
+      renderRuleSetGuide(parsed);
       autoEnrollRulesStatus.textContent = "Rules saved. New learners/imports will use this mapping.";
       showToast("Auto-enrollment rules updated.", "success");
       await loadSettings();
@@ -2396,7 +2540,7 @@ document.getElementById("saveBulkEnrollBtn").addEventListener("click", async () 
 // ANALYTICS EXPORT (module-level)
 // ============================================================
 document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
-  if (!analyticsCompletion && !analyticsTrends.length && !analyticsMastery?.roles?.length && !analyticsByModule.length) {
+  if (!analyticsCompletion && !analyticsTrends.length && !analyticsMastery?.roles?.length && !analyticsByModule.length && !analyticsRoleModuleCoverage.length) {
     showToast("Open the Analytics tab first to load data.", "error");
     return;
   }
@@ -2491,6 +2635,23 @@ document.getElementById("exportAnalyticsBtn")?.addEventListener("click", () => {
         row.completionAttempts || 0,
         row.passCount || 0,
         row.failCount || 0,
+        Number(row.passRate || 0).toFixed(1),
+      ]);
+    });
+    rows.push([]);
+  }
+
+  if (analyticsRoleModuleCoverage.length) {
+    rows.push(["Role Module Coverage", ""]);
+    rows.push(["Role Track", "Module", "Learners", "Completed Learners", "Coverage %", "Lesson Accuracy %", "Pass Rate %"]);
+    analyticsRoleModuleCoverage.forEach((row) => {
+      rows.push([
+        row.roleTrack || "Unassigned",
+        row.moduleTitle || row.moduleId || "",
+        row.roleLearnerCount || 0,
+        row.completionLearners || 0,
+        Number(row.coverageRate || 0).toFixed(1),
+        Number(row.lessonAccuracyRate || 0).toFixed(1),
         Number(row.passRate || 0).toFixed(1),
       ]);
     });

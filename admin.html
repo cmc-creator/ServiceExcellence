@@ -514,6 +514,30 @@
           </div>
           <p class="no-data hidden" id="noModuleAnalyticsData">No module analytics available yet.</p>
         </div>
+
+        <div style="margin-top:40px;">
+          <div class="section-head">
+            <p class="section-kicker">Coverage Audit</p>
+            <h2>Role-to-Module Coverage</h2>
+          </div>
+          <div class="table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Role Track</th>
+                  <th>Module</th>
+                  <th>Learners</th>
+                  <th>Completed Learners</th>
+                  <th>Coverage</th>
+                  <th>Lesson Accuracy</th>
+                  <th>Pass Rate</th>
+                </tr>
+              </thead>
+              <tbody id="roleModuleCoverageTableBody"></tbody>
+            </table>
+          </div>
+          <p class="no-data hidden" id="noRoleModuleCoverageData">No role-module coverage data available yet.</p>
+        </div>
       </section>
 
       <!-- TAB: USERS -->
@@ -655,6 +679,11 @@
             <label for="autoEnrollRulesJson">Rules JSON</label>
             <textarea id="autoEnrollRulesJson" class="admin-input mono-input" rows="12" spellcheck="false"></textarea>
           </div>
+          <div class="form-actions" style="margin-top:8px;">
+            <button class="btn-ghost btn-sm" id="applyRulesPresetBaselineBtn" type="button">Load Baseline Preset</button>
+            <button class="btn-ghost btn-sm" id="applyRulesPresetClinicalBtn" type="button">Load Clinical-Heavy Preset</button>
+          </div>
+          <p class="muted" id="autoEnrollRulesGuide" style="margin-top:8px;">Core: 0 | Department rules: 0 | Role rules: 0 | Referenced codes: 0.</p>
           <div class="form-field" style="margin-top:10px;max-width:340px;">
             <label for="autoEnrollSampleDepartment">Sample Department (for dry run)</label>
             <input id="autoEnrollSampleDepartment" type="text" class="admin-input" placeholder="e.g. Nursing, Behavioral Health, Intake">

@@ -20,6 +20,10 @@ function normalizeModuleId(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function normalizeRoleTrack(value) {
+  return String(value || "").trim() || "Unassigned";
+}
+
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
@@ -355,6 +359,144 @@ router.get("/by-module", async (req, res) => {
       };
     })
     .sort((a, b) => b.completionAttempts - a.completionAttempts || b.lessonAttempts - a.lessonAttempts);
+
+  return res.json(rows);
+});
+
+router.get("/role-module-coverage", async (req, res) => {
+  const orgId = req.user.organizationId;
+  const [learners, events] = await Promise.all([
+    db.learner.findMany({
+      where: { organizationId: orgId },
+      select: { id: true, roleTrack: true },
+    }),
+    db.trainingEvent.findMany({
+      where: {
+        organizationId: orgId,
+        verb: { in: ["answered-core-lesson", "completed-training"] },
+      },
+      select: {
+        verb: true,
+        learnerId: true,
+        payload: true,
+      },
+    }),
+  ]);
+
+  const roleTrackByLearnerId = new Map(
+    learners.map((learner) => [learner.id, normalizeRoleTrack(learner.roleTrack)])
+  );
+
+  const roleTracks = new Set(learners.map((learner) => normalizeRoleTrack(learner.roleTrack)));
+  const roleLearnerCounts = new Map();
+  learners.forEach((learner) => {
+    const roleTrack = normalizeRoleTrack(learner.roleTrack);
+    roleLearnerCounts.set(roleTrack, (roleLearnerCounts.get(roleTrack) || 0) + 1);
+  });
+
+  const roleModuleMap = new Map();
+  const ensure = (roleTrack, moduleId) => {
+    const normalizedRoleTrack = normalizeRoleTrack(roleTrack);
+    const normalizedModuleId = normalizeModuleId(moduleId);
+    if (!normalizedRoleTrack || !normalizedModuleId) return null;
+    const key = `${normalizedRoleTrack}::${normalizedModuleId}`;
+    if (!roleModuleMap.has(key)) {
+      roleModuleMap.set(key, {
+        roleTrack: normalizedRoleTrack,
+        moduleId: normalizedModuleId,
+        moduleTitle: MODULE_LABEL_BY_ID.get(normalizedModuleId) || normalizedModuleId,
+        lessonAttempts: 0,
+        lessonCorrect: 0,
+        completionAttempts: 0,
+        passAttempts: 0,
+        failAttempts: 0,
+        completionLearnerIds: new Set(),
+        passLearnerIds: new Set(),
+      });
+    }
+    return roleModuleMap.get(key);
+  };
+
+  for (const event of events) {
+    const payload = event.payload || {};
+    const detail = payload?.detail || {};
+    const roleTrack = normalizeRoleTrack(
+      payload?.roleTrack || roleTrackByLearnerId.get(event.learnerId) || "Unassigned"
+    );
+    roleTracks.add(roleTrack);
+
+    if (event.verb === "answered-core-lesson") {
+      const moduleId = normalizeModuleId(detail?.moduleId) || inferModuleIdFromLessonTitle(detail?.lesson);
+      const row = ensure(roleTrack, moduleId);
+      if (!row) continue;
+      row.lessonAttempts += 1;
+      if (detail?.good === true) row.lessonCorrect += 1;
+      continue;
+    }
+
+    if (event.verb === "completed-training") {
+      const activeModuleIds = Array.isArray(detail?.activeModuleIds)
+        ? detail.activeModuleIds.map((id) => normalizeModuleId(id)).filter(Boolean)
+        : MODULE_LIBRARY.map((module) => module.id);
+
+      activeModuleIds.forEach((moduleId) => {
+        const row = ensure(roleTrack, moduleId);
+        if (!row) return;
+        row.completionAttempts += 1;
+        if (event.learnerId) row.completionLearnerIds.add(event.learnerId);
+        if (detail?.pass === true) {
+          row.passAttempts += 1;
+          if (event.learnerId) row.passLearnerIds.add(event.learnerId);
+        }
+        if (detail?.pass === false) {
+          row.failAttempts += 1;
+        }
+      });
+    }
+  }
+
+  // Ensure each role track has an explicit row for every core module.
+  roleTracks.forEach((roleTrack) => {
+    MODULE_LIBRARY.forEach((module) => {
+      ensure(roleTrack, module.id);
+    });
+  });
+
+  const rows = Array.from(roleModuleMap.values())
+    .map((row) => {
+      const completionLearners = row.completionLearnerIds.size;
+      const passLearners = row.passLearnerIds.size;
+      const gradedAttempts = row.passAttempts + row.failAttempts;
+      const roleLearnerCount = roleLearnerCounts.get(row.roleTrack) || 0;
+      return {
+        roleTrack: row.roleTrack,
+        moduleId: row.moduleId,
+        moduleTitle: row.moduleTitle,
+        roleLearnerCount,
+        completionLearners,
+        passLearners,
+        lessonAttempts: row.lessonAttempts,
+        lessonAccuracyRate: row.lessonAttempts
+          ? Number(((row.lessonCorrect / row.lessonAttempts) * 100).toFixed(1))
+          : 0,
+        completionAttempts: row.completionAttempts,
+        passAttempts: row.passAttempts,
+        failAttempts: row.failAttempts,
+        coverageRate: roleLearnerCount
+          ? Number(((completionLearners / roleLearnerCount) * 100).toFixed(1))
+          : 0,
+        passRate: gradedAttempts
+          ? Number(((row.passAttempts / gradedAttempts) * 100).toFixed(1))
+          : 0,
+      };
+    })
+    .sort((a, b) => {
+      const roleCmp = a.roleTrack.localeCompare(b.roleTrack);
+      if (roleCmp !== 0) return roleCmp;
+      const idxA = MODULE_LIBRARY.findIndex((module) => module.id === a.moduleId);
+      const idxB = MODULE_LIBRARY.findIndex((module) => module.id === b.moduleId);
+      return idxA - idxB;
+    });
 
   return res.json(rows);
 });
