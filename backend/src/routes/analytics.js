@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "infection-isolation", title: "Infection Prevention and Isolation" },
-  { id: "hipaa-secure-communication", title: "HIPAA and Secure Communication" },
-  { id: "emtala-intake", title: "EMTALA and Emergency Intake" },
-  { id: "fire-life-safety", title: "Fire and Life Safety Response" },
-  { id: "incident-just-culture", title: "Incident Reporting and Just Culture" },
+  { id: "bloodborne-exposure-control", title: "Bloodborne Pathogens and Exposure Control" },
+  { id: "deescalation-crisis-communication", title: "De-escalation and Crisis Communication" },
+  { id: "safe-patient-handling", title: "Safe Patient Handling and Ergonomics" },
+  { id: "documentation-legal-records", title: "Documentation Integrity and Legal Recordkeeping" },
+  { id: "ethics-professional-boundaries", title: "Ethics, Boundaries, and Professional Conduct" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("infection") || normalized.includes("isolation")) return "infection-isolation";
-  if (normalized.includes("hipaa") || normalized.includes("secure communication") || normalized.includes("privacy")) return "hipaa-secure-communication";
-  if (normalized.includes("emtala") || normalized.includes("emergency intake") || normalized.includes("screening")) return "emtala-intake";
-  if (normalized.includes("fire") || normalized.includes("life safety")) return "fire-life-safety";
-  if (normalized.includes("incident") || normalized.includes("just culture") || normalized.includes("near-miss")) return "incident-just-culture";
+  if (normalized.includes("bloodborne") || normalized.includes("exposure")) return "bloodborne-exposure-control";
+  if (normalized.includes("de-escalation") || normalized.includes("crisis communication") || normalized.includes("aggression")) return "deescalation-crisis-communication";
+  if (normalized.includes("safe patient handling") || normalized.includes("ergonomics") || normalized.includes("transfer")) return "safe-patient-handling";
+  if (normalized.includes("documentation") || normalized.includes("recordkeeping") || normalized.includes("chart")) return "documentation-legal-records";
+  if (normalized.includes("ethics") || normalized.includes("boundaries") || normalized.includes("professional conduct")) return "ethics-professional-boundaries";
   return null;
 }
 

@@ -19,11 +19,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 
 - Luxury glassmorphism visual style with animated effects
 - Five built-in annual modules:
-  - Infection prevention and isolation protocols
-  - HIPAA and secure communication in live workflows
-  - EMTALA and emergency intake compliance
-  - Fire and life safety response
-  - Incident reporting and just culture escalation
+  - Bloodborne pathogens and exposure control
+  - De-escalation and crisis communication
+  - Safe patient handling and ergonomics
+  - Documentation integrity and legal recordkeeping
+  - Ethics, boundaries, and professional conduct
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round

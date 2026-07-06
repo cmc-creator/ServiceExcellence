@@ -74,11 +74,11 @@ const defaultRoleConfigs = [
     persona: "clinical",
     departments: ["Nursing", "Behavioral Health"],
     enabledModules: [
-      "infection-isolation",
-      "hipaa-secure-communication",
-      "emtala-intake",
-      "fire-life-safety",
-      "incident-just-culture",
+      "bloodborne-exposure-control",
+      "deescalation-crisis-communication",
+      "safe-patient-handling",
+      "documentation-legal-records",
+      "ethics-professional-boundaries",
     ],
   },
   {
@@ -87,11 +87,11 @@ const defaultRoleConfigs = [
     persona: "nonclinical",
     departments: ["Admissions", "Support Services"],
     enabledModules: [
-      "infection-isolation",
-      "hipaa-secure-communication",
-      "emtala-intake",
-      "fire-life-safety",
-      "incident-just-culture",
+      "bloodborne-exposure-control",
+      "deescalation-crisis-communication",
+      "safe-patient-handling",
+      "documentation-legal-records",
+      "ethics-professional-boundaries",
     ],
   },
   {
@@ -100,21 +100,21 @@ const defaultRoleConfigs = [
     persona: "leadership",
     departments: ["Management", "Operations"],
     enabledModules: [
-      "infection-isolation",
-      "hipaa-secure-communication",
-      "emtala-intake",
-      "fire-life-safety",
-      "incident-just-culture",
+      "bloodborne-exposure-control",
+      "deescalation-crisis-communication",
+      "safe-patient-handling",
+      "documentation-legal-records",
+      "ethics-professional-boundaries",
     ],
   },
 ];
 
 const MODULE_LIBRARY = [
-  { id: "infection-isolation", title: "Infection Prevention and Isolation Protocols" },
-  { id: "hipaa-secure-communication", title: "HIPAA and Secure Communication" },
-  { id: "emtala-intake", title: "EMTALA and Emergency Intake Compliance" },
-  { id: "fire-life-safety", title: "Fire and Life Safety Response" },
-  { id: "incident-just-culture", title: "Incident Reporting and Just Culture Escalation" },
+  { id: "bloodborne-exposure-control", title: "Bloodborne Pathogens and Exposure Control" },
+  { id: "deescalation-crisis-communication", title: "De-escalation and Crisis Communication" },
+  { id: "safe-patient-handling", title: "Safe Patient Handling and Ergonomics" },
+  { id: "documentation-legal-records", title: "Documentation Integrity and Legal Recordkeeping" },
+  { id: "ethics-professional-boundaries", title: "Ethics, Boundaries, and Professional Conduct" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -726,14 +726,14 @@ const easterEggs = [
 
 // Secret Bonus Scenario
 const bonusScenario = {
-  title: "Secret Bonus: Multi-Hazard Escalation",
-  category: "Challenge - Safety, Privacy, and Reporting Balance",
+  title: "Secret Bonus: Split-Second Judgment",
+  category: "Challenge - Safety, Ethics, and Legal Documentation",
   roles: ["clinical", "nonclinical", "leadership"],
-  prompt: "During a smoke alarm, a family member records staff actions and requests patient details in the corridor while a near-miss medication error is discovered. Best first move?",
+  prompt: "A combative patient spits during restraint removal, a staff back strain occurs during repositioning, and chart notes are incomplete. What is the strongest immediate sequence?",
   choices: [
-    { text: "Prioritize life safety protocol, move discussion to private channel, and trigger immediate near-miss reporting with assigned follow-up owners.", score: 20, good: true, feedback: "Excellent. This sequence protects safety, privacy, and just-culture escalation standards." },
-    { text: "Answer family questions in place first, then handle alarm and reporting afterward.", score: 8, good: false, feedback: "Public PHI disclosure and delayed alarm/reporting create compounding risk." },
-    { text: "Focus only on evacuation and skip incident reporting if no immediate harm appears.", score: 2, good: false, feedback: "Skipping near-miss reporting leaves system-level risk unresolved." },
+    { text: "Initiate exposure protocol, secure team support for safe handling, and complete objective incident/record updates before handoff.", score: 20, good: true, feedback: "Excellent. This protects staff safety and preserves legal/ethical reliability." },
+    { text: "Address the combative behavior only and delay injury and chart work until end of shift.", score: 8, good: false, feedback: "Delayed injury and documentation response increases risk and liability." },
+    { text: "Ask next shift to reconcile events so current workflow is not interrupted.", score: 2, good: false, feedback: "Critical escalation and documentation ownership cannot be deferred." },
   ],
 };
 
@@ -749,112 +749,112 @@ const roleLessonIntros = {
 const roleDepartmentSpotlights = {
   clinical: [
     {
-      title: "Isolation Intake Example",
+      title: "Exposure-Control Response Example",
       points: [
-        "At first symptom risk, apply source control and route to isolation-capable area.",
-        "Use correct PPE sequence and handoff isolation status with read-back.",
+        "At blood/body-fluid exposure risk, apply PPE and source-control response immediately.",
+        "Initiate exposure workflow and document timeline before end-of-shift handoff.",
       ],
     },
     {
-      title: "HIPAA Secure Communication Example",
+      title: "Crisis De-escalation Example",
       points: [
-        "Use approved secure channels and limit details to minimum necessary.",
-        "Shift sensitive conversations out of hallways and visitor areas.",
+        "Use calm directives, safe distance, and backup cues before escalation peaks.",
+        "Coordinate role-based response language to avoid contradictory instructions.",
       ],
     },
     {
-      title: "EMTALA Intake Example",
+      title: "Safe Handling Example",
       points: [
-        "Route emergency presentations directly to medical screening workflow.",
-        "Do not allow coverage verification to delay clinical intake.",
+        "Use lift-assist tools and team transfer technique for mobility-dependent patients.",
+        "Stop and reset posture when strain cues appear to prevent musculoskeletal injury.",
       ],
     },
     {
-      title: "Fire and Life Safety Example",
+      title: "Documentation Integrity Example",
       points: [
-        "On alarm activation, execute RACE roles and protect patients by compartment.",
-        "Correct containment barriers immediately and document actions.",
+        "Record objective, time-stamped events and interventions without narrative drift.",
+        "Correct late or conflicting notes through formal amendment protocol.",
       ],
     },
     {
-      title: "Just Culture Reporting Example",
+      title: "Ethics and Boundaries Example",
       points: [
-        "Report near misses immediately with objective timeline and contributing factors.",
-        "Escalate corrective actions with named owners and due dates.",
+        "Escalate boundary concerns early and separate care decisions from personal pressure.",
+        "Document objective concerns and route through professional-conduct workflow.",
       ],
     },
   ],
   nonclinical: [
     {
-      title: "Isolation Routing Example",
+      title: "Exposure Escalation Example",
       points: [
-        "Apply masking and route symptomatic arrivals out of shared waiting spaces.",
-        "Trigger isolation support flow without delaying for routine queue processing.",
+        "If exposure occurs in common areas, route response kit and alert supervisor immediately.",
+        "Capture location/time details clearly for follow-up and prevention review.",
       ],
     },
     {
-      title: "Frontline Privacy Example",
+      title: "Frontline De-escalation Example",
       points: [
-        "Pause hallway discussions containing PHI and relocate to private setting.",
-        "Use approved communication channels for updates and handoffs.",
+        "Use neutral tone and short directives when behavior becomes verbally aggressive.",
+        "Trigger support early rather than attempting solo control.",
       ],
     },
     {
-      title: "Emergency Intake Compliance Example",
+      title: "Ergonomic Workflow Example",
       points: [
-        "Escalate any financial-gating behavior that delays medical screening exam.",
-        "Document timing and routing sequence for compliance traceability.",
+        "Move carts/supplies with safe load limits and request assist for heavy transfers.",
+        "Report repetitive strain risk points before injury occurs.",
       ],
     },
     {
-      title: "Life Safety Coordination Example",
+      title: "Recordkeeping Support Example",
       points: [
-        "Follow alarm instructions immediately and assist unit containment pathways.",
-        "Escalate blocked exits/doors as urgent safety events.",
+        "Confirm identifiers and timestamps before submitting administrative entries.",
+        "Escalate discovered chart inconsistencies through correction workflow, not side notes.",
       ],
     },
     {
-      title: "Near-Miss Escalation Example",
+      title: "Boundary Escalation Example",
       points: [
-        "Report no-harm incidents through formal just-culture channels immediately.",
-        "Capture objective details and notify supervisors for system follow-up.",
+        "Escalate gifts/favor requests or inappropriate contact concerns immediately.",
+        "Route objective concerns through policy channels without rumor framing.",
       ],
     },
   ],
   leadership: [
     {
-      title: "Infection Control Governance Example",
+      title: "Exposure Governance Example",
       points: [
-        "Audit isolation compliance and exposure response times across shifts.",
-        "Coach immediate containment escalation for symptom-based intake risk.",
+        "Audit exposure response compliance and post-event follow-up completion rates.",
+        "Coach proactive PPE and source-control behavior through drills and rounds.",
       ],
     },
     {
-      title: "Privacy Leadership Example",
+      title: "De-escalation Governance Example",
       points: [
-        "Track hallway disclosure incidents and secure-channel adoption metrics.",
-        "Reinforce minimum-necessary behavior in coaching and huddles.",
+        "Review de-escalation response consistency and support activation timing.",
+        "Debrief high-risk behavior events with skill-based coaching plans.",
       ],
     },
     {
-      title: "EMTALA Oversight Example",
+      title: "Handling Safety Oversight Example",
       points: [
-        "Monitor screening-delay events and transfer-documentation completeness.",
-        "Escalate patterns where operational pressure bypasses compliance workflow.",
+        "Track staff strain incidents and lift-assist adherence trends.",
+        "Escalate unit layouts or staffing patterns that increase handling risk.",
       ],
     },
     {
-      title: "Life Safety Leadership Example",
+      title: "Documentation Quality Oversight",
       points: [
-        "Run regular fire/evacuation drills and verify compartment integrity readiness.",
-        "Require immediate incident capture for any life-safety protocol variance.",
+        "Measure record completeness, amendment timeliness, and discrepancy closure rates.",
+        "Set expectations for objective charting and audit reliability.",
       ],
     },
     {
-      title: "Just Culture Governance Example",
+      title: "Ethics Governance Example",
       points: [
-        "Ensure near-miss reports convert into measurable corrective actions.",
-        "Lead debriefs that emphasize system learning and accountable follow-through.",
+        "Enforce conflict-of-interest and boundary standards with consistent response.",
+        "Require documented follow-through for professional-conduct escalations.",
       ],
     },
   ],
@@ -862,24 +862,24 @@ const roleDepartmentSpotlights = {
 
 const TRAINING_CATEGORIES = {
   communication: {
-    label: "Care-Team Communication Discipline",
-    retryModule: "Revisit secure-communication scenarios and handoff prompts for clarity under pressure.",
+    label: "Crisis Communication and De-escalation",
+    retryModule: "Revisit de-escalation modules to reinforce calm language, role cues, and support activation timing.",
   },
   conduct: {
-    label: "EMTALA and Intake Compliance",
-    retryModule: "Review EMTALA modules for screening, transfer criteria, and compliant documentation.",
+    label: "Professional Conduct and Boundaries",
+    retryModule: "Review ethics and boundary scenarios for escalation triggers and policy-aligned decisions.",
   },
   privacy: {
-    label: "HIPAA and Secure Communication",
-    retryModule: "Repeat HIPAA modules focused on minimum necessary disclosure and approved channels.",
+    label: "Documentation and Record Integrity",
+    retryModule: "Repeat documentation modules focused on objective charting and amendment accuracy.",
   },
   reporting: {
-    label: "Safety and Incident Escalation",
-    retryModule: "Re-run life-safety and incident-reporting modules to practice immediate escalation pathways.",
+    label: "Incident Escalation and Follow-Through",
+    retryModule: "Re-run escalation scenarios to strengthen immediate reporting and corrective action ownership.",
   },
   safety: {
-    label: "Infection and Life Safety Control",
-    retryModule: "Revisit infection and fire-response modules to reinforce first-action safety sequencing.",
+    label: "Exposure and Handling Safety",
+    retryModule: "Revisit exposure-control and safe-handling modules to reinforce first-action safety sequencing.",
   },
   abuseNeglect: {
     label: "Critical Safety Escalation",
@@ -1099,7 +1099,7 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
     : `Critical-safety mastery finished at ${abuseNeglectPct}% against a ${abuseNeglectThreshold}% target.`;
 
   if (pass && recommendations.length === 0) {
-    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a quarterly 10-minute refresh focused on infection control, secure communication, and escalation consistency.`;
+    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a quarterly 10-minute refresh focused on exposure control, de-escalation, and documentation integrity.`;
   }
   if (pass && recommendations.length > 0) {
     return `${roleName}: you passed, and targeted reinforcement is recommended in ${recommendations.map((item) => item.label).join(", ")}. ${abuseNeglectClause} Re-run those modules this week for stronger retention.`;
@@ -2810,3 +2810,4 @@ async function bootstrap() {
 }
 
 bootstrap();
+
