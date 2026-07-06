@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "suicide-observation", title: "Suicide Risk and Observation" },
-  { id: "trauma-informed", title: "Trauma-Informed Care" },
-  { id: "medication-safety", title: "Medication Safety" },
-  { id: "workplace-violence", title: "Workplace Violence Prevention" },
-  { id: "legal-rights-consent", title: "Legal Rights and Consent" },
+  { id: "infection-isolation", title: "Infection Prevention and Isolation" },
+  { id: "hipaa-secure-communication", title: "HIPAA and Secure Communication" },
+  { id: "emtala-intake", title: "EMTALA and Emergency Intake" },
+  { id: "fire-life-safety", title: "Fire and Life Safety Response" },
+  { id: "incident-just-culture", title: "Incident Reporting and Just Culture" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("suicide") || normalized.includes("observation")) return "suicide-observation";
-  if (normalized.includes("trauma")) return "trauma-informed";
-  if (normalized.includes("medication")) return "medication-safety";
-  if (normalized.includes("violence")) return "workplace-violence";
-  if (normalized.includes("consent") || normalized.includes("rights")) return "legal-rights-consent";
+  if (normalized.includes("infection") || normalized.includes("isolation")) return "infection-isolation";
+  if (normalized.includes("hipaa") || normalized.includes("secure communication") || normalized.includes("privacy")) return "hipaa-secure-communication";
+  if (normalized.includes("emtala") || normalized.includes("emergency intake") || normalized.includes("screening")) return "emtala-intake";
+  if (normalized.includes("fire") || normalized.includes("life safety")) return "fire-life-safety";
+  if (normalized.includes("incident") || normalized.includes("just culture") || normalized.includes("near-miss")) return "incident-just-culture";
   return null;
 }
 
