@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "controlled-substance-diversion-audit", title: "Controlled Substance Diversion Prevention and Reconciliation Audits" },
-  { id: "involuntary-hold-court-order-workflow", title: "Involuntary Hold, Court Order, and Legal Documentation Workflow" },
-  { id: "visitor-boundary-de-escalation", title: "Visitor Boundary Management and De-Escalation Controls" },
-  { id: "discharge-safety-plan-followup-closure", title: "Discharge Safety Planning and 72-Hour Follow-Up Closure" },
-  { id: "social-media-boundary-confidentiality", title: "Social Media Boundaries and Patient Confidentiality Safeguards" },
+  { id: "ligature-self-harm-environmental-rounds", title: "Ligature Risk Rounds and Immediate Environment Safety Response" },
+  { id: "medication-refusal-capacity-escalation", title: "Medication Refusal, Capacity Reassessment, and Escalation Pathways" },
+  { id: "code-grey-team-de-escalation", title: "Workplace Violence Code Grey Coordination and Team De-Escalation" },
+  { id: "near-miss-handoff-learning-loop", title: "Near-Miss Handoff Analysis and Closed-Loop Learning Reviews" },
+  { id: "documentation-late-entry-correction-integrity", title: "Documentation Integrity, Late Entries, and Correction Standards" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("diversion") || normalized.includes("controlled substance") || normalized.includes("reconciliation audit")) return "controlled-substance-diversion-audit";
-  if (normalized.includes("involuntary hold") || normalized.includes("court order") || normalized.includes("legal documentation")) return "involuntary-hold-court-order-workflow";
-  if (normalized.includes("visitor") || normalized.includes("boundary") || normalized.includes("de-escalation")) return "visitor-boundary-de-escalation";
-  if (normalized.includes("discharge") || normalized.includes("follow-up") || normalized.includes("72-hour")) return "discharge-safety-plan-followup-closure";
-  if (normalized.includes("social media") || normalized.includes("confidentiality") || normalized.includes("posting")) return "social-media-boundary-confidentiality";
+  if (normalized.includes("ligature") || normalized.includes("environment") || normalized.includes("self-harm")) return "ligature-self-harm-environmental-rounds";
+  if (normalized.includes("medication refusal") || normalized.includes("capacity") || normalized.includes("reassessment")) return "medication-refusal-capacity-escalation";
+  if (normalized.includes("code grey") || normalized.includes("workplace violence") || normalized.includes("de-escalation")) return "code-grey-team-de-escalation";
+  if (normalized.includes("near-miss") || normalized.includes("handoff") || normalized.includes("learning review")) return "near-miss-handoff-learning-loop";
+  if (normalized.includes("late entry") || normalized.includes("correction") || normalized.includes("documentation integrity")) return "documentation-late-entry-correction-integrity";
   return null;
 }
 

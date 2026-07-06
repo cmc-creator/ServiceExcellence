@@ -19,11 +19,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 
 - Luxury glassmorphism visual style with animated effects
 - Five built-in annual modules:
-  - Controlled substance diversion prevention and reconciliation audits
-  - Involuntary hold, court order, and legal documentation workflow
-  - Visitor boundary management and de-escalation controls
-  - Discharge safety planning and 72-hour follow-up closure
-  - Social media boundaries and patient confidentiality safeguards
+  - Ligature risk rounds and immediate environment safety response
+  - Medication refusal, capacity reassessment, and escalation pathways
+  - Workplace violence Code Grey coordination and team de-escalation
+  - Near-miss handoff analysis and closed-loop learning reviews
+  - Documentation integrity, late entries, and correction standards
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round
