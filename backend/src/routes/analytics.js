@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "violence-risk-threat-response", title: "Violence Risk Stratification and Behavioral Threat Response" },
-  { id: "contraband-search-chain-custody", title: "Contraband Search and Personal Property Chain-of-Custody" },
-  { id: "capacity-consent-emergency-exception", title: "Capacity, Consent, and Emergency Exception Decisions" },
-  { id: "sentinel-disclosure-family-communication", title: "Sentinel Event Disclosure and Family Communication" },
-  { id: "staff-fatigue-fit-for-duty", title: "Staff Fatigue, Burnout, and Fit-for-Duty Escalation" },
+  { id: "infection-outbreak-cohorting", title: "Infection Outbreak Containment and Patient Cohorting" },
+  { id: "patient-rights-grievance-escalation", title: "Patient Rights, Grievance Intake, and Ombuds Escalation" },
+  { id: "telehealth-privacy-session-controls", title: "Telehealth Privacy and Remote Session Controls" },
+  { id: "emergency-transfer-handoff-coordination", title: "Emergency Psychiatric Transfer and Handoff Coordination" },
+  { id: "harassment-retaliation-safeguards", title: "Workplace Harassment Reporting and Anti-Retaliation Safeguards" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("violence risk") || normalized.includes("behavioral threat") || normalized.includes("threat response")) return "violence-risk-threat-response";
-  if (normalized.includes("contraband") || normalized.includes("chain-of-custody") || normalized.includes("property")) return "contraband-search-chain-custody";
-  if (normalized.includes("capacity") || normalized.includes("consent") || normalized.includes("emergency exception")) return "capacity-consent-emergency-exception";
-  if (normalized.includes("sentinel") || normalized.includes("disclosure") || normalized.includes("family communication")) return "sentinel-disclosure-family-communication";
-  if (normalized.includes("fatigue") || normalized.includes("burnout") || normalized.includes("fit-for-duty")) return "staff-fatigue-fit-for-duty";
+  if (normalized.includes("infection") || normalized.includes("outbreak") || normalized.includes("cohort")) return "infection-outbreak-cohorting";
+  if (normalized.includes("patient rights") || normalized.includes("grievance") || normalized.includes("ombuds")) return "patient-rights-grievance-escalation";
+  if (normalized.includes("telehealth") || normalized.includes("privacy") || normalized.includes("remote session")) return "telehealth-privacy-session-controls";
+  if (normalized.includes("transfer") || normalized.includes("handoff") || normalized.includes("sbar")) return "emergency-transfer-handoff-coordination";
+  if (normalized.includes("harassment") || normalized.includes("retaliation") || normalized.includes("workplace conduct")) return "harassment-retaliation-safeguards";
   return null;
 }
 

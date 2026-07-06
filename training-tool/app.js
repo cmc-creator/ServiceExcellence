@@ -74,11 +74,11 @@ const defaultRoleConfigs = [
     persona: "clinical",
     departments: ["Nursing", "Behavioral Health"],
     enabledModules: [
-      "violence-risk-threat-response",
-      "contraband-search-chain-custody",
-      "capacity-consent-emergency-exception",
-      "sentinel-disclosure-family-communication",
-      "staff-fatigue-fit-for-duty",
+      "infection-outbreak-cohorting",
+      "patient-rights-grievance-escalation",
+      "telehealth-privacy-session-controls",
+      "emergency-transfer-handoff-coordination",
+      "harassment-retaliation-safeguards",
     ],
   },
   {
@@ -87,11 +87,11 @@ const defaultRoleConfigs = [
     persona: "nonclinical",
     departments: ["Admissions", "Support Services"],
     enabledModules: [
-      "violence-risk-threat-response",
-      "contraband-search-chain-custody",
-      "capacity-consent-emergency-exception",
-      "sentinel-disclosure-family-communication",
-      "staff-fatigue-fit-for-duty",
+      "infection-outbreak-cohorting",
+      "patient-rights-grievance-escalation",
+      "telehealth-privacy-session-controls",
+      "emergency-transfer-handoff-coordination",
+      "harassment-retaliation-safeguards",
     ],
   },
   {
@@ -100,21 +100,21 @@ const defaultRoleConfigs = [
     persona: "leadership",
     departments: ["Management", "Operations"],
     enabledModules: [
-      "violence-risk-threat-response",
-      "contraband-search-chain-custody",
-      "capacity-consent-emergency-exception",
-      "sentinel-disclosure-family-communication",
-      "staff-fatigue-fit-for-duty",
+      "infection-outbreak-cohorting",
+      "patient-rights-grievance-escalation",
+      "telehealth-privacy-session-controls",
+      "emergency-transfer-handoff-coordination",
+      "harassment-retaliation-safeguards",
     ],
   },
 ];
 
 const MODULE_LIBRARY = [
-  { id: "violence-risk-threat-response", title: "Violence Risk Stratification and Behavioral Threat Response" },
-  { id: "contraband-search-chain-custody", title: "Contraband Search and Personal Property Chain-of-Custody" },
-  { id: "capacity-consent-emergency-exception", title: "Capacity, Consent, and Emergency Exception Decisions" },
-  { id: "sentinel-disclosure-family-communication", title: "Sentinel Event Disclosure and Family Communication" },
-  { id: "staff-fatigue-fit-for-duty", title: "Staff Fatigue, Burnout, and Fit-for-Duty Escalation" },
+  { id: "infection-outbreak-cohorting", title: "Infection Outbreak Containment and Patient Cohorting" },
+  { id: "patient-rights-grievance-escalation", title: "Patient Rights, Grievance Intake, and Ombuds Escalation" },
+  { id: "telehealth-privacy-session-controls", title: "Telehealth Privacy and Remote Session Controls" },
+  { id: "emergency-transfer-handoff-coordination", title: "Emergency Psychiatric Transfer and Handoff Coordination" },
+  { id: "harassment-retaliation-safeguards", title: "Workplace Harassment Reporting and Anti-Retaliation Safeguards" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -729,14 +729,14 @@ const easterEggs = [
 
 // Secret Bonus Scenario
 const bonusScenario = {
-  title: "Secret Bonus: Escalation on Two Fronts",
-  category: "Challenge - Threat Response, Disclosure, and Team Safety",
+  title: "Secret Bonus: Outbreak Trigger During Transfer Window",
+  category: "Challenge - Cohorting, Handoff, and Non-Retaliation",
   roles: ["clinical", "nonclinical", "leadership"],
-  prompt: "A behavioral threat cue escalates at intake while a recent sentinel event disclosure call is pending and one key staff member reports unsafe fatigue. Best first sequence?",
+  prompt: "A symptomatic patient is awaiting emergency transfer, telehealth triage is active, and a staff member reports being discouraged from filing a safety grievance. Best first sequence?",
   choices: [
-    { text: "Activate threat-response protocol, assign disclosure lead using factual script, and immediately reassign fatigued staff through fit-for-duty escalation.", score: 20, good: true, feedback: "Excellent. This sequence protects immediate safety, communication integrity, and workforce risk control." },
-    { text: "Prioritize the disclosure call first and delay threat activation until additional staff arrive.", score: 8, good: false, feedback: "Delaying threat response can create immediate harm risk." },
-    { text: "Proceed with usual staffing and postpone fatigue concern until shift close.", score: 2, good: false, feedback: "Deferring fit-for-duty escalation can compound safety failures." },
+    { text: "Initiate isolation/cohorting precautions now, execute SBAR transfer handoff, protect reporting staff from retaliation, and route grievance to ombuds workflow.", score: 20, good: true, feedback: "Excellent. This sequence protects infection safety, transfer reliability, and reporting integrity." },
+    { text: "Prioritize transfer paperwork only and defer grievance discussion until morning.", score: 8, good: false, feedback: "Deferring retaliation concerns and safety controls increases organizational risk." },
+    { text: "Continue normal unit flow and ask team to keep concerns informal.", score: 2, good: false, feedback: "Informal handling undermines rights, safety, and compliance." },
   ],
 };
 
@@ -752,112 +752,112 @@ const roleLessonIntros = {
 const roleDepartmentSpotlights = {
   clinical: [
     {
-      title: "Threat-Risk Triage Example",
+      title: "Outbreak Containment Example",
       points: [
-        "Apply structured violence-risk cues and activate response pathway early.",
-        "Position team safely and use closed-loop command language under escalation.",
+        "Escalate suspected clusters early and apply cohorting/isolation controls immediately.",
+        "Use structured handoff language for exposure status across shifts.",
       ],
     },
     {
-      title: "Contraband Chain-of-Custody Example",
+      title: "Rights and Grievance Example",
       points: [
-        "Use policy-aligned search boundaries and witness documentation.",
-        "Seal, label, and hand off contraband/property with traceable custody steps.",
+        "Explain rights and complaint pathways in plain language at point of concern.",
+        "Document grievance intake objectively and route to ombuds flow without delay.",
       ],
     },
     {
-      title: "Capacity and Consent Example",
+      title: "Telehealth Privacy Example",
       points: [
-        "Assess decision capacity directly and document rationale for consent pathway used.",
-        "Escalate emergency-exception decisions through legal-clinical protocol immediately.",
+        "Verify patient identity/location and secure environment before remote care discussion.",
+        "Use approved platforms and minimum-necessary disclosure standards.",
       ],
     },
     {
-      title: "Sentinel Disclosure Example",
+      title: "Emergency Transfer Handoff Example",
       points: [
-        "Use factual, empathic disclosure language with documented follow-up commitments.",
-        "Coordinate interdisciplinary timing so disclosures are accurate and consistent.",
+        "Use transfer checklist with clinical risk summary and acceptance confirmation.",
+        "Document transport readiness, stabilization status, and receiving handoff owner.",
       ],
     },
     {
-      title: "Fit-for-Duty Escalation Example",
+      title: "Anti-Retaliation Safeguard Example",
       points: [
-        "Escalate fatigue impairment cues early and reassign critical tasks safely.",
-        "Document fit-for-duty actions with objective observations and follow-up.",
+        "Escalate harassment and retaliation concerns through formal policy channels.",
+        "Document protective actions and follow-up milestones with clear ownership.",
       ],
     },
   ],
   nonclinical: [
     {
-      title: "Frontline Threat Alert Example",
+      title: "Cohorting Frontline Example",
       points: [
-        "Report escalating threat indicators before physical aggression occurs.",
-        "Capture objective behavior cues and route through emergency contact flow.",
+        "Route symptomatic or exposed patients to designated flow points quickly.",
+        "Escalate capacity pinch points before cohorting controls degrade.",
       ],
     },
     {
-      title: "Property Custody Support Example",
+      title: "Grievance Intake Example",
       points: [
-        "Document personal-property transfer with witness details and timestamps.",
-        "Escalate missing custody steps immediately to supervisor.",
+        "Capture concern details verbatim and provide clear escalation timeline.",
+        "Avoid dismissive language or informal deferral of rights complaints.",
       ],
     },
     {
-      title: "Consent Routing Example",
+      title: "Remote Session Privacy Example",
       points: [
-        "Route capacity/consent concerns to licensed lead without delay.",
-        "Never substitute administrative judgment for legal-clinical consent decisions.",
+        "Confirm privacy conditions and approved tools before connecting telehealth sessions.",
+        "Escalate any unsecure-channel requests immediately.",
       ],
     },
     {
-      title: "Disclosure Coordination Example",
+      title: "Transfer Coordination Example",
       points: [
-        "Prepare accurate event timelines for sentinel disclosure meetings.",
-        "Avoid speculative language in family communication records.",
+        "Verify receiving acceptance and transport logistics before movement.",
+        "Timestamp key handoff events for continuity and audit traceability.",
       ],
     },
     {
-      title: "Wellness Escalation Example",
+      title: "Harassment Reporting Support",
       points: [
-        "Escalate obvious fatigue impairment cues through supervisor pathway.",
-        "Support safe reassignment during high-risk tasks.",
+        "Route reports immediately and protect confidentiality boundaries.",
+        "Escalate retaliation signals early using non-punitive pathways.",
       ],
     },
   ],
   leadership: [
     {
-      title: "Threat Response Governance Example",
+      title: "Outbreak Governance Example",
       points: [
-        "Audit violence-risk events, response timing, and staff positioning reliability.",
-        "Coach early activation of protective pathways and post-event debrief quality.",
+        "Audit cohorting timeliness, exposure-control adherence, and overflow mitigation.",
+        "Escalate repeat breakdowns as high-priority safety events.",
       ],
     },
     {
-      title: "Chain-of-Custody Governance",
+      title: "Rights/Ombuds Governance",
       points: [
-        "Monitor contraband/property custody breaks and closure times.",
-        "Enforce witness and documentation standards across all units.",
+        "Track grievance closure times and communication quality metrics.",
+        "Ensure patient-rights escalations receive transparent follow-through.",
       ],
     },
     {
-      title: "Consent Decision Governance",
+      title: "Telehealth Security Governance",
       points: [
-        "Track capacity-assessment documentation completeness and emergency-exception usage.",
-        "Escalate recurring consent-boundary errors as high-risk events.",
+        "Monitor remote-session privacy incidents and platform compliance.",
+        "Require corrective action closure on repeat telehealth control misses.",
       ],
     },
     {
-      title: "Sentinel Communication Governance",
+      title: "Transfer Reliability Governance",
       points: [
-        "Review sentinel disclosure timeliness, consistency, and family follow-up closure.",
-        "Require fact-based communication standards and accountable ownership.",
+        "Review emergency transfer delays, handoff completeness, and near misses.",
+        "Strengthen checklist discipline and accountability at each transition point.",
       ],
     },
     {
-      title: "Fit-for-Duty Governance",
+      title: "Workforce Protection Governance",
       points: [
-        "Monitor fatigue-related risk signals and reassignment timeliness.",
-        "Enforce non-punitive escalation pathways that protect patient and staff safety.",
+        "Enforce anti-harassment and anti-retaliation protocols with documented safeguards.",
+        "Track reporter-protection outcomes and intervention timeliness.",
       ],
     },
   ],
@@ -865,28 +865,28 @@ const roleDepartmentSpotlights = {
 
 const TRAINING_CATEGORIES = {
   communication: {
-    label: "Threat and Disclosure Communication",
-    retryModule: "Revisit threat response and sentinel disclosure modules to reinforce factual, closed-loop communication.",
+    label: "Rights and Disclosure Communication",
+    retryModule: "Revisit grievance and rights communication modules to reinforce clear escalation language and timelines.",
   },
   conduct: {
-    label: "Consent Boundaries and Professional Conduct",
-    retryModule: "Review capacity-consent scenarios for legal-clinical escalation and policy alignment.",
+    label: "Professional Conduct and Reporter Protection",
+    retryModule: "Review harassment and anti-retaliation scenarios for policy-first protective action.",
   },
   privacy: {
-    label: "Custody and Record Accuracy",
-    retryModule: "Repeat contraband/property custody modules focused on traceability and documentation integrity.",
+    label: "Telehealth and Data Privacy Controls",
+    retryModule: "Repeat telehealth privacy modules focused on secure-session setup and minimum-necessary disclosure.",
   },
   reporting: {
-    label: "Incident and Workforce Escalation",
-    retryModule: "Re-run sentinel and fit-for-duty scenarios to strengthen immediate escalation and accountable follow-through.",
+    label: "Incident Escalation and Transfer Reliability",
+    retryModule: "Re-run transfer and escalation scenarios to strengthen ownership and timely closure.",
   },
   safety: {
-    label: "Behavioral and Team Safety",
-    retryModule: "Revisit violence-risk and team-safety modules to reinforce first-action protective sequencing.",
+    label: "Outbreak and Unit Safety Control",
+    retryModule: "Revisit outbreak containment and cohorting modules to reinforce first-action safety sequencing.",
   },
   abuseNeglect: {
-    label: "Critical Safety Escalation",
-    retryModule: "Repeat high-risk escalation scenarios to strengthen urgent safety decision-making.",
+    label: "Critical Escalation and Non-Retaliation",
+    retryModule: "Repeat high-risk escalation scenarios to strengthen protected reporting and urgent safety action.",
   },
   knowledgeCheck: {
     label: "Knowledge Check Mastery",
@@ -1098,297 +1098,297 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
   const abuseNeglectThreshold = getRoleMasteryThreshold("abuseNeglect");
   const abuseNeglectPct = getCategoryPercent("abuseNeglect");
   const abuseNeglectClause = abuseNeglectPct === null
-    ? `Complete critical-safety practice items to establish the ${abuseNeglectThreshold}% mastery target.`
-    : `Critical-safety mastery finished at ${abuseNeglectPct}% against a ${abuseNeglectThreshold}% target.`;
+    ? `Complete protected-reporting and non-retaliation items to establish the ${abuseNeglectThreshold}% mastery target.`
+    : `Protected-reporting mastery finished at ${abuseNeglectPct}% against a ${abuseNeglectThreshold}% target.`;
 
   if (pass && recommendations.length === 0) {
-    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a quarterly 10-minute refresh focused on threat response, consent decision reliability, and fit-for-duty readiness.`;
+    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a monthly refresh focused on outbreak cohorting readiness, transfer handoff discipline, and respectful workplace escalation.`;
   }
   if (pass && recommendations.length > 0) {
     return `${roleName}: you passed, and targeted reinforcement is recommended in ${recommendations.map((item) => item.label).join(", ")}. ${abuseNeglectClause} Re-run those modules this week for stronger retention.`;
   }
-  return `${roleName}: assessment at ${assessmentPct}%. ${abuseNeglectClause} Complete recommended retry modules, then reattempt the full assessment with focus on policy-first escalation and documentation decisions.`;
+  return `${roleName}: assessment at ${assessmentPct}%. ${abuseNeglectClause} Complete recommended retry modules, then reattempt the full assessment with focus on immediate escalation, rights protection, and clear documentation.`;
 }
 
 const coreLessons = [
   {
-    moduleId: "violence-risk-threat-response",
+    moduleId: "infection-outbreak-cohorting",
     spotlightIndex: 0,
-    title: "Lesson 1: Violence Risk Stratification and Behavioral Threat Response",
-    body: "Violence-risk management requires early cue identification, protective positioning, and immediate escalation before behavior peaks.",
-    check: "A patient shows escalating threats and clenched-fist pacing in triage. Strongest first response?",
+    title: "Lesson 1: Infection Outbreak Containment and Patient Cohorting",
+    body: "Outbreak control depends on early cluster detection, isolation discipline, and cohorting capacity management.",
+    check: "Two new symptomatic patients appear on same unit in one shift. Best immediate action?",
     answers: [
-      { text: "Activate threat-response workflow, create safe distance, and assign support roles immediately.", good: true, score: 8 },
-      { text: "Continue normal flow unless physical aggression starts.", good: false, score: 2 },
-      { text: "Handle alone to avoid alarming others.", good: false, score: 1 },
+      { text: "Escalate suspected cluster and activate cohorting protocol with exposure-control routing now.", good: true, score: 8 },
+      { text: "Wait for lab confirmation before changing room assignments.", good: false, score: 2 },
+      { text: "Document for next day review only.", good: false, score: 1 },
     ],
-    why: "Early coordinated response lowers injury risk.",
+    why: "Early cohorting decisions limit spread.",
     categoryKey: "safety",
-    recap: "Checkpoint: threat-risk cues require immediate protective escalation and role clarity.",
+    recap: "Checkpoint: cluster suspicion requires immediate containment and routing escalation.",
   },
   {
-    moduleId: "contraband-search-chain-custody",
+    moduleId: "patient-rights-grievance-escalation",
     spotlightIndex: 1,
-    title: "Lesson 2: Contraband Search and Personal Property Chain-of-Custody",
-    body: "Contraband processes require policy-based search boundaries and traceable custody to protect safety and legal integrity.",
-    check: "Potential contraband discovered in belongings during intake. Best next step?",
+    title: "Lesson 2: Patient Rights, Grievance Intake, and Ombuds Escalation",
+    body: "Rights protection requires clear complaint pathways, objective intake, and timely ombuds escalation.",
+    check: "Patient states rights were ignored and asks to file formal grievance. Best response?",
     answers: [
-      { text: "Follow search policy with witness, document item details, and transfer custody with chain-of-custody log.", good: true, score: 8 },
-      { text: "Store item informally at desk and log later.", good: false, score: 2 },
-      { text: "Discard questionable item without documentation.", good: false, score: 1 },
+      { text: "Provide grievance pathway immediately, document concern verbatim, and escalate per ombuds policy.", good: true, score: 8 },
+      { text: "Ask patient to wait until discharge to report.", good: false, score: 2 },
+      { text: "Handle concern informally with no formal record.", good: false, score: 1 },
     ],
-    why: "Traceable custody protects legal defensibility and patient safety.",
-    categoryKey: "privacy",
-    recap: "Checkpoint: contraband handling must be witnessed, documented, and traceable end-to-end.",
-  },
-  {
-    moduleId: "capacity-consent-emergency-exception",
-    spotlightIndex: 2,
-    title: "Lesson 3: Capacity, Consent, and Emergency Exception Decisions",
-    body: "Capacity and consent decisions require clinical rationale, clear rights communication, and immediate escalation when emergency exceptions apply.",
-    check: "Patient appears unable to consent during urgent intervention decision. Best action?",
-    answers: [
-      { text: "Escalate through emergency-consent pathway, document incapacity rationale, and proceed per policy.", good: true, score: 8 },
-      { text: "Assume prior verbal agreement still applies.", good: false, score: 2 },
-      { text: "Delay all care until family consensus is reached.", good: false, score: 1 },
-    ],
-    why: "Emergency-exception use requires immediate legal-clinical documentation.",
-    categoryKey: "conduct",
-    recap: "Checkpoint: consent-boundary decisions must be policy-backed, timely, and traceable.",
-  },
-  {
-    moduleId: "sentinel-disclosure-family-communication",
-    spotlightIndex: 3,
-    title: "Lesson 4: Sentinel Event Disclosure and Family Communication",
-    body: "Sentinel disclosure requires factual transparency, empathic communication, and documented follow-up ownership.",
-    check: "Family asks what happened after a serious event while facts are still being verified. Best response?",
-    answers: [
-      { text: "Provide confirmed facts only, acknowledge impact, and commit to documented follow-up updates.", good: true, score: 8 },
-      { text: "Speculate on likely causes to reassure family quickly.", good: false, score: 2 },
-      { text: "Avoid communication until full investigation closes.", good: false, score: 1 },
-    ],
-    why: "Fact-based disclosure preserves trust and reduces compounding harm.",
+    why: "Rights escalation must be timely and traceable.",
     categoryKey: "communication",
-    recap: "Checkpoint: sentinel disclosure should be factual, empathic, and follow-up accountable.",
+    recap: "Checkpoint: grievance intake should be immediate, objective, and policy-routed.",
   },
   {
-    moduleId: "staff-fatigue-fit-for-duty",
-    spotlightIndex: 4,
-    title: "Lesson 5: Staff Fatigue, Burnout, and Fit-for-Duty Escalation",
-    body: "Fit-for-duty readiness requires early fatigue escalation, non-punitive support, and safe reassignment of high-risk tasks.",
-    check: "A key team member reports unsafe fatigue before high-acuity assignment. Best response?",
+    moduleId: "telehealth-privacy-session-controls",
+    spotlightIndex: 2,
+    title: "Lesson 3: Telehealth Privacy and Remote Session Controls",
+    body: "Remote care requires secure channels, identity/location verification, and privacy safeguards before discussing protected details.",
+    check: "Telehealth visit starts while patient is in shared room and using non-approved app. Best action?",
     answers: [
-      { text: "Escalate fit-for-duty concern now and reassign critical tasks with documented coverage plan.", good: true, score: 8 },
-      { text: "Encourage them to push through this shift.", good: false, score: 2 },
-      { text: "Delay action unless an incident occurs.", good: false, score: 1 },
+      { text: "Pause visit, move to approved secure platform/privacy setting, and verify identity before continuing.", good: true, score: 8 },
+      { text: "Proceed quickly to avoid delaying care.", good: false, score: 2 },
+      { text: "Share only sensitive details by personal text.", good: false, score: 1 },
     ],
-    why: "Early escalation prevents fatigue-linked safety events.",
+    why: "Session controls protect privacy and compliance.",
+    categoryKey: "privacy",
+    recap: "Checkpoint: telehealth privacy starts before clinical conversation begins.",
+  },
+  {
+    moduleId: "emergency-transfer-handoff-coordination",
+    spotlightIndex: 3,
+    title: "Lesson 4: Emergency Psychiatric Transfer and Handoff Coordination",
+    body: "Safe transfers require stabilization checks, receiving acceptance, and complete handoff packets.",
+    check: "Receiving site requests immediate transfer but key risk details are incomplete. Best response?",
+    answers: [
+      { text: "Complete critical handoff checklist and receiving confirmation before transfer movement.", good: true, score: 8 },
+      { text: "Transfer now and send details afterward.", good: false, score: 2 },
+      { text: "Delay indefinitely due to missing detail.", good: false, score: 1 },
+    ],
+    why: "Transfer reliability depends on complete pre-move coordination.",
     categoryKey: "reporting",
-    recap: "Checkpoint: fatigue risk should be escalated and mitigated before critical task exposure.",
+    recap: "Checkpoint: emergency transfer safety is checklist-driven and ownership-based.",
+  },
+  {
+    moduleId: "harassment-retaliation-safeguards",
+    spotlightIndex: 4,
+    title: "Lesson 5: Workplace Harassment Reporting and Anti-Retaliation Safeguards",
+    body: "Reporter protection requires immediate policy escalation, confidentiality boundaries, and documented anti-retaliation safeguards.",
+    check: "Staff reports harassment and fears assignment retaliation. Best immediate action?",
+    answers: [
+      { text: "Activate formal report pathway, apply anti-retaliation safeguards, and document protective steps.", good: true, score: 8 },
+      { text: "Advise staff to watch and report only if repeated.", good: false, score: 2 },
+      { text: "Resolve privately to avoid formal process.", good: false, score: 1 },
+    ],
+    why: "Early reporter protection prevents compounding harm.",
+    categoryKey: "conduct",
+    recap: "Checkpoint: harassment reports require formal escalation and anti-retaliation follow-through.",
   },
 ];
 
 const scenarios = [
   {
-    title: "Scenario 1: Escalating Threat at Intake",
-    category: "Threat Response - Immediate Protection",
+    title: "Scenario 1: Unit Cluster Alert",
+    category: "Outbreak Containment - Rapid Cohorting",
     roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "A visitor begins threatening language and aggressive pacing near intake desk. Best immediate response?",
+    prompt: "Three linked symptomatic cases emerge on one unit in 24 hours. Best immediate response?",
     choices: [
-      { text: "Activate threat protocol, create safety perimeter, and call coordinated support immediately.", score: 16, good: true, feedback: "Correct. Early coordinated response protects staff and patients." },
-      { text: "Attempt solo conversation first to avoid escalation.", score: 6, good: false, feedback: "Solo handling increases risk in active threat cues." },
-      { text: "Wait for physical contact before action.", score: 2, good: false, feedback: "Threat indicators require action before assault occurs." },
+      { text: "Activate outbreak response, cohort affected patients, and enforce exposure routing controls now.", score: 16, good: true, feedback: "Correct. Immediate cohorting limits spread." },
+      { text: "Wait for full diagnostics before changing placement.", score: 6, good: false, feedback: "Delay can expand unit-wide exposure." },
+      { text: "Transfer all patients without containment planning.", score: 2, good: false, feedback: "Unplanned movement can increase transmission risk." },
     ],
     categoryKey: "safety",
-    recap: "Scenario recap: threat cues trigger immediate protective escalation.",
+    recap: "Scenario recap: suspected clusters require immediate containment and cohorting control.",
   },
   {
-    title: "Scenario 2: Internal Threat Concern",
-    category: "Threat Response - Team Safety",
+    title: "Scenario 2: Cohorting Capacity Breakdown",
+    category: "Outbreak Containment - Overflow Management",
     roles: ["clinical", "leadership"],
-    prompt: "Staff reports repeated intimidation by coworker during high-acuity events. Best leadership action?",
+    prompt: "Designated cohort beds are full while new exposed patients continue arriving. Best leadership action?",
     choices: [
-      { text: "Initiate formal safety escalation, apply interim protections, and document objective facts now.", score: 18, good: true, feedback: "Correct. Immediate formal response protects staff safety." },
-      { text: "Coach both parties informally and monitor.", score: 5, good: false, feedback: "Informal action alone may leave risk unmanaged." },
-      { text: "Delay until next performance review cycle.", score: 4, good: false, feedback: "Delay can allow safety risk to continue." },
+      { text: "Escalate overflow plan immediately and open policy-approved surge cohort controls.", score: 18, good: true, feedback: "Correct. Capacity escalation prevents unsafe mixing." },
+      { text: "Temporarily mix exposed and non-exposed patients.", score: 5, good: false, feedback: "Mixing undermines containment strategy." },
+      { text: "Pause intake with no escalation.", score: 4, good: false, feedback: "Uncoordinated pauses can create unsafe bottlenecks." },
     ],
-    categoryKey: "reporting",
-    recap: "Scenario recap: team-safety concerns require immediate documented escalation.",
+    categoryKey: "safety",
+    recap: "Scenario recap: overflow needs formal surge controls, not ad hoc mixing.",
   },
   {
-    title: "Scenario 3: Contraband Discovery",
-    category: "Chain-of-Custody - Intake Handling",
+    title: "Scenario 3: Rights Complaint at Bedside",
+    category: "Rights and Grievance - Immediate Intake",
     roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "Potential contraband is found in patient belongings during admission. Best action?",
+    prompt: "Patient states they were denied rights information and asks to file complaint now. Best response?",
     choices: [
-      { text: "Perform witnessed policy-based search and complete chain-of-custody transfer documentation.", score: 18, good: true, feedback: "Correct. Witnessed, traceable custody is required." },
-      { text: "Store item in nearby drawer until supervisor is free.", score: 6, good: false, feedback: "Unsecured interim storage breaks custody integrity." },
-      { text: "Dispose item quietly to reduce conflict.", score: 3, good: false, feedback: "Undocumented disposal can create major legal risk." },
-    ],
-    categoryKey: "privacy",
-    recap: "Scenario recap: contraband handling must remain policy-bound and traceable.",
-  },
-  {
-    title: "Scenario 4: Missing Property Step",
-    category: "Chain-of-Custody - Documentation Gap",
-    roles: ["nonclinical", "leadership"],
-    prompt: "Audit reveals a missing custody signature in a contraband transfer record. Best next step?",
-    choices: [
-      { text: "Escalate immediately, reconcile custody chain, and document corrective action with owner/date.", score: 18, good: true, feedback: "Correct. Custody breaks require immediate closure." },
-      { text: "Leave as-is if item was secured.", score: 6, good: false, feedback: "Security alone does not fix legal traceability gaps." },
-      { text: "Backfill signature later without incident note.", score: 2, good: false, feedback: "Unlogged retroactive edits weaken record integrity." },
-    ],
-    categoryKey: "privacy",
-    recap: "Scenario recap: custody documentation gaps require immediate corrective closure.",
-  },
-  {
-    title: "Scenario 5: Emergency Consent Boundary",
-    category: "Capacity and Consent - Urgent Care",
-    roles: ["clinical", "leadership"],
-    prompt: "Patient appears unable to consent during urgent intervention need; family contact is delayed. Best action?",
-    choices: [
-      { text: "Escalate emergency-consent pathway with documented capacity rationale and proceed per policy.", score: 18, good: true, feedback: "Correct. Policy-backed emergency exception is required." },
-      { text: "Proceed using standard consent assumptions.", score: 4, good: false, feedback: "Assumptions around consent create legal risk." },
-      { text: "Delay intervention until family responds.", score: 6, good: false, feedback: "Delay can create avoidable clinical harm." },
-    ],
-    categoryKey: "conduct",
-    recap: "Scenario recap: consent-boundary urgency requires documented policy escalation.",
-  },
-  {
-    title: "Scenario 6: Capacity Reassessment Drift",
-    category: "Capacity and Consent - Ongoing Decisions",
-    roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "Capacity appears to fluctuate during treatment decisions. Best team approach?",
-    choices: [
-      { text: "Perform timed reassessment, document findings objectively, and adjust consent pathway accordingly.", score: 18, good: true, feedback: "Correct. Capacity changes require structured reassessment." },
-      { text: "Use first assessment for entire stay.", score: 5, good: false, feedback: "Static capacity assumptions can become unsafe." },
-      { text: "Rely on family interpretation of capacity only.", score: 2, good: false, feedback: "Capacity assessment remains clinical and documented." },
-    ],
-    categoryKey: "conduct",
-    recap: "Scenario recap: dynamic capacity requires reassessment and documented pathway updates.",
-  },
-  {
-    title: "Scenario 7: Early Sentinel Communication",
-    category: "Sentinel Disclosure - Fact Integrity",
-    roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "Family requests immediate details after sentinel event before final review is complete. Best response?",
-    choices: [
-      { text: "Share confirmed facts, acknowledge impact, and commit to documented follow-up timeline.", score: 20, good: true, feedback: "Correct. Early factual transparency supports trust." },
-      { text: "Speculate likely causes to reduce anxiety.", score: 6, good: false, feedback: "Speculation can increase harm and mistrust." },
-      { text: "Refuse any communication until full report closes.", score: 2, good: false, feedback: "Complete silence can worsen trust and distress." },
+      { text: "Provide grievance pathway immediately, document concern objectively, and escalate to designated ombuds flow.", score: 18, good: true, feedback: "Correct. Immediate rights escalation is required." },
+      { text: "Ask patient to discuss later with primary team.", score: 6, good: false, feedback: "Delay can undermine rights access." },
+      { text: "Reassure verbally without filing process.", score: 3, good: false, feedback: "Informal reassurance does not replace formal grievance intake." },
     ],
     categoryKey: "communication",
-    recap: "Scenario recap: sentinel disclosures should be factual, empathic, and time-bound.",
+    recap: "Scenario recap: rights complaints need immediate formal intake and routing.",
   },
   {
-    title: "Scenario 8: Disclosure Follow-Up Failure",
-    category: "Sentinel Disclosure - Accountability",
-    roles: ["leadership"],
-    prompt: "Follow-up commitments from disclosure meeting were not completed on time. Best leadership response?",
+    title: "Scenario 4: Grievance Follow-Up Miss",
+    category: "Rights and Grievance - Closure Reliability",
+    roles: ["nonclinical", "leadership"],
+    prompt: "Grievance acknowledgment was sent but Deferred to annual review occurred by promised date. Best action?",
     choices: [
-      { text: "Escalate accountability review, reset deadlines with owners, and document closure tracking.", score: 20, good: true, feedback: "Correct. Follow-up ownership is essential to trust repair." },
-      { text: "Close case informally because disclosure already happened.", score: 6, good: false, feedback: "Disclosure without follow-through is incomplete." },
-      { text: "Defer follow-up until next quality committee cycle.", score: 2, good: false, feedback: "Delay compounds family and safety risk." },
+      { text: "Escalate closure miss, assign accountable owner/date, and communicate updated timeline to patient.", score: 18, good: true, feedback: "Correct. Rights workflows require closure accountability." },
+      { text: "Close complaint because acknowledgment was sent.", score: 6, good: false, feedback: "Acknowledgment alone is not resolution." },
+      { text: "Wait until monthly review to address.", score: 2, good: false, feedback: "Delayed follow-up erodes trust and compliance." },
     ],
     categoryKey: "reporting",
-    recap: "Scenario recap: disclosure commitments require documented ownership and closure.",
+    recap: "Scenario recap: grievance systems must track closure, not just intake.",
   },
   {
-    title: "Scenario 9: Fatigue in Critical Assignment",
-    category: "Fit-for-Duty - Immediate Reassignment",
-    roles: ["clinical", "nonclinical", "leadership"],
-    prompt: "Experienced staff reports unsafe fatigue before high-acuity medication round. Best response?",
-    choices: [
-      { text: "Escalate fit-for-duty concern and reassign high-risk tasks with documented coverage immediately.", score: 20, good: true, feedback: "Correct. Early mitigation prevents fatigue-linked error." },
-      { text: "Encourage completion of round first.", score: 6, good: false, feedback: "Deferral can create immediate safety exposure." },
-      { text: "Ignore concern because no error has occurred yet.", score: 2, good: false, feedback: "Waiting for harm is unsafe and avoidable." },
-    ],
-    categoryKey: "abuseNeglect",
-    recap: "Scenario recap: fit-for-duty escalations should occur before critical-task exposure.",
-  },
-  {
-    title: "Scenario 10: Burnout Signal Pattern",
-    category: "Fit-for-Duty - Leadership Action",
+    title: "Scenario 5: Unsecure Telehealth Start",
+    category: "Telehealth Privacy - Session Setup",
     roles: ["clinical", "leadership"],
-    prompt: "Multiple near misses correlate with prolonged overtime in one unit. Best leadership action?",
+    prompt: "Remote session starts from public area on non-approved app. Best response?",
     choices: [
-      { text: "Launch fatigue-risk mitigation plan, rebalance assignments, and track near-miss trend closure.", score: 20, good: true, feedback: "Correct. System mitigation is required for recurring fatigue risk." },
-      { text: "Offer optional wellness reminder and continue schedule unchanged.", score: 5, good: false, feedback: "Reminders alone rarely correct systemic fatigue drivers." },
-      { text: "Address only after a sentinel event occurs.", score: 4, good: false, feedback: "Reactive delay can allow preventable harm." },
+      { text: "Pause session, shift to approved platform/private setting, and re-verify identity/location.", score: 18, good: true, feedback: "Correct. Secure setup is required before care discussion." },
+      { text: "Proceed briefly with sensitive details minimized.", score: 4, good: false, feedback: "Even brief unsecure sessions can create privacy incidents." },
+      { text: "Switch to personal messaging for convenience.", score: 6, good: false, feedback: "Unapproved channels increase disclosure risk." },
+    ],
+    categoryKey: "privacy",
+    recap: "Scenario recap: secure platform and privacy controls are preconditions for telehealth care.",
+  },
+  {
+    title: "Scenario 6: Identity Verification Gap",
+    category: "Telehealth Privacy - Patient Verification",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "Caller requests remote treatment updates but cannot verify identity credentials. Best response?",
+    choices: [
+      { text: "Use verification protocol and withhold protected details until identity is confirmed.", score: 18, good: true, feedback: "Correct. Verification precedes protected disclosure." },
+      { text: "Share limited details due to urgent tone.", score: 5, good: false, feedback: "Urgency does not bypass privacy verification." },
+      { text: "Share full details and document concern later.", score: 2, good: false, feedback: "Post-hoc documentation cannot undo disclosure errors." },
+    ],
+    categoryKey: "privacy",
+    recap: "Scenario recap: identity verification is required before remote protected disclosures.",
+  },
+  {
+    title: "Scenario 7: Transfer Without Acceptance",
+    category: "Emergency Transfer - Receiving Coordination",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "Transport is ready but receiving unit has not confirmed clinical acceptance. Best action?",
+    choices: [
+      { text: "Hold movement, secure receiving acceptance, and complete checklist before departure.", score: 20, good: true, feedback: "Correct. Transfer requires confirmed receiving readiness." },
+      { text: "Send patient now to avoid delay and confirm en route.", score: 6, good: false, feedback: "Movement without acceptance can compromise patient safety." },
+      { text: "Cancel transfer indefinitely.", score: 2, good: false, feedback: "Escalation and completion are required, not indefinite cancellation." },
+    ],
+    categoryKey: "reporting",
+    recap: "Scenario recap: emergency transfer must be acceptance-confirmed and checklist-complete before movement.",
+  },
+  {
+    title: "Scenario 8: Handoff Packet Omission",
+    category: "Emergency Transfer - Information Integrity",
+    roles: ["leadership"],
+    prompt: "Post-event review finds missing risk-summary section in several transfer packets. Best leadership action?",
+    choices: [
+      { text: "Launch corrective reliability plan, retrain checklist use, and audit closure compliance.", score: 20, good: true, feedback: "Correct. Repeated omissions require structured reliability response." },
+      { text: "Issue reminder email only.", score: 6, good: false, feedback: "Reminders alone rarely fix process drift." },
+      { text: "Ignore if no adverse event occurred.", score: 2, good: false, feedback: "Near misses still require correction." },
+    ],
+    categoryKey: "reporting",
+    recap: "Scenario recap: transfer packet integrity needs active governance and measurable closure.",
+  },
+  {
+    title: "Scenario 9: Harassment Report with Retaliation Fear",
+    category: "Workforce Protection - Immediate Safeguards",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "Staff files harassment report and fears schedule retaliation this week. Best response?",
+    choices: [
+      { text: "Activate formal report workflow, apply anti-retaliation safeguards, and document protections now.", score: 20, good: true, feedback: "Correct. Early safeguards are required." },
+      { text: "Advise staff to report again if retaliation happens.", score: 6, good: false, feedback: "Reactive-only approach can leave staff exposed." },
+      { text: "Resolve informally to protect team morale.", score: 2, good: false, feedback: "Informal resolution alone may not protect reporters." },
+    ],
+    categoryKey: "conduct",
+    recap: "Scenario recap: harassment reports require formal escalation and anti-retaliation protections.",
+  },
+  {
+    title: "Scenario 10: Retaliation Signal After Report",
+    category: "Workforce Protection - Leadership Follow-Through",
+    roles: ["clinical", "leadership"],
+    prompt: "Reporter assignment was abruptly changed after complaint with no documented reason. Best leadership response?",
+    choices: [
+      { text: "Escalate potential retaliation immediately, document findings, and implement protective correction plan.", score: 20, good: true, feedback: "Correct. Reporter protection requires immediate documented intervention." },
+      { text: "Treat as routine scheduling issue unless explicit complaint repeats.", score: 5, good: false, feedback: "Potential retaliation requires proactive review." },
+      { text: "Wait for next quarter culture survey to assess.", score: 4, good: false, feedback: "Delayed response can increase harm and legal risk." },
     ],
     categoryKey: "abuseNeglect",
-    recap: "Scenario recap: recurring fatigue signals require system-level, tracked corrective action.",
+    recap: "Scenario recap: retaliation indicators require immediate, documented leadership action.",
   },
 ];
 
 const lightningQuestions = [
   {
-    q: "Aggressive threat cues escalate in intake zone. First priority?",
+    q: "Cluster signal appears in one unit. First action?",
     answers: [
-      { text: "Activate threat-response protocol and safety positioning immediately.", score: 12, good: true },
-      { text: "Wait for physical contact before action.", score: 3, good: false },
-      { text: "Handle privately without support.", score: 2, good: false },
+      { text: "Activate containment/cohorting protocol immediately.", score: 12, good: true },
+      { text: "Wait for full confirmation first.", score: 3, good: false },
+      { text: "Document only for later review.", score: 2, good: false },
     ],
-    why: "Threat indicators require early coordinated protective action.",
+    why: "Early containment limits spread risk.",
     categoryKey: "safety",
   },
   {
-    q: "Contraband found during belongings check. Best step?",
+    q: "Patient requests formal rights complaint now. Best response?",
     answers: [
-      { text: "Use witnessed chain-of-custody transfer and documentation.", score: 12, good: true },
-      { text: "Store informally until later.", score: 2, good: false },
-      { text: "Discard item without log.", score: 1, good: false },
+      { text: "Initiate grievance intake and ombuds escalation immediately.", score: 12, good: true },
+      { text: "Ask them to wait for discharge.", score: 2, good: false },
+      { text: "Handle informally only.", score: 1, good: false },
     ],
-    why: "Traceable custody protects legal and safety integrity.",
+    why: "Rights complaints require timely formal routing.",
+    categoryKey: "communication",
+  },
+  {
+    q: "Telehealth session is unsecure at start. Correct move?",
+    answers: [
+      { text: "Pause and move to approved secure setup before discussing care.", score: 12, good: true },
+      { text: "Proceed quickly anyway.", score: 3, good: false },
+      { text: "Use personal app instead.", score: 1, good: false },
+    ],
+    why: "Session controls are required before PHI discussion.",
     categoryKey: "privacy",
   },
   {
-    q: "Urgent intervention with uncertain capacity. Correct response?",
+    q: "Staff fears retaliation after harassment report. Best action?",
     answers: [
-      { text: "Escalate emergency-consent pathway with documented rationale.", score: 12, good: true },
-      { text: "Use routine consent assumptions.", score: 3, good: false },
-      { text: "Delay all care indefinitely.", score: 1, good: false },
+      { text: "Activate anti-retaliation safeguards and document protections now.", score: 12, good: true },
+      { text: "Wait to see if retaliation occurs.", score: 4, good: false },
+      { text: "Resolve informally only.", score: 2, good: false },
     ],
-    why: "Emergency exceptions must be policy-backed and documented.",
-    categoryKey: "conduct",
-  },
-  {
-    q: "Staff reports unsafe fatigue before critical task. Best action?",
-    answers: [
-      { text: "Escalate fit-for-duty and reassign high-risk work now.", score: 12, good: true },
-      { text: "Push through and debrief later.", score: 4, good: false },
-      { text: "Ignore until an incident occurs.", score: 2, good: false },
-    ],
-    why: "Fatigue concerns should be mitigated before harm occurs.",
+    why: "Reporter protection should be proactive and documented.",
     categoryKey: "abuseNeglect",
   },
 ];
 
 const finalAssessment = [
-  { q: "Violence-risk cues should trigger", a: ["Immediate protective escalation", "Watchful waiting", "Solo engagement first"], c: 0, k: "safety" },
-  { q: "Threat response is strongest when", a: ["Roles are assigned and communicated clearly", "Everyone speaks at once", "Action waits for confirmation"], c: 0, k: "communication" },
-  { q: "Contraband handling requires", a: ["Witnessed chain-of-custody", "Informal desk storage", "No documentation if secured"], c: 0, k: "privacy" },
-  { q: "Missing custody signature should be", a: ["Escalated and reconciled immediately", "Ignored if item recovered", "Backfilled silently"], c: 0, k: "privacy" },
-  { q: "Urgent care with uncertain capacity calls for", a: ["Emergency-consent policy escalation", "Routine assumptions", "Full care delay"], c: 0, k: "conduct" },
-  { q: "Capacity can", a: ["Fluctuate and require reassessment", "Be fixed for entire stay", "Be delegated to family only"], c: 0, k: "conduct" },
-  { q: "Sentinel disclosure should include", a: ["Confirmed facts and follow-up commitments", "Speculative causes", "No communication"], c: 0, k: "communication" },
-  { q: "Disclosure follow-up ownership should be", a: ["Documented with deadlines", "Optional", "Deferred indefinitely"], c: 0, k: "reporting" },
-  { q: "Fit-for-duty concerns should be", a: ["Escalated before critical tasks", "Ignored until error", "Handled privately only"], c: 0, k: "abuseNeglect" },
-  { q: "Fatigue-linked near misses indicate", a: ["System risk requiring mitigation", "Individual weakness only", "No meaningful trend"], c: 0, k: "abuseNeglect" },
-  { q: "Early threat escalation helps", a: ["Reduce injury risk", "Increase chaos", "Delay response"], c: 0, k: "safety" },
-  { q: "Chain-of-custody protects", a: ["Safety and legal traceability", "Only inventory speed", "Public perception only"], c: 0, k: "privacy" },
-  { q: "Emergency consent documentation should be", a: ["Objective and policy-linked", "Narrative guesswork", "Optional"], c: 0, k: "conduct" },
-  { q: "Sentinel communication tone should be", a: ["Empathic and factual", "Defensive", "Speculative"], c: 0, k: "communication" },
-  { q: "Workforce safety culture includes", a: ["Non-punitive fatigue escalation", "Silence on impairment", "Task completion at all costs"], c: 0, k: "reporting" },
-  { q: "Protective team positioning during threat events is", a: ["Essential", "Optional", "Counterproductive"], c: 0, k: "safety" },
-  { q: "Custody documentation gaps create", a: ["Legal and safety exposure", "No impact", "Minor formatting issues"], c: 0, k: "privacy" },
-  { q: "Capacity reassessment timing should be", a: ["Situation-responsive", "Fixed once", "Ignored after consent"], c: 0, k: "conduct" },
-  { q: "Disclosure without follow-up can", a: ["Erode trust", "Resolve concern", "Reduce workload"], c: 0, k: "communication" },
-  { q: "Fatigue mitigation should be", a: ["Tracked and owned", "Informal only", "Post-incident only"], c: 0, k: "abuseNeglect" },
-  { q: "Threat debrief quality should focus on", a: ["Corrective actions and owners", "Blame only", "No review"], c: 0, k: "reporting" },
-  { q: "Professional conduct in consent-boundary cases means", a: ["Policy-first escalation", "Shortcut decisions", "Family-only determination"], c: 0, k: "conduct" },
-  { q: "High-reliability safety communication is", a: ["Closed-loop", "One-way", "Unstructured"], c: 0, k: "communication" },
-  { q: "Chain-of-custody best practice is", a: ["Witness + timestamps + transfer log", "Single memory note", "No handoff record"], c: 0, k: "privacy" },
+  { q: "Outbreak cluster suspicion should trigger", a: ["Immediate containment escalation", "Routine watch", "End-of-day review only"], c: 0, k: "safety" },
+  { q: "Cohorting reliability depends on", a: ["Early routing control", "Ad hoc placement", "Single-room luck"], c: 0, k: "safety" },
+  { q: "Rights grievances should be", a: ["Formally intake-routed immediately", "Deferred to discharge", "Handled verbally only"], c: 0, k: "communication" },
+  { q: "Grievance closure quality requires", a: ["Owner and timeline accountability", "Acknowledgment only", "Quarterly review only"], c: 0, k: "reporting" },
+  { q: "Telehealth privacy starts with", a: ["Secure setup before discussion", "Post-session documentation", "Patient preference only"], c: 0, k: "privacy" },
+  { q: "Remote identity uncertainty means", a: ["Withhold PHI until verified", "Share limited details anyway", "Share and correct later"], c: 0, k: "privacy" },
+  { q: "Emergency transfer should proceed when", a: ["Receiving acceptance and checklist complete", "Transport arrives", "Sender prefers"], c: 0, k: "reporting" },
+  { q: "Handoff packet omissions are", a: ["Reliability risks requiring correction", "Minor formatting issues", "Acceptable if no incident"], c: 0, k: "reporting" },
+  { q: "Harassment reports require", a: ["Formal escalation and safeguards", "Private coaching only", "Wait-and-see approach"], c: 0, k: "conduct" },
+  { q: "Retaliation indicators should be", a: ["Escalated and documented immediately", "Ignored unless repeated", "Reviewed quarterly"], c: 0, k: "abuseNeglect" },
+  { q: "Outbreak overflow response should", a: ["Use surge cohort controls", "Mix populations casually", "Pause care without plan"], c: 0, k: "safety" },
+  { q: "Rights communication should be", a: ["Plain-language and time-bound", "Technical only", "Avoided in conflict"], c: 0, k: "communication" },
+  { q: "Telehealth platform policy exists to", a: ["Prevent unauthorized disclosure", "Increase complexity", "Replace clinical judgment"], c: 0, k: "privacy" },
+  { q: "Transfer checklist discipline improves", a: ["Continuity and safety", "Only billing", "Only optics"], c: 0, k: "reporting" },
+  { q: "Reporter protection culture is strongest when", a: ["Safeguards are proactive and non-punitive", "Concerns are deferred", "Reports are minimized"], c: 0, k: "conduct" },
+  { q: "Cluster communication across shifts should be", a: ["Closed-loop and explicit", "Assumption-based", "Informal only"], c: 0, k: "safety" },
+  { q: "Grievance delays can", a: ["Erode trust and compliance", "Improve outcomes", "Have no impact"], c: 0, k: "communication" },
+  { q: "Remote session controls include", a: ["Identity, location, platform verification", "Name only", "Provider memory"], c: 0, k: "privacy" },
+  { q: "Transfer acceptance confirmation is", a: ["Mandatory before movement", "Optional", "Needed post-arrival"], c: 0, k: "reporting" },
+  { q: "Anti-retaliation follow-through should be", a: ["Tracked to closure", "One-time verbal", "Deferred indefinitely"], c: 0, k: "abuseNeglect" },
+  { q: "Outbreak response leadership should prioritize", a: ["Containment speed and reliability", "Convenience placement", "Delay for certainty"], c: 0, k: "safety" },
+  { q: "Rights and ombuds pathways should be", a: ["Accessible and immediate", "Hidden until requested repeatedly", "Optional"], c: 0, k: "communication" },
+  { q: "Secure telehealth behavior in rush conditions means", a: ["No shortcut on approved controls", "Any app works", "Text sensitive details"], c: 0, k: "privacy" },
+  { q: "Harassment-report handling should avoid", a: ["Informal-only resolution", "Documented safeguards", "Escalation ownership"], c: 0, k: "conduct" },
   { q: "Best annual completion standard", a: ["Pass score plus acknowledgment", "Attendance only", "No tracking"], c: 0, k: "knowledgeCheck" },
 ];
 
@@ -2813,4 +2813,9 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+
+
+
+
 
