@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "elopement-prevention-search", title: "Patient Elopement Prevention and Search Protocols" },
-  { id: "suicide-observation-handoffs", title: "Suicide Reassessment and Observation Handoffs" },
-  { id: "high-alert-med-reconciliation", title: "High-Alert Medication Reconciliation" },
-  { id: "restraint-seclusion-alternatives", title: "Restraint/Seclusion Standards and Least-Restrictive Alternatives" },
-  { id: "cultural-competence-interpretation", title: "Cultural Competence and Interpreter Use" },
+  { id: "violence-risk-threat-response", title: "Violence Risk Stratification and Behavioral Threat Response" },
+  { id: "contraband-search-chain-custody", title: "Contraband Search and Personal Property Chain-of-Custody" },
+  { id: "capacity-consent-emergency-exception", title: "Capacity, Consent, and Emergency Exception Decisions" },
+  { id: "sentinel-disclosure-family-communication", title: "Sentinel Event Disclosure and Family Communication" },
+  { id: "staff-fatigue-fit-for-duty", title: "Staff Fatigue, Burnout, and Fit-for-Duty Escalation" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("elopement") || normalized.includes("search protocol") || normalized.includes("missing patient")) return "elopement-prevention-search";
-  if (normalized.includes("suicide") || normalized.includes("observation handoff") || normalized.includes("self-harm")) return "suicide-observation-handoffs";
-  if (normalized.includes("high-alert") || normalized.includes("med reconciliation") || normalized.includes("allergy")) return "high-alert-med-reconciliation";
-  if (normalized.includes("restraint") || normalized.includes("seclusion") || normalized.includes("least-restrictive")) return "restraint-seclusion-alternatives";
-  if (normalized.includes("cultural competence") || normalized.includes("interpreter") || normalized.includes("teach-back")) return "cultural-competence-interpretation";
+  if (normalized.includes("violence risk") || normalized.includes("behavioral threat") || normalized.includes("threat response")) return "violence-risk-threat-response";
+  if (normalized.includes("contraband") || normalized.includes("chain-of-custody") || normalized.includes("property")) return "contraband-search-chain-custody";
+  if (normalized.includes("capacity") || normalized.includes("consent") || normalized.includes("emergency exception")) return "capacity-consent-emergency-exception";
+  if (normalized.includes("sentinel") || normalized.includes("disclosure") || normalized.includes("family communication")) return "sentinel-disclosure-family-communication";
+  if (normalized.includes("fatigue") || normalized.includes("burnout") || normalized.includes("fit-for-duty")) return "staff-fatigue-fit-for-duty";
   return null;
 }
 

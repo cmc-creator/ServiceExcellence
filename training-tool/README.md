@@ -19,11 +19,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 
 - Luxury glassmorphism visual style with animated effects
 - Five built-in annual modules:
-  - Patient elopement prevention and search protocols
-  - Suicide reassessment and observation handoffs
-  - High-alert medication reconciliation
-  - Restraint/seclusion standards and least-restrictive alternatives
-  - Cultural competence and interpreter use
+  - Violence risk stratification and behavioral threat response
+  - Contraband search and personal property chain-of-custody
+  - Capacity, consent, and emergency exception decisions
+  - Sentinel event disclosure and family communication
+  - Staff fatigue, burnout, and fit-for-duty escalation
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round
