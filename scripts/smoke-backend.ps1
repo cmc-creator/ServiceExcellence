@@ -20,6 +20,27 @@ function Test-Endpoint {
   }
 }
 
+function Test-ProtectedEndpoint {
+  param(
+    [string]$Url,
+    [string]$Name,
+    [hashtable]$Headers = @{}
+  )
+
+  $result = Test-Endpoint -Url $Url -Headers $Headers
+  if ($result.pass) {
+    Write-Host "PASS - $Name responded"
+    return
+  }
+
+  if ($result.error -match "401") {
+    Write-Host "PASS - $Name requires authorization (401 as expected)"
+    return
+  }
+
+  Write-Host "FAIL - $Name failed: $($result.error)"
+}
+
 Write-Host "Running backend smoke checks..."
 
 $health = Test-Endpoint -Url "http://localhost:4100/health"
@@ -29,14 +50,26 @@ if ($health.pass) {
   Write-Host "FAIL - /health check failed: $($health.error)"
 }
 
+$baseHeaders = @{}
+if ($env:SMOKE_ADMIN_TOKEN) {
+  $baseHeaders = @{ Authorization = "Bearer $($env:SMOKE_ADMIN_TOKEN)" }
+}
+
+Test-ProtectedEndpoint -Url "http://localhost:4100/api/analytics/by-module" -Name "/api/analytics/by-module" -Headers $baseHeaders
+Test-ProtectedEndpoint -Url "http://localhost:4100/api/analytics/role-module-coverage" -Name "/api/analytics/role-module-coverage" -Headers $baseHeaders
+
 if ($env:SMOKE_ADMIN_TOKEN) {
   $headers = @{ Authorization = "Bearer $($env:SMOKE_ADMIN_TOKEN)" }
   $body = @{
     sampleDepartment = "Nursing"
+    sampleRoleTrack = "Clinical Staff"
     ruleSet = @{
       coreCodes = @("ANNUAL-COMPLIANCE-CORE", "ABUSE-NEGLECT-ANNUAL")
       departmentRules = @(
         @{ keywords = @("nursing"); codes = @("INFECTION-CONTROL-ANNUAL") }
+      )
+      roleTrackRules = @(
+        @{ roleTracks = @("clinical"); codes = @("DEESCALATION-ANNUAL") }
       )
     }
   } | ConvertTo-Json -Depth 8
