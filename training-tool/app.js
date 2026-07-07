@@ -17,6 +17,7 @@ const state = {
   activeLessons: [],
   categoryStats: {},
   retryRecommendations: [],
+  personality: { calm: 0, precision: 0, courage: 0 },
 };
 
 const ROLE_CONFIG_KEY = "nyxRoleConfigs";
@@ -58,6 +59,7 @@ const defaultRoleConfigs = [
       "dining-room-code-purple-response",
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
+      "emergency-code-reference-and-response-priorities",
     ],
   },
   {
@@ -71,6 +73,7 @@ const defaultRoleConfigs = [
       "dining-room-code-purple-response",
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
+      "emergency-code-reference-and-response-priorities",
     ],
   },
   {
@@ -84,6 +87,7 @@ const defaultRoleConfigs = [
       "dining-room-code-purple-response",
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
+      "emergency-code-reference-and-response-priorities",
     ],
   },
 ];
@@ -94,6 +98,7 @@ const MODULE_LIBRARY = [
   { id: "dining-room-code-purple-response", title: "Dining Room Code Purple Response and Team Role Assignment" },
   { id: "critical-lab-result-readback", title: "Critical Lab Result Escalation and Provider Read-Back" },
   { id: "discharge-release-guardian-verification", title: "Discharge Transportation Release and Guardian Verification" },
+  { id: "emergency-code-reference-and-response-priorities", title: "Emergency Code Reference and Response Priorities" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -253,6 +258,8 @@ function loadRoleConfigs() {
   const raw = localStorage.getItem(ROLE_CONFIG_KEY);
   if (!raw) return [...defaultRoleConfigs];
 
+  const requiredModules = ["emergency-code-reference-and-response-priorities"];
+
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) return [...defaultRoleConfigs];
@@ -262,13 +269,13 @@ function loadRoleConfigs() {
         const enabledModules = Array.isArray(item.enabledModules)
           ? item.enabledModules.filter((id) => MODULE_IDS.has(id))
           : [];
+        const mergedModules = [...new Set([...enabledModules, ...requiredModules].filter((id) => MODULE_IDS.has(id)))];
 
         return {
           ...item,
-          enabledModules:
-            enabledModules.length > 0
-              ? enabledModules
-              : MODULE_LIBRARY.map((module) => module.id),
+          enabledModules: mergedModules.length > 0
+            ? mergedModules
+            : MODULE_LIBRARY.map((module) => module.id),
         };
       });
   } catch {
@@ -291,14 +298,18 @@ async function loadRoleConfigsFromBackend() {
     return false;
   }
 
+  const requiredModules = ["emergency-code-reference-and-response-priorities"];
+
   roleConfigs = rows.map((item) => ({
     id: item.id,
     name: item.name,
     persona: item.persona,
     departments: Array.isArray(item.departments) ? item.departments : [],
     enabledModules:
-      existingById.get(item.id)?.enabledModules?.filter((id) => MODULE_IDS.has(id)) ||
-      MODULE_LIBRARY.map((module) => module.id),
+      [...new Set([
+        ...(existingById.get(item.id)?.enabledModules?.filter((id) => MODULE_IDS.has(id)) || MODULE_LIBRARY.map((module) => module.id)),
+        ...requiredModules,
+      ].filter((id) => MODULE_IDS.has(id)))],
   }));
   syncLocalRoleCache();
   return true;
@@ -765,6 +776,13 @@ const roleDepartmentSpotlights = {
         "Hold release when transportation, guardian, or handoff instructions do not match the chart.",
       ],
     },
+    {
+      title: "Emergency Code Reference",
+      points: [
+        "Match the alert name to the correct immediate response path before the scene gets louder.",
+        "Treat Code Red, Code Blue, Code Orange, Code Purple, Code Silver, Code Yellow, Code Black, and Code Green as distinct response pathways.",
+      ],
+    },
   ],
   nonclinical: [
     {
@@ -800,6 +818,13 @@ const roleDepartmentSpotlights = {
       points: [
         "Compare escort identity, vehicle plan, and release instructions before final sign-out.",
         "Escalate any mismatch instead of improvising a workaround at the exit point.",
+      ],
+    },
+    {
+      title: "Emergency Code Support",
+      points: [
+        "Repeat the code name and location clearly so the right team can respond immediately.",
+        "Protect privacy and reduce traffic while the appropriate response is in motion.",
       ],
     },
   ],
@@ -839,6 +864,13 @@ const roleDepartmentSpotlights = {
         "Require identity-verification compliance and review near-miss releases for process drift.",
       ],
     },
+    {
+      title: "Emergency Code Governance",
+      points: [
+        "Verify staff can distinguish fire, missing patient, medical, psychiatric, active shooter, disaster, bomb threat, and severe weather alerts.",
+        "Audit drill timing and escalation accuracy so code response stays crisp under pressure.",
+      ],
+    },
   ],
 };
 
@@ -846,6 +878,10 @@ const TRAINING_CATEGORIES = {
   communication: {
     label: "Discharge Coordination and Guardian Communication",
     retryModule: "Revisit discharge-release and guardian-verification modules to strengthen release clarity and escort coordination.",
+  },
+  emergencyCodes: {
+    label: "Emergency Code Reference and Response Priorities",
+    retryModule: "Review the emergency-code reference module to reinforce code recognition, immediate response routing, and escalation discipline.",
   },
   conduct: {
     label: "Code Purple Team Roles and Scene Discipline",
@@ -1165,6 +1201,21 @@ const coreLessons = [
     categoryKey: "communication",
     recap: "Checkpoint: discharge release requires confirmed authority, verified escort identity, and clear transportation closure.",
   },
+  {
+    moduleId: "emergency-code-reference-and-response-priorities",
+    spotlightIndex: 5,
+    title: "Lesson 6: Emergency Code Reference and Response Priorities",
+    body: "Emergency code response depends on recognizing the alert name, matching the correct team, and following the unit's response path without delay.",
+    check: "A public-address announcement says Code Orange. Best immediate interpretation?",
+    answers: [
+      { text: "A missing patient response is needed, so follow the unit's elopement or search process and notify the appropriate responders immediately.", good: true, score: 8 },
+      { text: "A fire alarm is the priority and everyone should evacuate.", good: false, score: 2 },
+      { text: "It means medical staff should wait for clarification before moving.", good: false, score: 1 },
+    ],
+    why: "Code Orange requires immediate missing-patient response, not delayed clarification.",
+    categoryKey: "emergencyCodes",
+    recap: "Checkpoint: emergency code announcements must be recognized instantly and matched to the correct response path.",
+  },
 ];
 
 const scenarios = [
@@ -1299,7 +1350,20 @@ const scenarios = [
     recap: "Scenario recap: discharge-release pressure should trigger escalation, not shortcut release controls.",
   },
   {
-    title: "Scenario 11: Code Purple With Self-Harm Statement",
+    title: "Scenario 11: Code Red Alarm in the Hallway",
+    category: "Emergency Codes - Fire Response",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A fire alarm sounds near the dayroom and staff see smoke near a trash receptacle. Best first response?",
+    choices: [
+      { text: "Activate Code Red response, move patients away from the hazard, notify the fire response chain, and follow site evacuation or containment policy.", score: 20, good: true, feedback: "Correct. Code Red requires immediate fire response and policy-based escalation." },
+      { text: "Wait for security to confirm the source before moving anyone.", score: 4, good: false, feedback: "Delaying movement around smoke increases risk." },
+      { text: "Continue medication pass so the unit doesn't fall behind.", score: 2, good: false, feedback: "Routine tasks stop when fire response begins." },
+    ],
+    categoryKey: "safety",
+    recap: "Scenario recap: Code Red requires immediate fire response, hazard removal, and policy-based escalation.",
+  },
+  {
+    title: "Scenario 12: Code Purple With Self-Harm Statement",
     category: "Code Purple - Immediate Psychiatric Safety",
     roles: ["clinical", "nonclinical", "leadership"],
     prompt: "A patient states they want to die and starts pacing near the dayroom doors. Best immediate response?",
@@ -1312,7 +1376,7 @@ const scenarios = [
     recap: "Scenario recap: Code Purple self-harm statements require immediate observation, hazard control, and escalation.",
   },
   {
-    title: "Scenario 12: Code Purple Closure and Safety Planning",
+    title: "Scenario 13: Code Purple Closure and Safety Planning",
     category: "Code Purple - Safety Planning and Closure",
     roles: ["clinical", "nonclinical", "leadership"],
     prompt: "The patient calms after a Code Purple response, but no safety plan, environmental check, or handoff update has been completed. Best follow-up?",
@@ -1366,6 +1430,16 @@ const lightningQuestions = [
     ],
     why: "Release authority must be confirmed before the patient leaves the unit.",
     categoryKey: "communication",
+  },
+  {
+    q: "Code Orange means",
+    answers: [
+      { text: "Missing patient response and search escalation", score: 12, good: true },
+      { text: "Active shooter response", score: 3, good: false },
+      { text: "Severe weather response", score: 1, good: false },
+    ],
+    why: "Code Orange is the missing-patient alert and must trigger the correct response chain.",
+    categoryKey: "emergencyCodes",
   },
   {
     q: "Code Purple stabilization starts with",

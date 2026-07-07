@@ -29,12 +29,13 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 ## Included
 
 - Luxury glassmorphism visual style with animated effects
-- Five built-in annual modules:
+- Six built-in annual modules:
   - Observation precaution reassessment and handoff clarity
   - Leave return screening and contraband re-entry control
   - Dining room Code Purple response and team role assignment
   - Critical lab result escalation and provider read-back
   - Discharge transportation release and guardian verification
+  - Emergency code reference and response priorities
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round
