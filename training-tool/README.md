@@ -83,6 +83,7 @@ The training runtime also emits xAPI-shaped interaction statements alongside the
 - Production pack: `content/production-content-pack.md`
 - Policy citation map: `docs/policy-citation-map.md`
 - Manager toolkit: `docs/manager-toolkit.md`
+- Audio voiceover pack: `content/audio-voiceover-pack.md`
 
 ## Backend Integration
 
