@@ -19,11 +19,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 
 - Luxury glassmorphism visual style with animated effects
 - Five built-in annual modules:
-  - Ligature risk rounds and immediate environment safety response
-  - Medication refusal, capacity reassessment, and escalation pathways
-  - Workplace violence Code Grey coordination and team de-escalation
-  - Near-miss handoff analysis and closed-loop learning reviews
-  - Documentation integrity, late entries, and correction standards
+  - Elopement drill reliability and search-zone response
+  - Seclusion order time limits, renewal, and timeout review
+  - Patient belongings inventory, contraband screening, and transfer custody
+  - Family escalation management and service recovery commitments
+  - Peer observation buddy system and shift-to-shift safety verification
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round

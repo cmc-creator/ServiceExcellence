@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "ligature-self-harm-environmental-rounds", title: "Ligature Risk Rounds and Immediate Environment Safety Response" },
-  { id: "medication-refusal-capacity-escalation", title: "Medication Refusal, Capacity Reassessment, and Escalation Pathways" },
-  { id: "code-grey-team-de-escalation", title: "Workplace Violence Code Grey Coordination and Team De-Escalation" },
-  { id: "near-miss-handoff-learning-loop", title: "Near-Miss Handoff Analysis and Closed-Loop Learning Reviews" },
-  { id: "documentation-late-entry-correction-integrity", title: "Documentation Integrity, Late Entries, and Correction Standards" },
+  { id: "elopement-drill-response-zones", title: "Elopement Drill Reliability and Search-Zone Response" },
+  { id: "seclusion-order-timeout-review", title: "Seclusion Order Time Limits, Renewal, and Timeout Review" },
+  { id: "patient-belongings-inventory-transfer", title: "Patient Belongings Inventory, Contraband Screening, and Transfer Custody" },
+  { id: "family-escalation-service-recovery", title: "Family Escalation Management and Service Recovery Commitments" },
+  { id: "peer-observation-buddy-shift-safety", title: "Peer Observation Buddy System and Shift-to-Shift Safety Verification" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("ligature") || normalized.includes("environment") || normalized.includes("self-harm")) return "ligature-self-harm-environmental-rounds";
-  if (normalized.includes("medication refusal") || normalized.includes("capacity") || normalized.includes("reassessment")) return "medication-refusal-capacity-escalation";
-  if (normalized.includes("code grey") || normalized.includes("workplace violence") || normalized.includes("de-escalation")) return "code-grey-team-de-escalation";
-  if (normalized.includes("near-miss") || normalized.includes("handoff") || normalized.includes("learning review")) return "near-miss-handoff-learning-loop";
-  if (normalized.includes("late entry") || normalized.includes("correction") || normalized.includes("documentation integrity")) return "documentation-late-entry-correction-integrity";
+  if (normalized.includes("elopement") || normalized.includes("search-zone") || normalized.includes("search zone")) return "elopement-drill-response-zones";
+  if (normalized.includes("seclusion") || normalized.includes("timeout") || normalized.includes("renewal")) return "seclusion-order-timeout-review";
+  if (normalized.includes("belongings") || normalized.includes("contraband") || normalized.includes("custody")) return "patient-belongings-inventory-transfer";
+  if (normalized.includes("family escalation") || normalized.includes("service recovery") || normalized.includes("recovery commitment")) return "family-escalation-service-recovery";
+  if (normalized.includes("buddy") || normalized.includes("shift verification") || normalized.includes("shift safety")) return "peer-observation-buddy-shift-safety";
   return null;
 }
 

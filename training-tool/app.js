@@ -74,11 +74,11 @@ const defaultRoleConfigs = [
     persona: "clinical",
     departments: ["Nursing", "Behavioral Health"],
     enabledModules: [
-      "ligature-self-harm-environmental-rounds",
-      "medication-refusal-capacity-escalation",
-      "code-grey-team-de-escalation",
-      "near-miss-handoff-learning-loop",
-      "documentation-late-entry-correction-integrity",
+      "elopement-drill-response-zones",
+      "seclusion-order-timeout-review",
+      "patient-belongings-inventory-transfer",
+      "family-escalation-service-recovery",
+      "peer-observation-buddy-shift-safety",
     ],
   },
   {
@@ -87,11 +87,11 @@ const defaultRoleConfigs = [
     persona: "nonclinical",
     departments: ["Admissions", "Support Services"],
     enabledModules: [
-      "ligature-self-harm-environmental-rounds",
-      "medication-refusal-capacity-escalation",
-      "code-grey-team-de-escalation",
-      "near-miss-handoff-learning-loop",
-      "documentation-late-entry-correction-integrity",
+      "elopement-drill-response-zones",
+      "seclusion-order-timeout-review",
+      "patient-belongings-inventory-transfer",
+      "family-escalation-service-recovery",
+      "peer-observation-buddy-shift-safety",
     ],
   },
   {
@@ -100,21 +100,21 @@ const defaultRoleConfigs = [
     persona: "leadership",
     departments: ["Management", "Operations"],
     enabledModules: [
-      "ligature-self-harm-environmental-rounds",
-      "medication-refusal-capacity-escalation",
-      "code-grey-team-de-escalation",
-      "near-miss-handoff-learning-loop",
-      "documentation-late-entry-correction-integrity",
+      "elopement-drill-response-zones",
+      "seclusion-order-timeout-review",
+      "patient-belongings-inventory-transfer",
+      "family-escalation-service-recovery",
+      "peer-observation-buddy-shift-safety",
     ],
   },
 ];
 
 const MODULE_LIBRARY = [
-  { id: "ligature-self-harm-environmental-rounds", title: "Ligature Risk Rounds and Immediate Environment Safety Response" },
-  { id: "medication-refusal-capacity-escalation", title: "Medication Refusal, Capacity Reassessment, and Escalation Pathways" },
-  { id: "code-grey-team-de-escalation", title: "Workplace Violence Code Grey Coordination and Team De-Escalation" },
-  { id: "near-miss-handoff-learning-loop", title: "Near-Miss Handoff Analysis and Closed-Loop Learning Reviews" },
-  { id: "documentation-late-entry-correction-integrity", title: "Documentation Integrity, Late Entries, and Correction Standards" },
+  { id: "elopement-drill-response-zones", title: "Elopement Drill Reliability and Search-Zone Response" },
+  { id: "seclusion-order-timeout-review", title: "Seclusion Order Time Limits, Renewal, and Timeout Review" },
+  { id: "patient-belongings-inventory-transfer", title: "Patient Belongings Inventory, Contraband Screening, and Transfer Custody" },
+  { id: "family-escalation-service-recovery", title: "Family Escalation Management and Service Recovery Commitments" },
+  { id: "peer-observation-buddy-shift-safety", title: "Peer Observation Buddy System and Shift-to-Shift Safety Verification" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -729,14 +729,14 @@ const easterEggs = [
 
 // Secret Bonus Scenario
 const bonusScenario = {
-  title: "Secret Bonus: Code Grey During Ligature Sweep",
-  category: "Challenge - Ligature, Capacity, and Team Safety",
+  title: "Secret Bonus: Family Escalation During Elopement Drill",
+  category: "Challenge - Elopement, Service Recovery, and Shift Safety",
   roles: ["clinical", "nonclinical", "leadership"],
-  prompt: "A ligature risk is found during rounds, a patient refuses medication while questioning capacity, and a Code Grey is called in an adjacent hall. Best first sequence?",
+  prompt: "An elopement drill is active, a family member escalates at the desk, and the incoming shift has not completed peer buddy safety verification. Best first sequence?",
   choices: [
-    { text: "Secure environment immediately, initiate medication-refusal capacity workflow, and coordinate Code Grey response with assigned team roles and read-back communication.", score: 20, good: true, feedback: "Excellent. This sequence protects immediate safety, legal integrity, and team coordination." },
-    { text: "Handle each issue informally after the shift stabilizes.", score: 8, good: false, feedback: "Deferred escalation increases both safety and legal risk." },
-    { text: "Focus only on the loudest event and postpone all documentation.", score: 2, good: false, feedback: "Single-threading acute events without documentation creates major risk gaps." },
+    { text: "Assign search-zone roles immediately, activate family de-escalation/service-recovery pathway, and complete buddy verification read-back before full handoff release.", score: 20, good: true, feedback: "Excellent. This sequence protects immediate safety, trust, and shift reliability." },
+    { text: "Pause the drill, ask family to wait, and complete handoff whenever time allows.", score: 8, good: false, feedback: "Delaying coordinated response increases both safety and experience risk." },
+    { text: "Address family concern only and postpone search/handoff checks.", score: 2, good: false, feedback: "Single-focus response can create severe operational and safety gaps." },
   ],
 };
 
@@ -865,28 +865,28 @@ const roleDepartmentSpotlights = {
 
 const TRAINING_CATEGORIES = {
   communication: {
-    label: "Near-Miss Handoff Communication",
-    retryModule: "Revisit handoff near-miss review modules to strengthen closed-loop continuity and shared learning.",
+    label: "Family Communication and Recovery",
+    retryModule: "Revisit family-escalation and recovery modules to strengthen clarity, empathy, and commitment follow-through.",
   },
   conduct: {
-    label: "Documentation Integrity and Professional Standards",
-    retryModule: "Review late-entry and correction scenarios for objective documentation and professionalism standards.",
+    label: "Shift Verification and Team Conduct",
+    retryModule: "Review buddy verification and peer-check scenarios for reliability and accountable team conduct.",
   },
   privacy: {
-    label: "Medication Refusal and Capacity Integrity",
-    retryModule: "Repeat medication-refusal and capacity reassessment modules focused on legal thresholds and safe escalation.",
+    label: "Belongings and Custody Integrity",
+    retryModule: "Repeat belongings inventory and custody-transfer modules focused on traceability and contraband controls.",
   },
   reporting: {
-    label: "Code Grey and Safety Escalation",
-    retryModule: "Re-run Code Grey and escalation scenarios to reinforce role clarity and objective reporting.",
+    label: "Seclusion Timeout and Escalation Reporting",
+    retryModule: "Re-run timeout-review and seclusion-renewal scenarios to reinforce objective reporting and escalation timing.",
   },
   safety: {
-    label: "Ligature and Environmental Safety",
-    retryModule: "Revisit ligature-round and environmental sweep modules to improve immediate hazard decisions.",
+    label: "Elopement and Search-Zone Safety",
+    retryModule: "Revisit elopement drill and search-zone modules to improve immediate safety decisions and role assignment.",
   },
   abuseNeglect: {
-    label: "Critical Multi-Event Escalation",
-    retryModule: "Repeat high-risk multi-event scenarios to strengthen urgent escalation sequencing and documentation discipline.",
+    label: "Critical Multi-Track Escalation",
+    retryModule: "Repeat high-risk multi-track scenarios to strengthen urgent sequencing across safety, service recovery, and handoff integrity.",
   },
   knowledgeCheck: {
     label: "Knowledge Check Mastery",
@@ -1102,19 +1102,19 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
     : `Protected-reporting mastery finished at ${abuseNeglectPct}% against a ${abuseNeglectThreshold}% target.`;
 
   if (pass && recommendations.length === 0) {
-    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a monthly refresh focused on ligature sweep reliability, medication-refusal capacity workflow, and handoff learning discipline.`;
+    return `${roleName}: strong completion. ${abuseNeglectClause} Next step is a monthly refresh focused on elopement drill reliability, family recovery communication, and shift verification discipline.`;
   }
   if (pass && recommendations.length > 0) {
     return `${roleName}: you passed, and targeted reinforcement is recommended in ${recommendations.map((item) => item.label).join(", ")}. ${abuseNeglectClause} Re-run those modules this week for stronger retention.`;
   }
-  return `${roleName}: assessment at ${assessmentPct}%. ${abuseNeglectClause} Complete recommended retry modules, then reattempt the full assessment with focus on immediate safety escalation, capacity decisions, and documentation integrity.`;
+  return `${roleName}: assessment at ${assessmentPct}%. ${abuseNeglectClause} Complete recommended retry modules, then reattempt the full assessment with focus on immediate safety escalation, service recovery communication, and custody documentation integrity.`;
 }
 
 const coreLessons = [
   {
-    moduleId: "ligature-self-harm-environmental-rounds",
+    moduleId: "elopement-drill-response-zones",
     spotlightIndex: 0,
-    title: "Lesson 1: Ligature Risk Rounds and Environmental Hazard Escalation",
+    title: "Lesson 1: Elopement Drill Search-Zone Activation and Reliability",
     body: "Diversion prevention depends on immediate discrepancy escalation, witnessed count reconciliation, and clear chain-of-custody documentation.",
     check: "A controlled-substance count is short at handoff. Strongest immediate action?",
     answers: [
@@ -1127,9 +1127,9 @@ const coreLessons = [
     recap: "Checkpoint: diversion prevention requires rapid escalation, witnessed reconciliation, and objective documentation.",
   },
   {
-    moduleId: "medication-refusal-capacity-escalation",
+    moduleId: "seclusion-order-timeout-review",
     spotlightIndex: 1,
-    title: "Lesson 2: Medication Refusal and Capacity Reassessment Escalation",
+    title: "Lesson 2: Seclusion Timeout Review and Renewal Escalation",
     body: "Legal-hold reliability depends on verified order status, time-stamped documentation, and immediate escalation of missing court directives.",
     check: "Transfer is requested but hold status is unclear between two records. Best response?",
     answers: [
@@ -1142,9 +1142,9 @@ const coreLessons = [
     recap: "Checkpoint: legal-hold workflow requires verified status and closed-loop documentation.",
   },
   {
-    moduleId: "code-grey-team-de-escalation",
+    moduleId: "patient-belongings-inventory-transfer",
     spotlightIndex: 2,
-    title: "Lesson 3: Code Grey Team Coordination and De-Escalation",
+    title: "Lesson 3: Belongings Inventory, Contraband Screening, and Transfer Custody",
     body: "Visitor safety depends on clear boundary setting, early escalation cues, and de-escalation techniques that protect patients and staff.",
     check: "A visitor refuses boundary instructions and approaches a restricted area. Best first step?",
     answers: [
@@ -1157,9 +1157,9 @@ const coreLessons = [
     recap: "Checkpoint: visitor boundary control requires calm de-escalation and timely escalation support.",
   },
   {
-    moduleId: "near-miss-handoff-learning-loop",
+    moduleId: "family-escalation-service-recovery",
     spotlightIndex: 3,
-    title: "Lesson 4: Near-Miss Handoff Analysis and Learning Loop Closure",
+    title: "Lesson 4: Family Escalation Management and Service Recovery Follow-Through",
     body: "Safe discharge depends on complete crisis/safety planning, medication continuity, and confirmed 72-hour follow-up closure.",
     check: "A high-risk patient is set for discharge without documented follow-up confirmation. Best response?",
     answers: [
@@ -1172,9 +1172,9 @@ const coreLessons = [
     recap: "Checkpoint: discharge reliability requires verified safety planning and follow-up closure.",
   },
   {
-    moduleId: "documentation-late-entry-correction-integrity",
+    moduleId: "peer-observation-buddy-shift-safety",
     spotlightIndex: 4,
-    title: "Lesson 5: Documentation Integrity, Late Entries, and Correction Standards",
+    title: "Lesson 5: Peer Observation Buddy Checks and Shift Safety Verification",
     body: "Confidentiality protection requires strict social-media boundaries, minimum-necessary disclosures, and immediate correction of potential breaches.",
     check: "A staff post indirectly references an identifiable patient event. Best immediate response?",
     answers: [
@@ -1190,8 +1190,8 @@ const coreLessons = [
 
 const scenarios = [
   {
-    title: "Scenario 1: Ligature Hazard Found During Sweep",
-    category: "Ligature Safety - Immediate Escalation",
+    title: "Scenario 1: Elopement Drill Role Assignment Gap",
+    category: "Elopement Drill - Immediate Escalation",
     roles: ["clinical", "nonclinical", "leadership"],
     prompt: "A high-risk patient is not in assigned room during safety check. Best immediate response?",
     choices: [
@@ -1203,8 +1203,8 @@ const scenarios = [
     recap: "Scenario recap: elopement response requires immediate escalation and coordinated zone search.",
   },
   {
-    title: "Scenario 2: Environmental Safety Drift Before Shift Change",
-    category: "Ligature Safety - Control Reinforcement",
+    title: "Scenario 2: Search-Zone Communication Breakdown",
+    category: "Elopement Drill - Control Reinforcement",
     roles: ["clinical", "leadership"],
     prompt: "During high traffic, a restricted exit is repeatedly held open for convenience. Best leadership action?",
     choices: [
@@ -1216,8 +1216,8 @@ const scenarios = [
     recap: "Scenario recap: access-control drift should be corrected and documented immediately.",
   },
   {
-    title: "Scenario 3: Medication Refusal With Capacity Uncertainty",
-    category: "Capacity Escalation - Handoff Reliability",
+    title: "Scenario 3: Seclusion Timeout Near Expiration",
+    category: "Timeout Review - Handoff Reliability",
     roles: ["clinical", "nonclinical", "leadership"],
     prompt: "Two notes list different observation levels after a self-harm statement. Best response?",
     choices: [
@@ -1229,8 +1229,8 @@ const scenarios = [
     recap: "Scenario recap: suicide-risk handoffs require direct reassessment and closed-loop clarity.",
   },
   {
-    title: "Scenario 4: Repeated Refusal and Risk Escalation",
-    category: "Capacity Escalation - Frontline Coordination",
+    title: "Scenario 4: Order Renewal Documentation Delay",
+    category: "Timeout Review - Frontline Coordination",
     roles: ["nonclinical", "leadership"],
     prompt: "A patient says, 'I won't be here tomorrow anyway' during registration. Best frontline response?",
     choices: [
@@ -1242,8 +1242,8 @@ const scenarios = [
     recap: "Scenario recap: indirect self-harm cues require immediate policy-based escalation.",
   },
   {
-    title: "Scenario 5: Code Grey Activation Timing",
-    category: "Code Grey - Immediate De-Escalation",
+    title: "Scenario 5: Belongings Chain-of-Custody Break",
+    category: "Custody Control - Immediate Recovery",
     roles: ["clinical", "leadership"],
     prompt: "Transfer record shows duplicate anticoagulant with different doses. Best action?",
     choices: [
@@ -1255,8 +1255,8 @@ const scenarios = [
     recap: "Scenario recap: high-alert medication conflicts require stop-verify-escalate behavior.",
   },
   {
-    title: "Scenario 6: Team Role Confusion During Code Grey",
-    category: "Code Grey - Team Role Reliability",
+    title: "Scenario 6: Contraband Screening Exception Pressure",
+    category: "Custody Control - Compliance Under Pressure",
     roles: ["clinical", "nonclinical", "leadership"],
     prompt: "New admission allergy list conflicts with active high-alert med plan. Best response?",
     choices: [
@@ -1268,8 +1268,8 @@ const scenarios = [
     recap: "Scenario recap: transition med reconciliation protects against allergy-related harm.",
   },
   {
-    title: "Scenario 7: Near-Miss Handoff Without Debrief",
-    category: "Near-Miss Review - Safety First",
+    title: "Scenario 7: Family Escalation at Intake Desk",
+    category: "Service Recovery - Safety First",
     roles: ["clinical", "nonclinical", "leadership"],
     prompt: "A patient becomes verbally threatening; team proposes immediate restraint without alternatives. Best response?",
     choices: [
@@ -1281,8 +1281,8 @@ const scenarios = [
     recap: "Scenario recap: least-restrictive interventions should be prioritized and documented before restraint.",
   },
   {
-    title: "Scenario 8: Repeat Near-Miss Without Closure",
-    category: "Near-Miss Review - Closure Compliance",
+    title: "Scenario 8: Missed Recovery Commitment Callback",
+    category: "Service Recovery - Closure Compliance",
     roles: ["leadership"],
     prompt: "Audit shows missing restraint monitoring timestamps on several encounters. Best leadership action?",
     choices: [
@@ -1294,8 +1294,8 @@ const scenarios = [
     recap: "Scenario recap: monitoring documentation gaps require immediate corrective governance.",
   },
   {
-    title: "Scenario 9: Late Entry After Critical Event",
-    category: "Documentation Integrity - Late Entry Controls",
+    title: "Scenario 9: Buddy Observation Check Missed",
+    category: "Shift Verification - Buddy Controls",
     roles: ["clinical", "nonclinical", "leadership"],
     prompt: "Consent discussion starts without interpreter because family says 'we can translate'. Best response?",
     choices: [
@@ -1307,8 +1307,8 @@ const scenarios = [
     recap: "Scenario recap: interpreter fidelity is central to equitable and safe care communication.",
   },
   {
-    title: "Scenario 10: Correction Request on Signed Note",
-    category: "Documentation Integrity - Correction Escalation",
+    title: "Scenario 10: Shift Handoff Safety Read-Back Failure",
+    category: "Shift Verification - Escalation and Corrective Action",
     roles: ["clinical", "leadership"],
     prompt: "A patient repeatedly declines treatment due to cultural concerns not reflected in care plan. Best leadership response?",
     choices: [
