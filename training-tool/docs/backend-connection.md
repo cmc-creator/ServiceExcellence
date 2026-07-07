@@ -21,6 +21,7 @@ Then refresh the page.
 - On Start Experience, frontend creates a backend attempt.
 - During scenarios and assessment, events are posted to backend.
 - On Submit Completion, attempt status is finalized and scored.
+- Each posted event also includes an xAPI-shaped statement for LMS export and analytics interoperability.
 
 ## Branding
 - Client deployment: Destiny Springs Healthcare psychiatric acute inpatient edition.

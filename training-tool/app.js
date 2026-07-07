@@ -257,11 +257,14 @@ async function startBackendAttempt() {
 async function pushEventToBackend(verb, detail) {
   if (!state.attemptId) return;
 
+  const xapi = buildXapiStatement(verb, detail);
+
   await apiRequest("/api/training/event", {
     method: "POST",
     body: {
       attemptId: state.attemptId,
       verb,
+      xapi,
       payload: {
         detail,
         score: state.score,
@@ -2155,6 +2158,67 @@ function scormTerminate() {
   if (!scorm.initialized) return false;
   if (scorm.version === "2004") return scormCall("Terminate", "");
   return scormCall("LMSFinish", "");
+}
+
+function slugifyXapiValue(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80) || "training-event";
+}
+
+function buildXapiStatement(verb, detail = {}) {
+  const identity = getLearnerIdentity();
+  const courseId = "destiny-springs-annual-service-conduct";
+  const objectKey = slugifyXapiValue(
+    detail.moduleId || detail.lesson || detail.scenario || detail.title || detail.index || verb
+  );
+  const verbDisplay = String(verb || "training-event");
+  const success = typeof detail.correct === "boolean"
+    ? detail.correct
+    : typeof detail.good === "boolean"
+      ? detail.good
+      : typeof detail.pass === "boolean"
+        ? detail.pass
+        : undefined;
+
+  return {
+    actor: {
+      name: identity.name,
+      account: {
+        homePage: "https://nyxarete.com",
+        name: identity.email,
+      },
+    },
+    verb: {
+      id: `https://nyxarete.com/verbs/${verbDisplay}`,
+      display: { "en-US": verbDisplay },
+    },
+    object: {
+      id: `https://nyxarete.com/training/${courseId}/${objectKey}`,
+      definition: {
+        name: { "en-US": detail.title || detail.lesson || detail.scenario || verbDisplay },
+        description: {
+          "en-US": detail.description || `Training interaction: ${verbDisplay}`,
+        },
+      },
+    },
+    result: {
+      score: { raw: state.score },
+      success,
+    },
+    context: {
+      registration: state.attemptId || undefined,
+      extensions: {
+        "https://nyxarete.com/extensions/role-track": getCurrentRoleName(),
+        "https://nyxarete.com/extensions/role-persona": getCurrentRolePersona(),
+        "https://nyxarete.com/extensions/module": detail.moduleId || null,
+        "https://nyxarete.com/extensions/course-code": "SE-COC-ANNUAL",
+      },
+    },
+    timestamp: new Date().toISOString(),
+  };
 }
 
 function trackEvent(verb, detail = {}) {

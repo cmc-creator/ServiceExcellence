@@ -75,6 +75,8 @@ These files provide a concrete Keep/Merge/Rewrite/Retire map from the two source
 
 Use these with your LMS vendor or internal team to publish completion, scoring, and attempt analytics.
 
+The training runtime also emits xAPI-shaped interaction statements alongside the normal backend event payloads.
+
 ## Content Pack Deliverables
 
 - Master script: `content/master-facilitation-script.md`
