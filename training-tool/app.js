@@ -69,6 +69,7 @@ const defaultRoleConfigs = [
       "code-blue-medical-emergency-response",
       "code-silver-active-shooter-response",
       "code-black-bomb-threat-response",
+      "code-green-severe-weather-response",
     ],
   },
   {
@@ -86,6 +87,7 @@ const defaultRoleConfigs = [
       "code-blue-medical-emergency-response",
       "code-silver-active-shooter-response",
       "code-black-bomb-threat-response",
+      "code-green-severe-weather-response",
     ],
   },
   {
@@ -103,6 +105,7 @@ const defaultRoleConfigs = [
       "code-blue-medical-emergency-response",
       "code-silver-active-shooter-response",
       "code-black-bomb-threat-response",
+      "code-green-severe-weather-response",
     ],
   },
 ];
@@ -117,6 +120,7 @@ const MODULE_LIBRARY = [
   { id: "code-blue-medical-emergency-response", title: "Code Blue Medical Emergency Response and Resuscitation Support" },
   { id: "code-silver-active-shooter-response", title: "Code Silver Active Shooter Response and Lockdown Support" },
   { id: "code-black-bomb-threat-response", title: "Code Black Bomb Threat Response and Area Safety" },
+  { id: "code-green-severe-weather-response", title: "Code Green Severe Weather Response and Shelter Support" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -275,7 +279,7 @@ function loadRoleConfigs() {
   const raw = localStorage.getItem(ROLE_CONFIG_KEY);
   if (!raw) return [...defaultRoleConfigs];
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response"];
 
   try {
     const parsed = JSON.parse(raw);
@@ -315,7 +319,7 @@ async function loadRoleConfigsFromBackend() {
     return false;
   }
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response"];
 
   roleConfigs = rows.map((item) => ({
     id: item.id,
@@ -821,6 +825,13 @@ const roleDepartmentSpotlights = {
         "Keep communication calm and limited while safety teams coordinate the response path.",
       ],
     },
+    {
+      title: "Code Green Severe Weather Example",
+      points: [
+        "Move people away from windows and exterior hazards and follow shelter guidance immediately.",
+        "Stay alert for relocation or lockdown instructions and keep communication focused on safety updates.",
+      ],
+    },
   ],
   nonclinical: [
     {
@@ -886,6 +897,13 @@ const roleDepartmentSpotlights = {
         "Avoid touching or moving suspicious items unless the site's bomb-threat procedure specifically directs it.",
       ],
     },
+    {
+      title: "Code Green Access Support",
+      points: [
+        "Move people to interior areas away from windows or other exposed spaces as directed.",
+        "Keep corridors clear so relocation or shelter actions can happen quickly and quietly.",
+      ],
+    },
   ],
   leadership: [
     {
@@ -938,6 +956,13 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
+      title: "Code Green Governance",
+      points: [
+        "Audit whether teams move people to safe shelter areas quickly and follow weather guidance without delay.",
+        "Review drill timing, window safety, and communication discipline during severe-weather events.",
+      ],
+    },
+    {
       title: "Code Silver Governance",
       points: [
         "Audit whether staff can locate cover, lock down access points, and follow threat-response instructions without delay.",
@@ -967,6 +992,10 @@ const TRAINING_CATEGORIES = {
   bombThreat: {
     label: "Code Black Bomb Threat Response and Area Safety",
     retryModule: "Review the Code Black module to strengthen scene preservation, access control, and bomb-threat communication discipline.",
+  },
+  severeWeather: {
+    label: "Code Green Severe Weather Response and Shelter Support",
+    retryModule: "Review the Code Green module to strengthen shelter guidance, interior relocation, and severe-weather communication discipline.",
   },
   conduct: {
     label: "Code Purple Team Roles and Scene Discipline",
@@ -1036,6 +1065,10 @@ const roleFeedbackSnippets = {
       good: "Clinical lens: preserve the scene and follow the bomb-threat procedure exactly to protect everyone nearby.",
       bad: "Clinical lens: bomb-threat response requires controlled movement and disciplined communication, not improvisation.",
     },
+    severeWeather: {
+      good: "Clinical lens: moving patients to a safer interior area quickly is the right protective response.",
+      bad: "Clinical lens: severe-weather response requires immediate sheltering and hazard reduction, not delay.",
+    },
     abuseNeglect: {
       good: "Clinical lens: immediate safety check plus reporting is the correct protective sequence.",
       bad: "Clinical lens: critical-safety concerns require urgent documentation and escalation.",
@@ -1073,6 +1106,10 @@ const roleFeedbackSnippets = {
     bombThreat: {
       good: "Access-point lens: controlled access and scene preservation are the right first steps.",
       bad: "Access-point lens: uncontrolled searching or traffic increases risk and confusion.",
+    },
+    severeWeather: {
+      good: "Access-point lens: clear the route, guide people to shelter, and keep the flow orderly.",
+      bad: "Access-point lens: blocked corridors or unclear directions slow the response and increase exposure.",
     },
     abuseNeglect: {
       good: "Access-point lens: your response balanced immediate support with proper escalation.",
@@ -1112,6 +1149,10 @@ const roleFeedbackSnippets = {
       good: "Leadership lens: calm coordination and scene preservation are essential in a bomb-threat response.",
       bad: "Leadership lens: ad hoc searching or mixed messages undermine safety and control.",
     },
+    severeWeather: {
+      good: "Leadership lens: clear shelter guidance and fast relocation keep the team aligned during severe weather.",
+      bad: "Leadership lens: delay or mixed messages can expose the unit to avoidable weather risk.",
+    },
     abuseNeglect: {
       good: "Leadership lens: this protects vulnerable patients and sets a clear reporting standard.",
       bad: "Leadership lens: delayed action on critical-safety concerns is unacceptable risk.",
@@ -1132,6 +1173,7 @@ const adaptiveHintBank = {
   medicalEmergency: "Hint: Activate immediately, clear space, and route equipment or runners without delay.",
   activeThreat: "Hint: Get to cover, lock or secure the area if directed, and communicate only what is necessary for safety.",
   bombThreat: "Hint: Preserve the scene, reduce movement, and follow the bomb-threat procedure exactly as written.",
+  severeWeather: "Hint: Move to interior shelter areas quickly and keep people away from windows and exterior hazards.",
   abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and urgent escalation pathways.",
   knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
 };
@@ -1373,6 +1415,21 @@ const coreLessons = [
     categoryKey: "bombThreat",
     recap: "Checkpoint: Code Black means preserve the scene, limit movement, and follow the bomb-threat response procedure exactly.",
   },
+  {
+    moduleId: "code-green-severe-weather-response",
+    spotlightIndex: 9,
+    title: "Lesson 10: Code Green Severe Weather Response and Shelter Support",
+    body: "Code Green response requires moving people away from windows and exterior hazards, following shelter or relocation guidance, and keeping communication calm and current.",
+    check: "A severe weather alert is issued while patients are near exterior windows. Best immediate action?",
+    answers: [
+      { text: "Move patients and visitors to interior shelter areas away from windows, follow the facility's weather guidance, and keep corridors clear for relocation support.", good: true, score: 8 },
+      { text: "Keep everyone in place until the storm passes so movement stays minimal.", good: false, score: 2 },
+      { text: "Go outside to check the weather firsthand before deciding what to do.", good: false, score: 1 },
+    ],
+    why: "Code Green requires immediate sheltering and hazard reduction, not delay or exposure.",
+    categoryKey: "severeWeather",
+    recap: "Checkpoint: Code Green means move to safer interior shelter, stay away from windows, and follow severe-weather guidance immediately.",
+  },
 ];
 
 const scenarios = [
@@ -1584,6 +1641,19 @@ const scenarios = [
     categoryKey: "bombThreat",
     recap: "Scenario recap: Code Black response preserves the scene, limits movement, and follows the formal bomb-threat procedure.",
   },
+  {
+    title: "Scenario 17: Code Green During Severe Weather",
+    category: "Code Green - Severe Weather Response",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A severe weather alert is announced while patients are gathered near a wall of windows. Best first move?",
+    choices: [
+      { text: "Move everyone to interior shelter areas away from windows, follow the facility's severe-weather guidance, and keep the route calm and clear.", score: 20, good: true, feedback: "Correct. Code Green starts with rapid sheltering and hazard reduction." },
+      { text: "Leave the group in place because moving people may create confusion.", score: 3, good: false, feedback: "Confusion is less dangerous than exposure to severe weather hazards." },
+      { text: "Open the windows to see if conditions outside are improving.", score: 2, good: false, feedback: "That increases exposure and is not a sheltering response." },
+    ],
+    categoryKey: "severeWeather",
+    recap: "Scenario recap: Code Green response moves people to safer interior shelter, away from windows and other hazards.",
+  },
 ];
 
 const lightningQuestions = [
@@ -1668,6 +1738,16 @@ const lightningQuestions = [
     categoryKey: "bombThreat",
   },
   {
+    q: "Code Green means",
+    answers: [
+      { text: "Severe weather response and sheltering away from hazards", score: 12, good: true },
+      { text: "Active shooter response", score: 3, good: false },
+      { text: "Routine discharge assistance", score: 1, good: false },
+    ],
+    why: "Code Green is the severe-weather alert and should trigger immediate sheltering and hazard reduction.",
+    categoryKey: "severeWeather",
+  },
+  {
     q: "Code Purple stabilization starts with",
     answers: [
       { text: "Observation, hazard control, and staff roles", score: 12, good: true },
@@ -1709,6 +1789,7 @@ const finalAssessment = [
   { q: "Best annual completion standard", a: ["Pass score plus acknowledgment", "Attendance only", "No tracking"], c: 0, k: "knowledgeCheck" },
   { q: "After Code Purple de-escalation, the next step is", a: ["Safety plan, environment check, and handoff update", "Send everyone home immediately", "Wait until the next day shift to review"], c: 0, k: "conduct" },
   { q: "A calm patient after Code Purple still needs", a: ["Documented closure and observation alignment", "No further follow-up", "Only a verbal promise to stay calm"], c: 0, k: "conduct" },
+  { q: "Code Green response starts with", a: ["Interior sheltering away from windows", "Waiting for the storm to pass", "Checking outside conditions firsthand"], c: 0, k: "severeWeather" },
 ];
 
 const panels = {

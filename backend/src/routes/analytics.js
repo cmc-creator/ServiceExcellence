@@ -16,6 +16,7 @@ const MODULE_LIBRARY = [
   { id: "code-blue-medical-emergency-response", title: "Code Blue Medical Emergency Response and Resuscitation Support" },
   { id: "code-silver-active-shooter-response", title: "Code Silver Active Shooter Response and Lockdown Support" },
   { id: "code-black-bomb-threat-response", title: "Code Black Bomb Threat Response and Area Safety" },
+  { id: "code-green-severe-weather-response", title: "Code Green Severe Weather Response and Shelter Support" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -38,6 +39,7 @@ function inferModuleIdFromLessonTitle(title) {
   if (normalized.includes("guardian verification") || normalized.includes("discharge transportation") || normalized.includes("release")) return "discharge-release-guardian-verification";
   if (normalized.includes("code silver") || normalized.includes("active shooter") || normalized.includes("lockdown") || normalized.includes("shelter in place")) return "code-silver-active-shooter-response";
   if (normalized.includes("code black") || normalized.includes("bomb threat") || normalized.includes("suspicious package") || normalized.includes("scene preservation")) return "code-black-bomb-threat-response";
+  if (normalized.includes("code green") || normalized.includes("severe weather") || normalized.includes("weather alert") || normalized.includes("shelter guidance")) return "code-green-severe-weather-response";
   if (normalized.includes("code red") || normalized.includes("code orange") || normalized.includes("code blue") || normalized.includes("code silver") || normalized.includes("code yellow") || normalized.includes("code black") || normalized.includes("code green") || normalized.includes("emergency code") || normalized.includes("response priorities")) return "emergency-code-reference-and-response-priorities";
   if (normalized.includes("medical emergency") || normalized.includes("resuscitation") || normalized.includes("cardiac arrest") || normalized.includes("crash cart")) return "code-blue-medical-emergency-response";
   return null;
