@@ -68,6 +68,7 @@ const defaultRoleConfigs = [
       "emergency-code-reference-and-response-priorities",
       "code-blue-medical-emergency-response",
       "code-silver-active-shooter-response",
+      "code-black-bomb-threat-response",
     ],
   },
   {
@@ -84,6 +85,7 @@ const defaultRoleConfigs = [
       "emergency-code-reference-and-response-priorities",
       "code-blue-medical-emergency-response",
       "code-silver-active-shooter-response",
+      "code-black-bomb-threat-response",
     ],
   },
   {
@@ -100,6 +102,7 @@ const defaultRoleConfigs = [
       "emergency-code-reference-and-response-priorities",
       "code-blue-medical-emergency-response",
       "code-silver-active-shooter-response",
+      "code-black-bomb-threat-response",
     ],
   },
 ];
@@ -113,6 +116,7 @@ const MODULE_LIBRARY = [
   { id: "emergency-code-reference-and-response-priorities", title: "Emergency Code Reference and Response Priorities" },
   { id: "code-blue-medical-emergency-response", title: "Code Blue Medical Emergency Response and Resuscitation Support" },
   { id: "code-silver-active-shooter-response", title: "Code Silver Active Shooter Response and Lockdown Support" },
+  { id: "code-black-bomb-threat-response", title: "Code Black Bomb Threat Response and Area Safety" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -271,7 +275,7 @@ function loadRoleConfigs() {
   const raw = localStorage.getItem(ROLE_CONFIG_KEY);
   if (!raw) return [...defaultRoleConfigs];
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response"];
 
   try {
     const parsed = JSON.parse(raw);
@@ -311,7 +315,7 @@ async function loadRoleConfigsFromBackend() {
     return false;
   }
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response"];
 
   roleConfigs = rows.map((item) => ({
     id: item.id,
@@ -810,6 +814,13 @@ const roleDepartmentSpotlights = {
         "Report location and threat details only when it is safe to do so and avoid drawing attention to the response team.",
       ],
     },
+    {
+      title: "Code Black Bomb Threat Example",
+      points: [
+        "Treat the report as real, preserve the scene, and follow the bomb-threat procedure exactly.",
+        "Keep communication calm and limited while safety teams coordinate the response path.",
+      ],
+    },
   ],
   nonclinical: [
     {
@@ -866,6 +877,13 @@ const roleDepartmentSpotlights = {
       points: [
         "Move people to cover, control access points, and keep hall traffic away from the threat area.",
         "Relay only safety-critical information and avoid creating noise or confusion during lockdown or shelter response.",
+      ],
+    },
+    {
+      title: "Code Black Access Support",
+      points: [
+        "Keep people away from the suspected area and preserve a clear route for responders to assess risk.",
+        "Avoid touching or moving suspicious items unless the site's bomb-threat procedure specifically directs it.",
       ],
     },
   ],
@@ -946,6 +964,10 @@ const TRAINING_CATEGORIES = {
     label: "Code Silver Active Shooter Response and Lockdown Support",
     retryModule: "Review the Code Silver module to strengthen cover-seeking, lockdown discipline, and threat-response communication.",
   },
+  bombThreat: {
+    label: "Code Black Bomb Threat Response and Area Safety",
+    retryModule: "Review the Code Black module to strengthen scene preservation, access control, and bomb-threat communication discipline.",
+  },
   conduct: {
     label: "Code Purple Team Roles and Scene Discipline",
     retryModule: "Review dining-room Code Purple scenarios to reinforce explicit role assignment and scene control discipline.",
@@ -1010,6 +1032,10 @@ const roleFeedbackSnippets = {
       good: "Clinical lens: immediate activation and task assignment protect the patient during a medical emergency.",
       bad: "Clinical lens: medical emergencies require immediate response routing, not delay or debate.",
     },
+    bombThreat: {
+      good: "Clinical lens: preserve the scene and follow the bomb-threat procedure exactly to protect everyone nearby.",
+      bad: "Clinical lens: bomb-threat response requires controlled movement and disciplined communication, not improvisation.",
+    },
     abuseNeglect: {
       good: "Clinical lens: immediate safety check plus reporting is the correct protective sequence.",
       bad: "Clinical lens: critical-safety concerns require urgent documentation and escalation.",
@@ -1043,6 +1069,10 @@ const roleFeedbackSnippets = {
     medicalEmergency: {
       good: "Access-point lens: clear access and fast equipment routing support the resuscitation team.",
       bad: "Access-point lens: crowding or delays can obstruct medical-emergency response.",
+    },
+    bombThreat: {
+      good: "Access-point lens: controlled access and scene preservation are the right first steps.",
+      bad: "Access-point lens: uncontrolled searching or traffic increases risk and confusion.",
     },
     abuseNeglect: {
       good: "Access-point lens: your response balanced immediate support with proper escalation.",
@@ -1078,6 +1108,10 @@ const roleFeedbackSnippets = {
       good: "Leadership lens: fast role assignment and equipment readiness keep a Code Blue response coordinated.",
       bad: "Leadership lens: delayed coordination creates avoidable response drift in a medical emergency.",
     },
+    bombThreat: {
+      good: "Leadership lens: calm coordination and scene preservation are essential in a bomb-threat response.",
+      bad: "Leadership lens: ad hoc searching or mixed messages undermine safety and control.",
+    },
     abuseNeglect: {
       good: "Leadership lens: this protects vulnerable patients and sets a clear reporting standard.",
       bad: "Leadership lens: delayed action on critical-safety concerns is unacceptable risk.",
@@ -1097,6 +1131,7 @@ const adaptiveHintBank = {
   safety: "Hint: Look for read-back, risk confirmation, and explicit task ownership.",
   medicalEmergency: "Hint: Activate immediately, clear space, and route equipment or runners without delay.",
   activeThreat: "Hint: Get to cover, lock or secure the area if directed, and communicate only what is necessary for safety.",
+  bombThreat: "Hint: Preserve the scene, reduce movement, and follow the bomb-threat procedure exactly as written.",
   abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and urgent escalation pathways.",
   knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
 };
@@ -1323,6 +1358,21 @@ const coreLessons = [
     categoryKey: "activeThreat",
     recap: "Checkpoint: Code Silver means protect life first, move to cover, and follow lockdown or shelter directives without delay.",
   },
+  {
+    moduleId: "code-black-bomb-threat-response",
+    spotlightIndex: 8,
+    title: "Lesson 9: Code Black Bomb Threat Response and Area Safety",
+    body: "Code Black response depends on preserving the scene, reducing unnecessary movement, and following the site's bomb-threat procedure without improvisation.",
+    check: "A bomb threat is reported for the facility. Best immediate response?",
+    answers: [
+      { text: "Keep people away from the suspected area, preserve the scene, and follow the facility's bomb-threat procedure and notification chain exactly as written.", good: true, score: 8 },
+      { text: "Search every room immediately without a defined procedure so the issue can be solved faster.", good: false, score: 2 },
+      { text: "Assume it is a prank and continue normal operations until leadership confirms otherwise.", good: false, score: 1 },
+    ],
+    why: "Code Black requires scene preservation and controlled communication, not improvisation or disorderly searching.",
+    categoryKey: "bombThreat",
+    recap: "Checkpoint: Code Black means preserve the scene, limit movement, and follow the bomb-threat response procedure exactly.",
+  },
 ];
 
 const scenarios = [
@@ -1521,6 +1571,19 @@ const scenarios = [
     categoryKey: "activeThreat",
     recap: "Scenario recap: Code Silver response starts with cover, movement away from danger, and immediate lockdown or shelter compliance.",
   },
+  {
+    title: "Scenario 16: Code Black Reported at the Front Desk",
+    category: "Code Black - Bomb Threat Response",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A bomb threat is received for the facility and staff are asking whether to search the building immediately. Best first move?",
+    choices: [
+      { text: "Preserve the scene, follow the facility's bomb-threat procedure and notification chain, and keep movement and communication tightly controlled.", score: 20, good: true, feedback: "Correct. Code Black response should be controlled and procedure-driven." },
+      { text: "Send everyone to search hallways and offices until the threat is resolved.", score: 3, good: false, feedback: "An uncontrolled search creates avoidable risk and confusion." },
+      { text: "Ignore the report unless a second threat call arrives.", score: 2, good: false, feedback: "Bomb threats require immediate controlled response, not dismissal." },
+    ],
+    categoryKey: "bombThreat",
+    recap: "Scenario recap: Code Black response preserves the scene, limits movement, and follows the formal bomb-threat procedure.",
+  },
 ];
 
 const lightningQuestions = [
@@ -1593,6 +1656,16 @@ const lightningQuestions = [
     ],
     why: "Code Silver is the active-threat alert and should trigger immediate protective action and safe communication.",
     categoryKey: "activeThreat",
+  },
+  {
+    q: "Code Black means",
+    answers: [
+      { text: "Bomb threat response and scene preservation", score: 12, good: true },
+      { text: "Severe weather response", score: 3, good: false },
+      { text: "Medical emergency response", score: 1, good: false },
+    ],
+    why: "Code Black is the bomb-threat alert and should trigger controlled scene preservation and procedure-based response.",
+    categoryKey: "bombThreat",
   },
   {
     q: "Code Purple stabilization starts with",
