@@ -82,6 +82,7 @@ The training runtime also emits xAPI-shaped interaction statements alongside the
 - Master script: `content/master-facilitation-script.md`
 - Production pack: `content/production-content-pack.md`
 - Policy citation map: `docs/policy-citation-map.md`
+- Manager toolkit: `docs/manager-toolkit.md`
 
 ## Backend Integration
 
