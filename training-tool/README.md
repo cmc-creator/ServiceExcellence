@@ -38,7 +38,7 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round
-- Full final assessment with 25 questions
+- Full final assessment with 27 questions
 - Policy topic explorer
 - Completion summary and achievement badges
 - Exportable tracking JSON for LMS mapping

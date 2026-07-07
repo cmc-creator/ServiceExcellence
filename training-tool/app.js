@@ -20,6 +20,7 @@ const state = {
 };
 
 const ROLE_CONFIG_KEY = "nyxRoleConfigs";
+const SOUND_KEY = "nyxSoundEnabled";
 const SEASONAL_KEY = "nyxSeasonalAchievements";
 const BRAND_MODE_KEY = "nyxBrandMode";
 
@@ -1297,6 +1298,32 @@ const scenarios = [
     categoryKey: "abuseNeglect",
     recap: "Scenario recap: discharge-release pressure should trigger escalation, not shortcut release controls.",
   },
+  {
+    title: "Scenario 11: Code Purple With Self-Harm Statement",
+    category: "Code Purple - Immediate Psychiatric Safety",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A patient states they want to die and starts pacing near the dayroom doors. Best immediate response?",
+    choices: [
+      { text: "Keep the patient within direct staff observation, alert the clinical lead, clear hazards from the area, and activate Code Purple support right away.", score: 20, good: true, feedback: "Correct. Immediate supervision and escalation come first." },
+      { text: "Ask the patient to take a hallway walk so the room can settle down.", score: 4, good: false, feedback: "Separation without supervision increases risk." },
+      { text: "Wait for the next scheduled check-in unless the patient makes a second statement.", score: 2, good: false, feedback: "Delaying response leaves an active safety risk unresolved." },
+    ],
+    categoryKey: "safety",
+    recap: "Scenario recap: Code Purple self-harm statements require immediate observation, hazard control, and escalation.",
+  },
+  {
+    title: "Scenario 12: Code Purple Closure and Safety Planning",
+    category: "Code Purple - Safety Planning and Closure",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "The patient calms after a Code Purple response, but no safety plan, environmental check, or handoff update has been completed. Best follow-up?",
+    choices: [
+      { text: "Complete the safety plan, verify the environment is clear, update the next shift on triggers and supports, and keep observation aligned with the documented plan.", score: 20, good: true, feedback: "Correct. Closure is a structured safety task, not just a quiet room." },
+      { text: "Consider the event closed because the patient is no longer shouting.", score: 5, good: false, feedback: "Calm behavior does not replace closure steps." },
+      { text: "Document the event later if time allows and move on to the next patient.", score: 2, good: false, feedback: "Delayed follow-up weakens safety planning and accountability." },
+    ],
+    categoryKey: "conduct",
+    recap: "Scenario recap: Code Purple closure requires environmental checks, safety planning, and shift handoff updates.",
+  },
 ];
 
 const lightningQuestions = [
@@ -1340,6 +1367,16 @@ const lightningQuestions = [
     why: "Release authority must be confirmed before the patient leaves the unit.",
     categoryKey: "communication",
   },
+  {
+    q: "Code Purple stabilization starts with",
+    answers: [
+      { text: "Observation, hazard control, and staff roles", score: 12, good: true },
+      { text: "Paperwork after the patient calms", score: 3, good: false },
+      { text: "Delaying until the room is empty", score: 1, good: false },
+    ],
+    why: "Immediate safety, role clarity, and environmental control come before paperwork.",
+    categoryKey: "conduct",
+  },
 ];
 
 const finalAssessment = [
@@ -1361,6 +1398,7 @@ const finalAssessment = [
   { q: "Observation ambiguity left unresolved can cause", a: ["Minor administrative delay only", "Immediate patient-safety exposure", "No meaningful consequence"], c: 1, k: "safety" },
   { q: "Contraband control is strongest when", a: ["Items are screened before re-entry and exceptions are logged", "Screening happens only if staff are concerned", "Bags are assumed safe after passes"], c: 0, k: "privacy" },
   { q: "Code Purple team discipline means", a: ["One lead and defined responder roles", "Everyone chooses tasks independently", "Documentation can wait indefinitely"], c: 0, k: "conduct" },
+  { q: "Code Purple stabilization starts with", a: ["Observation, hazard control, and staff roles", "Paperwork after the patient calms", "Delaying until the room is empty"], c: 0, k: "conduct" },
   { q: "Provider read-back on critical labs helps confirm", a: ["Message accuracy and immediate ownership", "Only courtesy", "That documentation can be skipped"], c: 0, k: "reporting" },
   { q: "Guardian verification at discharge protects", a: ["Release speed only", "Patient safety and legal handoff integrity", "Parking flow"], c: 1, k: "communication" },
   { q: "A high-risk multi-track event should be managed by", a: ["Sequencing urgent controls across safety, reporting, and release", "Choosing whichever issue is loudest and ignoring the rest", "Documenting first and acting later"], c: 0, k: "abuseNeglect" },
@@ -1369,6 +1407,8 @@ const finalAssessment = [
   { q: "Dining room event review is strongest when", a: ["Role timing and closure gaps are coached immediately", "It waits for quarterly review only", "No one names the scene lead"], c: 0, k: "conduct" },
   { q: "Best annual completion standard", a: ["Pass score plus acknowledgment", "Attendance only", "No tracking"], c: 0, k: "knowledgeCheck" },
   { q: "Best annual completion standard", a: ["Pass score plus acknowledgment", "Attendance only", "No tracking"], c: 0, k: "knowledgeCheck" },
+  { q: "After Code Purple de-escalation, the next step is", a: ["Safety plan, environment check, and handoff update", "Send everyone home immediately", "Wait until the next day shift to review"], c: 0, k: "conduct" },
+  { q: "A calm patient after Code Purple still needs", a: ["Documented closure and observation alignment", "No further follow-up", "Only a verbal promise to stay calm"], c: 0, k: "conduct" },
 ];
 
 const panels = {
