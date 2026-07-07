@@ -7,11 +7,11 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 
 const MODULE_LIBRARY = [
-  { id: "elopement-drill-response-zones", title: "Elopement Drill Reliability and Search-Zone Response" },
-  { id: "seclusion-order-timeout-review", title: "Seclusion Order Time Limits, Renewal, and Timeout Review" },
-  { id: "patient-belongings-inventory-transfer", title: "Patient Belongings Inventory, Contraband Screening, and Transfer Custody" },
-  { id: "family-escalation-service-recovery", title: "Family Escalation Management and Service Recovery Commitments" },
-  { id: "peer-observation-buddy-shift-safety", title: "Peer Observation Buddy System and Shift-to-Shift Safety Verification" },
+  { id: "observation-precaution-reassessment-handoffs", title: "Observation Precaution Reassessment and Handoff Clarity" },
+  { id: "leave-return-screening-contraband-control", title: "Leave Return Screening and Contraband Re-Entry Control" },
+  { id: "dining-room-code-grey-response", title: "Dining Room Code Grey Response and Team Role Assignment" },
+  { id: "critical-lab-result-readback", title: "Critical Lab Result Escalation and Provider Read-Back" },
+  { id: "discharge-release-guardian-verification", title: "Discharge Transportation Release and Guardian Verification" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -27,11 +27,11 @@ function normalizeRoleTrack(value) {
 function inferModuleIdFromLessonTitle(title) {
   const normalized = String(title || "").toLowerCase();
   if (!normalized) return null;
-  if (normalized.includes("elopement") || normalized.includes("search-zone") || normalized.includes("search zone")) return "elopement-drill-response-zones";
-  if (normalized.includes("seclusion") || normalized.includes("timeout") || normalized.includes("renewal")) return "seclusion-order-timeout-review";
-  if (normalized.includes("belongings") || normalized.includes("contraband") || normalized.includes("custody")) return "patient-belongings-inventory-transfer";
-  if (normalized.includes("family escalation") || normalized.includes("service recovery") || normalized.includes("recovery commitment")) return "family-escalation-service-recovery";
-  if (normalized.includes("buddy") || normalized.includes("shift verification") || normalized.includes("shift safety")) return "peer-observation-buddy-shift-safety";
+  if (normalized.includes("observation") || normalized.includes("reassessment") || normalized.includes("handoff clarity")) return "observation-precaution-reassessment-handoffs";
+  if (normalized.includes("leave return") || normalized.includes("re-entry") || normalized.includes("contraband")) return "leave-return-screening-contraband-control";
+  if (normalized.includes("code grey") || normalized.includes("dining room") || normalized.includes("team role")) return "dining-room-code-grey-response";
+  if (normalized.includes("critical lab") || normalized.includes("read-back") || normalized.includes("provider read-back")) return "critical-lab-result-readback";
+  if (normalized.includes("guardian verification") || normalized.includes("discharge transportation") || normalized.includes("release")) return "discharge-release-guardian-verification";
   return null;
 }
 

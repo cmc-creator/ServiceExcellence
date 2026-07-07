@@ -19,11 +19,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 
 - Luxury glassmorphism visual style with animated effects
 - Five built-in annual modules:
-  - Elopement drill reliability and search-zone response
-  - Seclusion order time limits, renewal, and timeout review
-  - Patient belongings inventory, contraband screening, and transfer custody
-  - Family escalation management and service recovery commitments
-  - Peer observation buddy system and shift-to-shift safety verification
+  - Observation precaution reassessment and handoff clarity
+  - Leave return screening and contraband re-entry control
+  - Dining room Code Grey response and team role assignment
+  - Critical lab result escalation and provider read-back
+  - Discharge transportation release and guardian verification
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round

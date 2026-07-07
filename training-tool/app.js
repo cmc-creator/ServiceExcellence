@@ -74,11 +74,11 @@ const defaultRoleConfigs = [
     persona: "clinical",
     departments: ["Nursing", "Behavioral Health"],
     enabledModules: [
-      "elopement-drill-response-zones",
-      "seclusion-order-timeout-review",
-      "patient-belongings-inventory-transfer",
-      "family-escalation-service-recovery",
-      "peer-observation-buddy-shift-safety",
+      "observation-precaution-reassessment-handoffs",
+      "leave-return-screening-contraband-control",
+      "dining-room-code-grey-response",
+      "critical-lab-result-readback",
+      "discharge-release-guardian-verification",
     ],
   },
   {
@@ -87,11 +87,11 @@ const defaultRoleConfigs = [
     persona: "nonclinical",
     departments: ["Admissions", "Support Services"],
     enabledModules: [
-      "elopement-drill-response-zones",
-      "seclusion-order-timeout-review",
-      "patient-belongings-inventory-transfer",
-      "family-escalation-service-recovery",
-      "peer-observation-buddy-shift-safety",
+      "observation-precaution-reassessment-handoffs",
+      "leave-return-screening-contraband-control",
+      "dining-room-code-grey-response",
+      "critical-lab-result-readback",
+      "discharge-release-guardian-verification",
     ],
   },
   {
@@ -100,21 +100,21 @@ const defaultRoleConfigs = [
     persona: "leadership",
     departments: ["Management", "Operations"],
     enabledModules: [
-      "elopement-drill-response-zones",
-      "seclusion-order-timeout-review",
-      "patient-belongings-inventory-transfer",
-      "family-escalation-service-recovery",
-      "peer-observation-buddy-shift-safety",
+      "observation-precaution-reassessment-handoffs",
+      "leave-return-screening-contraband-control",
+      "dining-room-code-grey-response",
+      "critical-lab-result-readback",
+      "discharge-release-guardian-verification",
     ],
   },
 ];
 
 const MODULE_LIBRARY = [
-  { id: "elopement-drill-response-zones", title: "Elopement Drill Reliability and Search-Zone Response" },
-  { id: "seclusion-order-timeout-review", title: "Seclusion Order Time Limits, Renewal, and Timeout Review" },
-  { id: "patient-belongings-inventory-transfer", title: "Patient Belongings Inventory, Contraband Screening, and Transfer Custody" },
-  { id: "family-escalation-service-recovery", title: "Family Escalation Management and Service Recovery Commitments" },
-  { id: "peer-observation-buddy-shift-safety", title: "Peer Observation Buddy System and Shift-to-Shift Safety Verification" },
+  { id: "observation-precaution-reassessment-handoffs", title: "Observation Precaution Reassessment and Handoff Clarity" },
+  { id: "leave-return-screening-contraband-control", title: "Leave Return Screening and Contraband Re-Entry Control" },
+  { id: "dining-room-code-grey-response", title: "Dining Room Code Grey Response and Team Role Assignment" },
+  { id: "critical-lab-result-readback", title: "Critical Lab Result Escalation and Provider Read-Back" },
+  { id: "discharge-release-guardian-verification", title: "Discharge Transportation Release and Guardian Verification" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -1112,7 +1112,7 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
 
 const coreLessons = [
   {
-    moduleId: "elopement-drill-response-zones",
+    moduleId: "observation-precaution-reassessment-handoffs",
     spotlightIndex: 0,
     title: "Lesson 1: Elopement Drill Search-Zone Activation and Reliability",
     body: "Diversion prevention depends on immediate discrepancy escalation, witnessed count reconciliation, and clear chain-of-custody documentation.",
@@ -1127,7 +1127,7 @@ const coreLessons = [
     recap: "Checkpoint: diversion prevention requires rapid escalation, witnessed reconciliation, and objective documentation.",
   },
   {
-    moduleId: "seclusion-order-timeout-review",
+    moduleId: "leave-return-screening-contraband-control",
     spotlightIndex: 1,
     title: "Lesson 2: Seclusion Timeout Review and Renewal Escalation",
     body: "Legal-hold reliability depends on verified order status, time-stamped documentation, and immediate escalation of missing court directives.",
@@ -1142,7 +1142,7 @@ const coreLessons = [
     recap: "Checkpoint: legal-hold workflow requires verified status and closed-loop documentation.",
   },
   {
-    moduleId: "patient-belongings-inventory-transfer",
+    moduleId: "dining-room-code-grey-response",
     spotlightIndex: 2,
     title: "Lesson 3: Belongings Inventory, Contraband Screening, and Transfer Custody",
     body: "Visitor safety depends on clear boundary setting, early escalation cues, and de-escalation techniques that protect patients and staff.",
@@ -1157,7 +1157,7 @@ const coreLessons = [
     recap: "Checkpoint: visitor boundary control requires calm de-escalation and timely escalation support.",
   },
   {
-    moduleId: "family-escalation-service-recovery",
+    moduleId: "critical-lab-result-readback",
     spotlightIndex: 3,
     title: "Lesson 4: Family Escalation Management and Service Recovery Follow-Through",
     body: "Safe discharge depends on complete crisis/safety planning, medication continuity, and confirmed 72-hour follow-up closure.",
@@ -1172,7 +1172,7 @@ const coreLessons = [
     recap: "Checkpoint: discharge reliability requires verified safety planning and follow-up closure.",
   },
   {
-    moduleId: "peer-observation-buddy-shift-safety",
+    moduleId: "discharge-release-guardian-verification",
     spotlightIndex: 4,
     title: "Lesson 5: Peer Observation Buddy Checks and Shift Safety Verification",
     body: "Confidentiality protection requires strict social-media boundaries, minimum-necessary disclosures, and immediate correction of potential breaches.",
@@ -2813,3 +2813,5 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+
