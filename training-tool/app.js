@@ -72,6 +72,7 @@ const defaultRoleConfigs = [
       "code-green-severe-weather-response",
       "code-yellow-disaster-response",
       "code-red-fire-response",
+      "code-orange-missing-patient-search",
     ],
   },
   {
@@ -92,6 +93,7 @@ const defaultRoleConfigs = [
       "code-green-severe-weather-response",
       "code-yellow-disaster-response",
       "code-red-fire-response",
+      "code-orange-missing-patient-search",
     ],
   },
   {
@@ -112,6 +114,7 @@ const defaultRoleConfigs = [
       "code-green-severe-weather-response",
       "code-yellow-disaster-response",
       "code-red-fire-response",
+      "code-orange-missing-patient-search",
     ],
   },
 ];
@@ -129,6 +132,7 @@ const MODULE_LIBRARY = [
   { id: "code-green-severe-weather-response", title: "Code Green Severe Weather Response and Shelter Support" },
   { id: "code-yellow-disaster-response", title: "Code Yellow Internal/External Disaster Response and Surge Coordination" },
   { id: "code-red-fire-response", title: "Code Red Fire Response and Evacuation/Containment Support" },
+  { id: "code-orange-missing-patient-search", title: "Code Orange Missing Patient Search and Elopement Response" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -287,7 +291,7 @@ function loadRoleConfigs() {
   const raw = localStorage.getItem(ROLE_CONFIG_KEY);
   if (!raw) return [...defaultRoleConfigs];
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response", "code-red-fire-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response", "code-red-fire-response", "code-orange-missing-patient-search"];
 
   try {
     const parsed = JSON.parse(raw);
@@ -327,7 +331,7 @@ async function loadRoleConfigsFromBackend() {
     return false;
   }
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response", "code-red-fire-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response", "code-red-fire-response", "code-orange-missing-patient-search"];
 
   roleConfigs = rows.map((item) => ({
     id: item.id,
@@ -854,6 +858,13 @@ const roleDepartmentSpotlights = {
         "Keep doors, routes, and notification chain actions aligned with the facility's fire plan.",
       ],
     },
+    {
+      title: "Code Orange Missing Patient Example",
+      points: [
+        "Activate the missing-patient search immediately and share the exact last-seen location.",
+        "Document who was notified, who searched, and when the response began.",
+      ],
+    },
   ],
   nonclinical: [
     {
@@ -940,6 +951,13 @@ const roleDepartmentSpotlights = {
         "Follow the fire plan's direction on containment, evacuation, and notifications without delay.",
       ],
     },
+    {
+      title: "Code Orange Access Support",
+      points: [
+        "Notify the search chain immediately and pass along the exact last-seen location.",
+        "Keep doors, entrances, and likely exit routes clear so the search can start fast.",
+      ],
+    },
   ],
   leadership: [
     {
@@ -1005,6 +1023,13 @@ const roleDepartmentSpotlights = {
         "Review after-action reports for communication discipline, drill readiness, and safe movement choices under pressure.",
       ],
     },
+    {
+      title: "Code Orange Governance",
+      points: [
+        "Audit how quickly missing-patient events are escalated with exact last-seen details.",
+        "Review elopement searches for timing, location accuracy, and documentation discipline.",
+      ],
+    },
   ],
 };
 
@@ -1036,6 +1061,10 @@ const TRAINING_CATEGORIES = {
   disaster: {
     label: "Code Yellow Internal/External Disaster Response and Surge Coordination",
     retryModule: "Review the Code Yellow module to strengthen incident-command awareness, surge staging, and disaster-plan execution.",
+  },
+  missingPatient: {
+    label: "Code Orange Missing Patient Search and Elopement Response",
+    retryModule: "Review the Code Orange module to strengthen missing-patient escalation, last-seen reporting, and search coordination.",
   },
   fireResponse: {
     label: "Code Red Fire Response and Evacuation/Containment Support",
@@ -1121,6 +1150,10 @@ const roleFeedbackSnippets = {
       good: "Clinical lens: moving people away from the hazard and following the fire plan protects everyone in the unit.",
       bad: "Clinical lens: fire response requires immediate movement and clear containment or evacuation actions, not delay.",
     },
+    missingPatient: {
+      good: "Clinical lens: exact last-seen details and immediate escalation support the search response.",
+      bad: "Clinical lens: missing-patient events require fast reporting and coordinated search steps, not waiting.",
+    },
     abuseNeglect: {
       good: "Clinical lens: immediate safety check plus reporting is the correct protective sequence.",
       bad: "Clinical lens: critical-safety concerns require urgent documentation and escalation.",
@@ -1170,6 +1203,10 @@ const roleFeedbackSnippets = {
     fireResponse: {
       good: "Access-point lens: clear egress routes and prompt notifications are what the fire response needs.",
       bad: "Access-point lens: blocked exits or unclear directions make fire response harder and slower.",
+    },
+    missingPatient: {
+      good: "Access-point lens: exact last-seen details and quick alerting keep the search coordinated.",
+      bad: "Access-point lens: delays or vague descriptions slow the missing-patient search.",
     },
     abuseNeglect: {
       good: "Access-point lens: your response balanced immediate support with proper escalation.",
@@ -1221,6 +1258,10 @@ const roleFeedbackSnippets = {
       good: "Leadership lens: clear fire-plan execution keeps the unit coordinated when every second matters.",
       bad: "Leadership lens: hesitation or conflicting instructions increase fire risk and confusion.",
     },
+    missingPatient: {
+      good: "Leadership lens: fast escalation and accurate last-seen details strengthen the search response.",
+      bad: "Leadership lens: unclear ownership or delayed notification weakens the missing-patient response.",
+    },
     abuseNeglect: {
       good: "Leadership lens: this protects vulnerable patients and sets a clear reporting standard.",
       bad: "Leadership lens: delayed action on critical-safety concerns is unacceptable risk.",
@@ -1244,6 +1285,7 @@ const adaptiveHintBank = {
   severeWeather: "Hint: Move to interior shelter areas quickly and keep people away from windows and exterior hazards.",
   disaster: "Hint: Follow the disaster plan, stage resources, and keep routes and roles clear for surge coordination.",
   fireResponse: "Hint: Move people away from the hazard, keep exits clear, and follow the facility fire plan immediately.",
+  missingPatient: "Hint: Activate the search chain immediately, share the last-known location exactly, and document who was notified.",
   abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and urgent escalation pathways.",
   knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
 };
@@ -1530,6 +1572,21 @@ const coreLessons = [
     categoryKey: "fireResponse",
     recap: "Checkpoint: Code Red means move people away from the hazard, clear fire routes, and follow evacuation or containment policy immediately.",
   },
+  {
+    moduleId: "code-orange-missing-patient-search",
+    spotlightIndex: 12,
+    title: "Lesson 13: Code Orange Missing Patient Search and Elopement Response",
+    body: "Code Orange response requires immediate missing-patient escalation, exact last-seen reporting, and coordinated search steps so the response starts without delay.",
+    check: "A patient is missing from the unit and the last known location is the courtyard gate. Best immediate action?",
+    answers: [
+      { text: "Activate Code Orange, notify the search chain, share the exact last-seen location, and follow the facility's missing-patient procedure immediately.", good: true, score: 8 },
+      { text: "Check the chart for a few minutes before telling anyone else.", good: false, score: 2 },
+      { text: "Wait until the next round so the patient has time to return.", good: false, score: 1 },
+    ],
+    why: "Code Orange requires immediate search escalation and exact location reporting, not delay.",
+    categoryKey: "missingPatient",
+    recap: "Checkpoint: Code Orange means initiate the missing-patient response, share the last-known location, and follow the search procedure immediately.",
+  },
 ];
 
 const scenarios = [
@@ -1544,7 +1601,6 @@ const scenarios = [
       { text: "Let the receiving shift decide after they take responsibility.", score: 2, good: false, feedback: "Delayed reconciliation leaves an unsafe gap." },
     ],
     categoryKey: "safety",
-      category: "Code Red - Fire Response",
   },
   {
     title: "Scenario 2: Observation Downgrade Without Rationale",
@@ -1766,6 +1822,19 @@ const scenarios = [
     ],
     categoryKey: "disaster",
     recap: "Scenario recap: Code Yellow response starts with disaster-plan activation, staged resources, and controlled surge coordination.",
+  },
+  {
+    title: "Scenario 19: Code Orange at the Courtyard Gate",
+    category: "Code Orange - Missing Patient Search",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "Staff discover a patient is missing and the last verified sighting was near the courtyard gate. Best first move?",
+    choices: [
+      { text: "Activate Code Orange, notify the search chain, and provide the exact last-seen location and description so the search starts immediately.", score: 20, good: true, feedback: "Correct. Missing-patient response depends on exact location reporting and immediate escalation." },
+      { text: "Search the building quietly on your own before notifying the team.", score: 3, good: false, feedback: "Delaying the alert weakens the coordinated search." },
+      { text: "Wait for the patient to return to the unit before taking any action.", score: 2, good: false, feedback: "Missing-patient events require immediate action, not waiting." },
+    ],
+    categoryKey: "missingPatient",
+    recap: "Scenario recap: Code Orange response starts with immediate escalation, exact last-seen reporting, and coordinated search steps.",
   },
 ];
 
