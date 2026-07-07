@@ -60,6 +60,7 @@ const defaultRoleConfigs = [
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
       "emergency-code-reference-and-response-priorities",
+      "code-blue-medical-emergency-response",
     ],
   },
   {
@@ -74,6 +75,7 @@ const defaultRoleConfigs = [
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
       "emergency-code-reference-and-response-priorities",
+      "code-blue-medical-emergency-response",
     ],
   },
   {
@@ -88,6 +90,7 @@ const defaultRoleConfigs = [
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
       "emergency-code-reference-and-response-priorities",
+      "code-blue-medical-emergency-response",
     ],
   },
 ];
@@ -99,6 +102,7 @@ const MODULE_LIBRARY = [
   { id: "critical-lab-result-readback", title: "Critical Lab Result Escalation and Provider Read-Back" },
   { id: "discharge-release-guardian-verification", title: "Discharge Transportation Release and Guardian Verification" },
   { id: "emergency-code-reference-and-response-priorities", title: "Emergency Code Reference and Response Priorities" },
+  { id: "code-blue-medical-emergency-response", title: "Code Blue Medical Emergency Response and Resuscitation Support" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -258,7 +262,7 @@ function loadRoleConfigs() {
   const raw = localStorage.getItem(ROLE_CONFIG_KEY);
   if (!raw) return [...defaultRoleConfigs];
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response"];
 
   try {
     const parsed = JSON.parse(raw);
@@ -298,7 +302,7 @@ async function loadRoleConfigsFromBackend() {
     return false;
   }
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response"];
 
   roleConfigs = rows.map((item) => ({
     id: item.id,
@@ -783,6 +787,13 @@ const roleDepartmentSpotlights = {
         "Treat Code Red, Code Blue, Code Orange, Code Purple, Code Silver, Code Yellow, Code Black, and Code Green as distinct response pathways.",
       ],
     },
+    {
+      title: "Code Blue Medical Emergency Example",
+      points: [
+        "Call for immediate medical emergency response when breathing, pulse, or responsiveness is compromised.",
+        "Bring the crash cart, AED, or oxygen support to the patient and assign a runner for supplies or outside help.",
+      ],
+    },
   ],
   nonclinical: [
     {
@@ -825,6 +836,13 @@ const roleDepartmentSpotlights = {
       points: [
         "Repeat the code name and location clearly so the right team can respond immediately.",
         "Protect privacy and reduce traffic while the appropriate response is in motion.",
+      ],
+    },
+    {
+      title: "Code Blue Access Support",
+      points: [
+        "Clear the route to the patient and bring the nearest resuscitation equipment without delay.",
+        "Keep bystanders out of the space so responders can work without obstruction.",
       ],
     },
   ],
@@ -871,6 +889,13 @@ const roleDepartmentSpotlights = {
         "Audit drill timing and escalation accuracy so code response stays crisp under pressure.",
       ],
     },
+    {
+      title: "Code Blue Governance",
+      points: [
+        "Measure whether staff call the medical emergency quickly and assign tasks without crowding the bedside.",
+        "Review response timing, equipment readiness, and post-event documentation for drift.",
+      ],
+    },
   ],
 };
 
@@ -882,6 +907,10 @@ const TRAINING_CATEGORIES = {
   emergencyCodes: {
     label: "Emergency Code Reference and Response Priorities",
     retryModule: "Review the emergency-code reference module to reinforce code recognition, immediate response routing, and escalation discipline.",
+  },
+  medicalEmergency: {
+    label: "Code Blue Medical Emergency Response and Resuscitation Support",
+    retryModule: "Review the Code Blue module to strengthen rapid medical-emergency activation, equipment routing, and resuscitation support discipline.",
   },
   conduct: {
     label: "Code Purple Team Roles and Scene Discipline",
@@ -943,6 +972,10 @@ const roleFeedbackSnippets = {
       good: "Clinical lens: closed-loop handoffs are critical in psychiatric acute care transitions.",
       bad: "Clinical lens: handoff ambiguity is a top preventable safety risk.",
     },
+    medicalEmergency: {
+      good: "Clinical lens: immediate activation and task assignment protect the patient during a medical emergency.",
+      bad: "Clinical lens: medical emergencies require immediate response routing, not delay or debate.",
+    },
     abuseNeglect: {
       good: "Clinical lens: immediate safety check plus reporting is the correct protective sequence.",
       bad: "Clinical lens: critical-safety concerns require urgent documentation and escalation.",
@@ -972,6 +1005,10 @@ const roleFeedbackSnippets = {
     safety: {
       good: "Access-point lens: complete transfers prevent downstream confusion and delay.",
       bad: "Access-point lens: partial handoffs can produce major safety misses.",
+    },
+    medicalEmergency: {
+      good: "Access-point lens: clear access and fast equipment routing support the resuscitation team.",
+      bad: "Access-point lens: crowding or delays can obstruct medical-emergency response.",
     },
     abuseNeglect: {
       good: "Access-point lens: your response balanced immediate support with proper escalation.",
@@ -1003,6 +1040,10 @@ const roleFeedbackSnippets = {
       good: "Leadership lens: read-back expectations improve reliability across shifts.",
       bad: "Leadership lens: unmanaged handoff gaps become repeatable system defects.",
     },
+    medicalEmergency: {
+      good: "Leadership lens: fast role assignment and equipment readiness keep a Code Blue response coordinated.",
+      bad: "Leadership lens: delayed coordination creates avoidable response drift in a medical emergency.",
+    },
     abuseNeglect: {
       good: "Leadership lens: this protects vulnerable patients and sets a clear reporting standard.",
       bad: "Leadership lens: delayed action on critical-safety concerns is unacceptable risk.",
@@ -1020,6 +1061,7 @@ const adaptiveHintBank = {
   privacy: "Hint: Ask who is authorized, what is necessary, and where the conversation should occur.",
   reporting: "Hint: If facts suggest risk, document and escalate now, not later.",
   safety: "Hint: Look for read-back, risk confirmation, and explicit task ownership.",
+  medicalEmergency: "Hint: Activate immediately, clear space, and route equipment or runners without delay.",
   abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and urgent escalation pathways.",
   knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
 };
@@ -1216,6 +1258,21 @@ const coreLessons = [
     categoryKey: "emergencyCodes",
     recap: "Checkpoint: emergency code announcements must be recognized instantly and matched to the correct response path.",
   },
+  {
+    moduleId: "code-blue-medical-emergency-response",
+    spotlightIndex: 6,
+    title: "Lesson 7: Code Blue Medical Emergency Response and Resuscitation Support",
+    body: "Code Blue response requires immediate medical-emergency activation, rapid equipment routing, and clear task assignment around the patient.",
+    check: "A patient becomes unresponsive and is not breathing normally. Best immediate action?",
+    answers: [
+      { text: "Activate Code Blue immediately, assign a runner for the crash cart and AED, and begin the site's resuscitation response per role assignment.", good: true, score: 8 },
+      { text: "Wait to see whether the patient wakes up before calling for help.", good: false, score: 2 },
+      { text: "Finish the current task and ask someone to check later.", good: false, score: 1 },
+    ],
+    why: "Code Blue must trigger immediate resuscitation support and task routing without delay.",
+    categoryKey: "medicalEmergency",
+    recap: "Checkpoint: Code Blue means immediate medical-emergency activation, resuscitation support, and clear task routing.",
+  },
 ];
 
 const scenarios = [
@@ -1388,6 +1445,19 @@ const scenarios = [
     categoryKey: "conduct",
     recap: "Scenario recap: Code Purple closure requires environmental checks, safety planning, and shift handoff updates.",
   },
+  {
+    title: "Scenario 14: Code Blue at the Medication Window",
+    category: "Code Blue - Medical Emergency Response",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A patient at the medication window suddenly collapses and is not responsive. Best first response?",
+    choices: [
+      { text: "Call Code Blue, clear the area, bring the nearest resuscitation equipment, and assign a runner while the clinical team begins the response sequence.", score: 20, good: true, feedback: "Correct. Code Blue requires immediate activation and coordinated task routing." },
+      { text: "Move the patient to a chair first and see if they recover.", score: 4, good: false, feedback: "Moving a collapsed patient before activation delays care." },
+      { text: "Wait for a supervisor to arrive before starting the response.", score: 2, good: false, feedback: "Medical emergencies do not pause for supervision." },
+    ],
+    categoryKey: "medicalEmergency",
+    recap: "Scenario recap: Code Blue requires immediate activation, equipment access, and task assignment at the point of collapse.",
+  },
 ];
 
 const lightningQuestions = [
@@ -1440,6 +1510,16 @@ const lightningQuestions = [
     ],
     why: "Code Orange is the missing-patient alert and must trigger the correct response chain.",
     categoryKey: "emergencyCodes",
+  },
+  {
+    q: "Code Blue means",
+    answers: [
+      { text: "Medical emergency and immediate resuscitation response", score: 12, good: true },
+      { text: "Missing patient response", score: 3, good: false },
+      { text: "Bomb threat response", score: 1, good: false },
+    ],
+    why: "Code Blue is the medical-emergency alert and should trigger immediate resuscitation support.",
+    categoryKey: "medicalEmergency",
   },
   {
     q: "Code Purple stabilization starts with",

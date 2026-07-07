@@ -13,6 +13,7 @@ const MODULE_LIBRARY = [
   { id: "critical-lab-result-readback", title: "Critical Lab Result Escalation and Provider Read-Back" },
   { id: "discharge-release-guardian-verification", title: "Discharge Transportation Release and Guardian Verification" },
   { id: "emergency-code-reference-and-response-priorities", title: "Emergency Code Reference and Response Priorities" },
+  { id: "code-blue-medical-emergency-response", title: "Code Blue Medical Emergency Response and Resuscitation Support" },
 ];
 
 const MODULE_LABEL_BY_ID = new Map(MODULE_LIBRARY.map((item) => [item.id, item.title]));
@@ -34,6 +35,7 @@ function inferModuleIdFromLessonTitle(title) {
   if (normalized.includes("critical lab") || normalized.includes("read-back") || normalized.includes("provider read-back")) return "critical-lab-result-readback";
   if (normalized.includes("guardian verification") || normalized.includes("discharge transportation") || normalized.includes("release")) return "discharge-release-guardian-verification";
   if (normalized.includes("code red") || normalized.includes("code orange") || normalized.includes("code blue") || normalized.includes("code silver") || normalized.includes("code yellow") || normalized.includes("code black") || normalized.includes("code green") || normalized.includes("emergency code") || normalized.includes("response priorities")) return "emergency-code-reference-and-response-priorities";
+  if (normalized.includes("medical emergency") || normalized.includes("resuscitation") || normalized.includes("cardiac arrest") || normalized.includes("crash cart")) return "code-blue-medical-emergency-response";
   return null;
 }
 
