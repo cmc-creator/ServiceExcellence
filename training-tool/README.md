@@ -29,7 +29,7 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 ## Included
 
 - Luxury glassmorphism visual style with animated effects
-- Seven built-in annual modules:
+- Eight built-in annual modules:
   - Observation precaution reassessment and handoff clarity
   - Leave return screening and contraband re-entry control
   - Dining room Code Purple response and team role assignment
