@@ -9,7 +9,7 @@ router.use(requireAuth, requireRole(["OWNER", "ADMIN", "MANAGER"]));
 const MODULE_LIBRARY = [
   { id: "observation-precaution-reassessment-handoffs", title: "Observation Precaution Reassessment and Handoff Clarity" },
   { id: "leave-return-screening-contraband-control", title: "Leave Return Screening and Contraband Re-Entry Control" },
-  { id: "dining-room-code-grey-response", title: "Dining Room Code Grey Response and Team Role Assignment" },
+  { id: "dining-room-behavioral-emergency-response", title: "Dining Room Behavioral Emergency Response and Team Role Assignment" },
   { id: "critical-lab-result-readback", title: "Critical Lab Result Escalation and Provider Read-Back" },
   { id: "discharge-release-guardian-verification", title: "Discharge Transportation Release and Guardian Verification" },
 ];
@@ -29,7 +29,7 @@ function inferModuleIdFromLessonTitle(title) {
   if (!normalized) return null;
   if (normalized.includes("observation") || normalized.includes("reassessment") || normalized.includes("handoff clarity")) return "observation-precaution-reassessment-handoffs";
   if (normalized.includes("leave return") || normalized.includes("re-entry") || normalized.includes("contraband")) return "leave-return-screening-contraband-control";
-  if (normalized.includes("code grey") || normalized.includes("dining room") || normalized.includes("team role")) return "dining-room-code-grey-response";
+  if (normalized.includes("behavioral emergency") || normalized.includes("code grey") || normalized.includes("dining room") || normalized.includes("team role")) return "dining-room-behavioral-emergency-response";
   if (normalized.includes("critical lab") || normalized.includes("read-back") || normalized.includes("provider read-back")) return "critical-lab-result-readback";
   if (normalized.includes("guardian verification") || normalized.includes("discharge transportation") || normalized.includes("release")) return "discharge-release-guardian-verification";
   return null;

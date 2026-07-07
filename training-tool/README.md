@@ -21,7 +21,7 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 - Five built-in annual modules:
   - Observation precaution reassessment and handoff clarity
   - Leave return screening and contraband re-entry control
-  - Dining room Code Grey response and team role assignment
+  - Dining room behavioral emergency response and team role assignment
   - Critical lab result escalation and provider read-back
   - Discharge transportation release and guardian verification
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
