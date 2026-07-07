@@ -37,6 +37,7 @@ Configure runtime settings in `runtime-config.js` for production backend routing
   - Discharge transportation release and guardian verification
   - Emergency code reference and response priorities
   - Code Blue medical emergency response and resuscitation support
+  - Code Silver active shooter response and lockdown support
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round

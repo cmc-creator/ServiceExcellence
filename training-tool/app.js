@@ -24,7 +24,6 @@ const ROLE_CONFIG_KEY = "nyxRoleConfigs";
 const SOUND_KEY = "nyxSoundEnabled";
 const SEASONAL_KEY = "nyxSeasonalAchievements";
 const BRAND_MODE_KEY = "nyxBrandMode";
-
 const seasonalThemes = {
   0: "January Spotlight: New Year, New Standards.",
   1: "February Spotlight: Respect Is A Daily Practice.",
@@ -45,6 +44,13 @@ const mysteryBadgeCatalog = [
   { key: "Golden Moment", hint: "Hit a rare golden feedback moment." },
   { key: "Seasonal Champion", hint: "Complete five passes in one month." },
   { key: "Secret Master", hint: "Find and clear the hidden bonus scenario." },
+    {
+      title: "Code Silver Access Support",
+      points: [
+        "Move people toward cover or secure spaces and keep hall traffic away from the threat area.",
+        "Limit communication to safety-critical routing so the unit can stay quiet and controlled.",
+      ],
+    },
 ];
 
 const defaultRoleConfigs = [
@@ -61,6 +67,7 @@ const defaultRoleConfigs = [
       "discharge-release-guardian-verification",
       "emergency-code-reference-and-response-priorities",
       "code-blue-medical-emergency-response",
+      "code-silver-active-shooter-response",
     ],
   },
   {
@@ -76,6 +83,7 @@ const defaultRoleConfigs = [
       "discharge-release-guardian-verification",
       "emergency-code-reference-and-response-priorities",
       "code-blue-medical-emergency-response",
+      "code-silver-active-shooter-response",
     ],
   },
   {
@@ -91,6 +99,7 @@ const defaultRoleConfigs = [
       "discharge-release-guardian-verification",
       "emergency-code-reference-and-response-priorities",
       "code-blue-medical-emergency-response",
+      "code-silver-active-shooter-response",
     ],
   },
 ];
@@ -103,6 +112,7 @@ const MODULE_LIBRARY = [
   { id: "discharge-release-guardian-verification", title: "Discharge Transportation Release and Guardian Verification" },
   { id: "emergency-code-reference-and-response-priorities", title: "Emergency Code Reference and Response Priorities" },
   { id: "code-blue-medical-emergency-response", title: "Code Blue Medical Emergency Response and Resuscitation Support" },
+  { id: "code-silver-active-shooter-response", title: "Code Silver Active Shooter Response and Lockdown Support" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -122,7 +132,6 @@ const requireLoginSetting = localStorage.getItem("nyxRequireLogin");
 const REQUIRE_LOGIN = requireLoginSetting !== null
   ? requireLoginSetting !== "false"
   : window.NYX_REQUIRE_LOGIN === true;
-
 const ORG_SLUG =
   localStorage.getItem("nyxOrgSlug") ||
   window.NYX_ORG_SLUG ||
@@ -262,7 +271,7 @@ function loadRoleConfigs() {
   const raw = localStorage.getItem(ROLE_CONFIG_KEY);
   if (!raw) return [...defaultRoleConfigs];
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response"];
 
   try {
     const parsed = JSON.parse(raw);
@@ -302,7 +311,7 @@ async function loadRoleConfigsFromBackend() {
     return false;
   }
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response"];
 
   roleConfigs = rows.map((item) => ({
     id: item.id,
@@ -794,6 +803,13 @@ const roleDepartmentSpotlights = {
         "Bring the crash cart, AED, or oxygen support to the patient and assign a runner for supplies or outside help.",
       ],
     },
+    {
+      title: "Code Silver Active Shooter Example",
+      points: [
+        "Get behind cover, move people away from danger, and follow the site's lockdown or shelter directives immediately.",
+        "Report location and threat details only when it is safe to do so and avoid drawing attention to the response team.",
+      ],
+    },
   ],
   nonclinical: [
     {
@@ -843,6 +859,13 @@ const roleDepartmentSpotlights = {
       points: [
         "Clear the route to the patient and bring the nearest resuscitation equipment without delay.",
         "Keep bystanders out of the space so responders can work without obstruction.",
+      ],
+    },
+    {
+      title: "Code Silver Access Support",
+      points: [
+        "Move people to cover, control access points, and keep hall traffic away from the threat area.",
+        "Relay only safety-critical information and avoid creating noise or confusion during lockdown or shelter response.",
       ],
     },
   ],
@@ -896,6 +919,13 @@ const roleDepartmentSpotlights = {
         "Review response timing, equipment readiness, and post-event documentation for drift.",
       ],
     },
+    {
+      title: "Code Silver Governance",
+      points: [
+        "Audit whether staff can locate cover, lock down access points, and follow threat-response instructions without delay.",
+        "Review after-action reports for communication discipline, drill readiness, and safe movement choices under pressure.",
+      ],
+    },
   ],
 };
 
@@ -911,6 +941,10 @@ const TRAINING_CATEGORIES = {
   medicalEmergency: {
     label: "Code Blue Medical Emergency Response and Resuscitation Support",
     retryModule: "Review the Code Blue module to strengthen rapid medical-emergency activation, equipment routing, and resuscitation support discipline.",
+  },
+  activeThreat: {
+    label: "Code Silver Active Shooter Response and Lockdown Support",
+    retryModule: "Review the Code Silver module to strengthen cover-seeking, lockdown discipline, and threat-response communication.",
   },
   conduct: {
     label: "Code Purple Team Roles and Scene Discipline",
@@ -1062,6 +1096,7 @@ const adaptiveHintBank = {
   reporting: "Hint: If facts suggest risk, document and escalate now, not later.",
   safety: "Hint: Look for read-back, risk confirmation, and explicit task ownership.",
   medicalEmergency: "Hint: Activate immediately, clear space, and route equipment or runners without delay.",
+  activeThreat: "Hint: Get to cover, lock or secure the area if directed, and communicate only what is necessary for safety.",
   abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and urgent escalation pathways.",
   knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
 };
@@ -1273,6 +1308,21 @@ const coreLessons = [
     categoryKey: "medicalEmergency",
     recap: "Checkpoint: Code Blue means immediate medical-emergency activation, resuscitation support, and clear task routing.",
   },
+  {
+    moduleId: "code-silver-active-shooter-response",
+    spotlightIndex: 7,
+    title: "Lesson 8: Code Silver Active Shooter Response and Lockdown Support",
+    body: "Code Silver response requires immediate protective movement, cover or lockdown compliance, and careful communication that supports safety without increasing exposure.",
+    check: "You hear Code Silver announced over the unit intercom while you are near a hallway with open doors. Best immediate action?",
+    answers: [
+      { text: "Move to cover or behind a locked barrier if directed, secure nearby doors, keep people away from the exposed area, and follow site lockdown or shelter instructions immediately.", good: true, score: 8 },
+      { text: "Step into the hallway to confirm the source of the announcement before deciding what to do.", good: false, score: 2 },
+      { text: "Continue normal work until you receive a second announcement with more details.", good: false, score: 1 },
+    ],
+    why: "Code Silver is an active-threat alert and requires immediate protective action rather than investigation or delay.",
+    categoryKey: "activeThreat",
+    recap: "Checkpoint: Code Silver means protect life first, move to cover, and follow lockdown or shelter directives without delay.",
+  },
 ];
 
 const scenarios = [
@@ -1458,6 +1508,19 @@ const scenarios = [
     categoryKey: "medicalEmergency",
     recap: "Scenario recap: Code Blue requires immediate activation, equipment access, and task assignment at the point of collapse.",
   },
+  {
+    title: "Scenario 15: Code Silver in the Unit Corridor",
+    category: "Code Silver - Active Shooter Response",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "Code Silver is announced while you are in a corridor with patients and visitors nearby. Best first move?",
+    choices: [
+      { text: "Get to cover or behind a secured barrier, move others away from the exposed corridor, secure nearby access points if safe, and follow the site's lockdown or shelter instructions.", score: 20, good: true, feedback: "Correct. Code Silver requires immediate protective movement and access control." },
+      { text: "Go into the corridor to see whether you can identify the source of the alert.", score: 3, good: false, feedback: "Investigating the threat increases exposure." },
+      { text: "Wait for leadership to arrive before doing anything.", score: 2, good: false, feedback: "Delay leaves people exposed during an active threat." },
+    ],
+    categoryKey: "activeThreat",
+    recap: "Scenario recap: Code Silver response starts with cover, movement away from danger, and immediate lockdown or shelter compliance.",
+  },
 ];
 
 const lightningQuestions = [
@@ -1520,6 +1583,16 @@ const lightningQuestions = [
     ],
     why: "Code Blue is the medical-emergency alert and should trigger immediate resuscitation support.",
     categoryKey: "medicalEmergency",
+  },
+  {
+    q: "Code Silver means",
+    answers: [
+      { text: "Active shooter response and immediate cover or lockdown action", score: 12, good: true },
+      { text: "Routine discharge assistance", score: 3, good: false },
+      { text: "Missing patient search", score: 1, good: false },
+    ],
+    why: "Code Silver is the active-threat alert and should trigger immediate protective action and safe communication.",
+    categoryKey: "activeThreat",
   },
   {
     q: "Code Purple stabilization starts with",
