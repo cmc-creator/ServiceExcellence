@@ -71,6 +71,7 @@ const defaultRoleConfigs = [
       "code-black-bomb-threat-response",
       "code-green-severe-weather-response",
       "code-yellow-disaster-response",
+      "code-red-fire-response",
     ],
   },
   {
@@ -90,6 +91,7 @@ const defaultRoleConfigs = [
       "code-black-bomb-threat-response",
       "code-green-severe-weather-response",
       "code-yellow-disaster-response",
+      "code-red-fire-response",
     ],
   },
   {
@@ -109,6 +111,7 @@ const defaultRoleConfigs = [
       "code-black-bomb-threat-response",
       "code-green-severe-weather-response",
       "code-yellow-disaster-response",
+      "code-red-fire-response",
     ],
   },
 ];
@@ -125,6 +128,7 @@ const MODULE_LIBRARY = [
   { id: "code-black-bomb-threat-response", title: "Code Black Bomb Threat Response and Area Safety" },
   { id: "code-green-severe-weather-response", title: "Code Green Severe Weather Response and Shelter Support" },
   { id: "code-yellow-disaster-response", title: "Code Yellow Internal/External Disaster Response and Surge Coordination" },
+  { id: "code-red-fire-response", title: "Code Red Fire Response and Evacuation/Containment Support" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -283,7 +287,7 @@ function loadRoleConfigs() {
   const raw = localStorage.getItem(ROLE_CONFIG_KEY);
   if (!raw) return [...defaultRoleConfigs];
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response", "code-red-fire-response"];
 
   try {
     const parsed = JSON.parse(raw);
@@ -323,7 +327,7 @@ async function loadRoleConfigsFromBackend() {
     return false;
   }
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response", "code-red-fire-response"];
 
   roleConfigs = rows.map((item) => ({
     id: item.id,
@@ -843,6 +847,13 @@ const roleDepartmentSpotlights = {
         "Prepare space, supplies, and transport routes while keeping routine operations controlled and clearly communicated.",
       ],
     },
+    {
+      title: "Code Red Fire Response Example",
+      points: [
+        "Activate fire response immediately, remove patients from the hazard, and follow evacuation or containment guidance.",
+        "Keep doors, routes, and notification chain actions aligned with the facility's fire plan.",
+      ],
+    },
   ],
   nonclinical: [
     {
@@ -920,6 +931,13 @@ const roleDepartmentSpotlights = {
       points: [
         "Clear routes, staging areas, and access points so surge traffic or disaster response can move without delay.",
         "Relay only the approved disaster-plan instructions and avoid adding unnecessary noise or speculation.",
+      ],
+    },
+    {
+      title: "Code Red Access Support",
+      points: [
+        "Clear hallways and exits quickly while keeping the fire route open for safe movement.",
+        "Follow the fire plan's direction on containment, evacuation, and notifications without delay.",
       ],
     },
   ],
@@ -1019,6 +1037,10 @@ const TRAINING_CATEGORIES = {
     label: "Code Yellow Internal/External Disaster Response and Surge Coordination",
     retryModule: "Review the Code Yellow module to strengthen incident-command awareness, surge staging, and disaster-plan execution.",
   },
+  fireResponse: {
+    label: "Code Red Fire Response and Evacuation/Containment Support",
+    retryModule: "Review the Code Red module to strengthen fire-plan execution, hazard removal, and evacuation or containment discipline.",
+  },
   conduct: {
     label: "Code Purple Team Roles and Scene Discipline",
     retryModule: "Review dining-room Code Purple scenarios to reinforce explicit role assignment and scene control discipline.",
@@ -1095,6 +1117,10 @@ const roleFeedbackSnippets = {
       good: "Clinical lens: disaster planning protects patient flow, safety, and continuity under surge conditions.",
       bad: "Clinical lens: disaster response requires following the plan and staging resources, not improvisation.",
     },
+    fireResponse: {
+      good: "Clinical lens: moving people away from the hazard and following the fire plan protects everyone in the unit.",
+      bad: "Clinical lens: fire response requires immediate movement and clear containment or evacuation actions, not delay.",
+    },
     abuseNeglect: {
       good: "Clinical lens: immediate safety check plus reporting is the correct protective sequence.",
       bad: "Clinical lens: critical-safety concerns require urgent documentation and escalation.",
@@ -1140,6 +1166,10 @@ const roleFeedbackSnippets = {
     disaster: {
       good: "Access-point lens: staging supplies and keeping routes clear helps the whole facility absorb surge safely.",
       bad: "Access-point lens: confusion at the access point slows every disaster-control step behind it.",
+    },
+    fireResponse: {
+      good: "Access-point lens: clear egress routes and prompt notifications are what the fire response needs.",
+      bad: "Access-point lens: blocked exits or unclear directions make fire response harder and slower.",
     },
     abuseNeglect: {
       good: "Access-point lens: your response balanced immediate support with proper escalation.",
@@ -1187,6 +1217,10 @@ const roleFeedbackSnippets = {
       good: "Leadership lens: incident-command discipline and resource staging are essential when a disaster creates surge.",
       bad: "Leadership lens: mixed messages or delayed staging weaken the entire response chain.",
     },
+    fireResponse: {
+      good: "Leadership lens: clear fire-plan execution keeps the unit coordinated when every second matters.",
+      bad: "Leadership lens: hesitation or conflicting instructions increase fire risk and confusion.",
+    },
     abuseNeglect: {
       good: "Leadership lens: this protects vulnerable patients and sets a clear reporting standard.",
       bad: "Leadership lens: delayed action on critical-safety concerns is unacceptable risk.",
@@ -1209,6 +1243,7 @@ const adaptiveHintBank = {
   bombThreat: "Hint: Preserve the scene, reduce movement, and follow the bomb-threat procedure exactly as written.",
   severeWeather: "Hint: Move to interior shelter areas quickly and keep people away from windows and exterior hazards.",
   disaster: "Hint: Follow the disaster plan, stage resources, and keep routes and roles clear for surge coordination.",
+  fireResponse: "Hint: Move people away from the hazard, keep exits clear, and follow the facility fire plan immediately.",
   abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and urgent escalation pathways.",
   knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
 };
@@ -1480,6 +1515,21 @@ const coreLessons = [
     categoryKey: "disaster",
     recap: "Checkpoint: Code Yellow means follow incident command, stage resources, and keep patient flow controlled during disaster surge conditions.",
   },
+  {
+    moduleId: "code-red-fire-response",
+    spotlightIndex: 11,
+    title: "Lesson 12: Code Red Fire Response and Evacuation/Containment Support",
+    body: "Code Red response requires immediate fire response, hazard removal, and clear evacuation or containment steps so people move away from danger without delay.",
+    check: "You smell smoke near the dayroom and a fire alarm is active. Best immediate action?",
+    answers: [
+      { text: "Activate Code Red response, move patients and visitors away from the hazard, notify the fire response chain, and follow site evacuation or containment policy.", good: true, score: 8 },
+      { text: "Wait for security to verify the source before moving anyone.", good: false, score: 2 },
+      { text: "Continue the current task so the unit does not fall behind.", good: false, score: 1 },
+    ],
+    why: "Code Red requires immediate fire response and policy-based escalation, not delay or task continuation.",
+    categoryKey: "fireResponse",
+    recap: "Checkpoint: Code Red means move people away from the hazard, clear fire routes, and follow evacuation or containment policy immediately.",
+  },
 ];
 
 const scenarios = [
@@ -1494,7 +1544,7 @@ const scenarios = [
       { text: "Let the receiving shift decide after they take responsibility.", score: 2, good: false, feedback: "Delayed reconciliation leaves an unsafe gap." },
     ],
     categoryKey: "safety",
-    recap: "Scenario recap: observation conflicts require immediate reconciliation, not post-transfer correction.",
+      category: "Code Red - Fire Response",
   },
   {
     title: "Scenario 2: Observation Downgrade Without Rationale",
@@ -1821,6 +1871,16 @@ const lightningQuestions = [
     categoryKey: "disaster",
   },
   {
+    q: "Code Red means",
+    answers: [
+      { text: "Fire response and immediate evacuation or containment action", score: 12, good: true },
+      { text: "Severe weather response", score: 3, good: false },
+      { text: "Missing patient search", score: 1, good: false },
+    ],
+    why: "Code Red is the fire alert and should trigger immediate hazard removal and fire-plan execution.",
+    categoryKey: "fireResponse",
+  },
+  {
     q: "Code Purple stabilization starts with",
     answers: [
       { text: "Observation, hazard control, and staff roles", score: 12, good: true },
@@ -1864,6 +1924,7 @@ const finalAssessment = [
   { q: "A calm patient after Code Purple still needs", a: ["Documented closure and observation alignment", "No further follow-up", "Only a verbal promise to stay calm"], c: 0, k: "conduct" },
   { q: "Code Green response starts with", a: ["Interior sheltering away from windows", "Waiting for the storm to pass", "Checking outside conditions firsthand"], c: 0, k: "severeWeather" },
   { q: "Code Yellow response starts with", a: ["Incident-command guided disaster staging", "Normal operations until more details arrive", "Sending staff outside to investigate"], c: 0, k: "disaster" },
+  { q: "Code Red response starts with", a: ["Immediate hazard removal and fire-plan execution", "Waiting for a second alarm", "Continuing routine tasks"], c: 0, k: "fireResponse" },
 ];
 
 const panels = {

@@ -29,7 +29,7 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 ## Included
 
 - Luxury glassmorphism visual style with animated effects
-- Eleven built-in annual modules:
+- Twelve built-in annual modules:
   - Observation precaution reassessment and handoff clarity
   - Leave return screening and contraband re-entry control
   - Dining room Code Purple response and team role assignment
@@ -41,10 +41,11 @@ Configure runtime settings in `runtime-config.js` for production backend routing
   - Code Black bomb threat response and area safety
   - Code Green severe weather response and shelter support
   - Code Yellow internal/external disaster response and surge coordination
+  - Code Red fire response and evacuation/containment support
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
 - Branching scenarios with role-based tracks (clinical, non-clinical, leadership)
 - Timed challenge round
-- Full final assessment with 29 questions
+- Full final assessment with 30 questions
 - Policy topic explorer
 - Completion summary and achievement badges
 - Exportable tracking JSON for LMS mapping
