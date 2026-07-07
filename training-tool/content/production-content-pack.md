@@ -26,7 +26,7 @@
 - Caption and transcript text files for accessibility
 
 ## 5. Compliance Pack
-- Policy citation map per scenario
+- Policy citation map per scenario: [docs/policy-citation-map.md](../docs/policy-citation-map.md)
 - Mandatory annual attestation language
 - Reporting hotline and speak-up references
 - Version and effective-date metadata

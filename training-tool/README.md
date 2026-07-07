@@ -79,6 +79,7 @@ Use these with your LMS vendor or internal team to publish completion, scoring, 
 
 - Master script: `content/master-facilitation-script.md`
 - Production pack: `content/production-content-pack.md`
+- Policy citation map: `docs/policy-citation-map.md`
 
 ## Backend Integration
 

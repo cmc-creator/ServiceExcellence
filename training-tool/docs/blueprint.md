@@ -66,7 +66,7 @@ Deliver a high-engagement annual training for all Destiny Springs Healthcare psy
   - Bronze: below 65 with required remediation steps
 
 ## Compliance Controls
-- Policy citation attached to each scenario.
+- Policy citation attached to each scenario and indexed in [policy-citation-map.md](policy-citation-map.md).
 - Version stamp on all policy-derived content.
 - Mandatory annual acknowledgment capture.
 - Retake logic for failing score thresholds.
