@@ -20,7 +20,6 @@ const state = {
 };
 
 const ROLE_CONFIG_KEY = "nyxRoleConfigs";
-const SOUND_KEY = "nyxSoundEnabled";
 const SEASONAL_KEY = "nyxSeasonalAchievements";
 const BRAND_MODE_KEY = "nyxBrandMode";
 
@@ -55,7 +54,7 @@ const defaultRoleConfigs = [
     enabledModules: [
       "observation-precaution-reassessment-handoffs",
       "leave-return-screening-contraband-control",
-      "dining-room-code-grey-response",
+      "dining-room-code-purple-response",
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
     ],
@@ -68,7 +67,7 @@ const defaultRoleConfigs = [
     enabledModules: [
       "observation-precaution-reassessment-handoffs",
       "leave-return-screening-contraband-control",
-      "dining-room-code-grey-response",
+      "dining-room-code-purple-response",
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
     ],
@@ -81,7 +80,7 @@ const defaultRoleConfigs = [
     enabledModules: [
       "observation-precaution-reassessment-handoffs",
       "leave-return-screening-contraband-control",
-      "dining-room-code-grey-response",
+      "dining-room-code-purple-response",
       "critical-lab-result-readback",
       "discharge-release-guardian-verification",
     ],
@@ -91,7 +90,7 @@ const defaultRoleConfigs = [
 const MODULE_LIBRARY = [
   { id: "observation-precaution-reassessment-handoffs", title: "Observation Precaution Reassessment and Handoff Clarity" },
   { id: "leave-return-screening-contraband-control", title: "Leave Return Screening and Contraband Re-Entry Control" },
-  { id: "dining-room-behavioral-emergency-response", title: "Dining Room Behavioral Emergency Response and Team Role Assignment" },
+  { id: "dining-room-code-purple-response", title: "Dining Room Code Purple Response and Team Role Assignment" },
   { id: "critical-lab-result-readback", title: "Critical Lab Result Escalation and Provider Read-Back" },
   { id: "discharge-release-guardian-verification", title: "Discharge Transportation Release and Guardian Verification" },
 ];
@@ -708,14 +707,14 @@ const easterEggs = [
 
 // Secret Bonus Scenario
 const bonusScenario = {
-  title: "Secret Bonus: Critical Lab Alert During Dining Room Behavioral Emergency Response",
-  category: "Challenge - Observation, Behavioral Emergency Response, and Release Safety",
+  title: "Secret Bonus: Critical Lab Alert During Dining Room Code Purple Response",
+  category: "Challenge - Observation, Code Purple Response, and Release Safety",
   roles: ["clinical", "nonclinical", "leadership"],
   prompt: "A patient on enhanced observation escalates in the dining room, a critical lab result is called in, and the planned discharge escort does not match the authorized guardian. Best first sequence?",
   choices: [
-    { text: "Reassign observation coverage, designate a behavioral emergency lead and move bystanders, escalate the critical result with read-back, and hold discharge until guardian authorization is verified.", score: 20, good: true, feedback: "Excellent. This sequence protects patient safety, provider communication, and release control." },
+    { text: "Reassign observation coverage, designate a Code Purple lead and move bystanders, escalate the critical result with read-back, and hold discharge until guardian authorization is verified.", score: 20, good: true, feedback: "Excellent. This sequence protects patient safety, provider communication, and release control." },
     { text: "Handle the dining room event first and clean up the lab and discharge questions afterward.", score: 8, good: false, feedback: "Single-threading leaves time-sensitive clinical and release risks unresolved." },
-    { text: "Send the discharge out to reduce crowding and document everything after the behavioral emergency ends.", score: 2, good: false, feedback: "Unverified discharge and delayed lab escalation create serious safety and compliance exposure." },
+    { text: "Send the discharge out to reduce crowding and document everything after the Code Purple response ends.", score: 2, good: false, feedback: "Unverified discharge and delayed lab escalation create serious safety and compliance exposure." },
   ],
 };
 
@@ -745,7 +744,7 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Dining Room Behavioral Emergency Example",
+      title: "Dining Room Code Purple Example",
       points: [
         "Assign one scene lead, one patient-support role, and one bystander-clearing role immediately.",
         "Use least-restrictive verbal de-escalation while preserving meal-area safety.",
@@ -782,7 +781,7 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Behavioral Emergency Access Support",
+      title: "Code Purple Access Support",
       points: [
         "Clear unnecessary traffic from the dining room and preserve a safe route for responders.",
         "Relay exact location and behavior cues instead of broad summaries.",
@@ -819,7 +818,7 @@ const roleDepartmentSpotlights = {
       ],
     },
     {
-      title: "Behavioral Emergency Governance",
+      title: "Code Purple Governance",
       points: [
         "Review role clarity, bystander safety, and de-escalation sequencing after common-area events.",
         "Measure whether scene leadership is explicit within the first response minute.",
@@ -848,8 +847,8 @@ const TRAINING_CATEGORIES = {
     retryModule: "Revisit discharge-release and guardian-verification modules to strengthen release clarity and escort coordination.",
   },
   conduct: {
-    label: "Behavioral Emergency Team Roles and Scene Discipline",
-    retryModule: "Review dining-room behavioral-emergency scenarios to reinforce explicit role assignment and scene control discipline.",
+    label: "Code Purple Team Roles and Scene Discipline",
+    retryModule: "Review dining-room Code Purple scenarios to reinforce explicit role assignment and scene control discipline.",
   },
   privacy: {
     label: "Leave Return Screening and Property Control",
@@ -865,7 +864,7 @@ const TRAINING_CATEGORIES = {
   },
   abuseNeglect: {
     label: "Critical Multi-Track Escalation",
-    retryModule: "Repeat high-risk multi-track scenarios to strengthen urgent sequencing across observation, behavioral emergency response, and release safety controls.",
+    retryModule: "Repeat high-risk multi-track scenarios to strengthen urgent sequencing across observation, Code Purple response, and release safety controls.",
   },
   knowledgeCheck: {
     label: "Knowledge Check Mastery",
@@ -1086,7 +1085,7 @@ function buildNextStepGuidance(pass, assessmentPct, recommendations) {
   if (pass && recommendations.length > 0) {
     return `${roleName}: you passed, and targeted reinforcement is recommended in ${recommendations.map((item) => item.label).join(", ")}. ${abuseNeglectClause} Re-run those modules this week for stronger retention.`;
   }
-  return `${roleName}: assessment at ${assessmentPct}%. ${abuseNeglectClause} Complete recommended retry modules, then reattempt the full assessment with focus on observation escalation, code-grey role discipline, and release-verification integrity.`;
+  return `${roleName}: assessment at ${assessmentPct}%. ${abuseNeglectClause} Complete recommended retry modules, then reattempt the full assessment with focus on observation escalation, Code Purple role discipline, and release-verification integrity.`;
 }
 
 const coreLessons = [
@@ -1121,19 +1120,19 @@ const coreLessons = [
     recap: "Checkpoint: leave returns require complete screening, documented item control, and timely escalation of exceptions.",
   },
   {
-    moduleId: "dining-room-behavioral-emergency-response",
+    moduleId: "dining-room-code-purple-response",
     spotlightIndex: 2,
-    title: "Lesson 3: Dining Room Behavioral Emergency Response and Team Role Assignment",
-    body: "Common-area escalation requires explicit role assignment, safe bystander redirection, and least-restrictive de-escalation before scene control is lost.",
+    title: "Lesson 3: Dining Room Code Purple Response and Team Role Assignment",
+    body: "Common-area Code Purple response requires explicit role assignment, safe bystander redirection, and least-restrictive de-escalation before scene control is lost.",
     check: "A meal-time argument escalates quickly and three staff respond at once without a clear lead. Best first step?",
     answers: [
-      { text: "Name a response lead immediately, assign bystander-clearing and patient-support roles, and begin structured behavioral emergency de-escalation.", good: true, score: 8 },
+      { text: "Name a response lead immediately, assign bystander-clearing and patient-support roles, and begin structured Code Purple de-escalation.", good: true, score: 8 },
       { text: "Let each responder manage a different part of the scene independently.", good: false, score: 2 },
       { text: "Wait to assign roles until security arrives.", good: false, score: 1 },
     ],
-    why: "Early role clarity keeps a behavioral emergency from becoming chaotic and unsafe.",
+    why: "Early role clarity keeps a Code Purple response from becoming chaotic and unsafe.",
     categoryKey: "conduct",
-    recap: "Checkpoint: dining-room behavioral emergency response requires explicit leadership, role discipline, and scene control.",
+    recap: "Checkpoint: dining-room Code Purple response requires explicit leadership, role discipline, and scene control.",
   },
   {
     moduleId: "critical-lab-result-readback",
@@ -1222,29 +1221,29 @@ const scenarios = [
   },
   {
     title: "Scenario 5: Dining Room Table Escalation",
-    category: "Behavioral Emergency - Immediate Role Assignment",
+    category: "Code Purple - Immediate Role Assignment",
     roles: ["clinical", "leadership"],
     prompt: "Two patients begin shouting in the dining room and trays start moving. Best immediate action?",
     choices: [
-      { text: "Assign a scene lead, direct one responder to move nearby patients, assign one to verbal de-escalation, and activate behavioral emergency support.", score: 18, good: true, feedback: "Correct. Immediate role clarity stabilizes the scene." },
+      { text: "Assign a scene lead, direct one responder to move nearby patients, assign one to verbal de-escalation, and activate Code Purple support.", score: 18, good: true, feedback: "Correct. Immediate role clarity stabilizes the scene." },
       { text: "Let all nearby staff respond however they think best.", score: 4, good: false, feedback: "Uncoordinated response can worsen the event." },
       { text: "Wait to intervene until a supervisor enters the room.", score: 6, good: false, feedback: "Delay can allow the scene to escalate rapidly." },
     ],
     categoryKey: "conduct",
-    recap: "Scenario recap: dining-room behavioral emergency response begins with explicit role assignment and bystander protection.",
+    recap: "Scenario recap: dining-room Code Purple response begins with explicit role assignment and bystander protection.",
   },
   {
-    title: "Scenario 6: Behavioral Emergency Scene Closed Without Follow-Through",
-    category: "Behavioral Emergency - Leadership Closure",
+    title: "Scenario 6: Code Purple Scene Closed Without Follow-Through",
+    category: "Code Purple - Leadership Closure",
     roles: ["clinical", "nonclinical", "leadership"],
     prompt: "The immediate dining-room event ends, but no one has reassigned seating, checked bystanders, or documented roles. Best leadership response?",
     choices: [
-      { text: "Run immediate scene closure tasks, confirm patient placement and bystander follow-up, document role execution, and coach any gaps now.", score: 18, good: true, feedback: "Correct. Behavioral emergency closure is part of the safety response." },
+      { text: "Run immediate scene closure tasks, confirm patient placement and bystander follow-up, document role execution, and coach any gaps now.", score: 18, good: true, feedback: "Correct. Code Purple closure is part of the safety response." },
       { text: "Consider the event over once voices quiet down.", score: 5, good: false, feedback: "Quiet does not equal complete scene control." },
       { text: "Save documentation and coaching for the next staff meeting.", score: 2, good: false, feedback: "Delayed closure loses critical detail and accountability." },
     ],
     categoryKey: "conduct",
-    recap: "Scenario recap: behavioral emergency leadership includes scene closure, documentation, and immediate coaching follow-through.",
+    recap: "Scenario recap: Code Purple leadership includes scene closure, documentation, and immediate coaching follow-through.",
   },
   {
     title: "Scenario 7: Critical Lab Call During Med Pass",
@@ -1348,20 +1347,20 @@ const finalAssessment = [
   { q: "An observation downgrade without reassessment note is", a: ["Acceptable if entered in the chart", "A risk that requires immediate clarification", "Best reviewed at month end"], c: 1, k: "safety" },
   { q: "Return from pass with unscreened belongings requires", a: ["Immediate re-entry screening before unit return", "Screening after the patient settles", "No screening if the trip was supervised"], c: 0, k: "privacy" },
   { q: "A restricted item found after partial screening should lead to", a: ["Quiet confiscation only", "Formal escalation and process reset", "Disposal without documentation"], c: 1, k: "privacy" },
-  { q: "Dining room behavioral emergency safety depends first on", a: ["Waiting for leadership arrival", "Explicit role assignment and scene lead", "All responders improvising"], c: 1, k: "conduct" },
-  { q: "Scene closure after a behavioral emergency should include", a: ["Patient placement checks and documented follow-through", "Only a quick verbal debrief", "No documentation if the scene calmed"], c: 0, k: "conduct" },
+  { q: "Dining room Code Purple safety depends first on", a: ["Waiting for leadership arrival", "Explicit role assignment and scene lead", "All responders improvising"], c: 1, k: "conduct" },
+  { q: "Scene closure after a Code Purple response should include", a: ["Patient placement checks and documented follow-through", "Only a quick verbal debrief", "No documentation if the scene calmed"], c: 0, k: "conduct" },
   { q: "A critical lab result during routine workflow requires", a: ["Immediate provider escalation with read-back", "A note for the next shift", "Callback when things slow down"], c: 0, k: "reporting" },
   { q: "Missing read-back evidence on a critical result is", a: ["Fine if a provider name is listed", "A safety-control gap needing correction", "Optional if orders were entered later"], c: 1, k: "reporting" },
   { q: "Discharge should be held when", a: ["Guardian or escort identity does not match the release plan", "Transportation is waiting outside", "The patient says it is fine"], c: 0, k: "communication" },
   { q: "Transportation pressure should", a: ["Override missing release checks", "Trigger escalation but not bypass verification", "Allow after-the-fact checklist completion"], c: 1, k: "communication" },
   { q: "Observation handoff clarity is strongest when", a: ["The final precaution is read back and documented", "Staff rely on memory", "A verbal summary is enough"], c: 0, k: "safety" },
   { q: "Return screening under throughput pressure should", a: ["Skip low-risk bags", "Maintain the full screening standard", "Wait until bedtime rounds"], c: 1, k: "privacy" },
-  { q: "In a behavioral emergency, bystander movement should be", a: ["Assigned deliberately as part of the role plan", "Left to chance", "Delayed until security arrives"], c: 0, k: "conduct" },
+  { q: "In a Code Purple response, bystander movement should be", a: ["Assigned deliberately as part of the role plan", "Left to chance", "Delayed until security arrives"], c: 0, k: "conduct" },
   { q: "Critical-result documentation should capture", a: ["Time, receiver, read-back, and next action", "Only the result value", "Only the provider name"], c: 0, k: "reporting" },
   { q: "Release authority for a minor is confirmed by", a: ["Recognizing the driver", "The authorized guardian or approved escort record", "The patient asking to leave quickly"], c: 1, k: "communication" },
   { q: "Observation ambiguity left unresolved can cause", a: ["Minor administrative delay only", "Immediate patient-safety exposure", "No meaningful consequence"], c: 1, k: "safety" },
   { q: "Contraband control is strongest when", a: ["Items are screened before re-entry and exceptions are logged", "Screening happens only if staff are concerned", "Bags are assumed safe after passes"], c: 0, k: "privacy" },
-  { q: "Behavioral emergency team discipline means", a: ["One lead and defined responder roles", "Everyone chooses tasks independently", "Documentation can wait indefinitely"], c: 0, k: "conduct" },
+  { q: "Code Purple team discipline means", a: ["One lead and defined responder roles", "Everyone chooses tasks independently", "Documentation can wait indefinitely"], c: 0, k: "conduct" },
   { q: "Provider read-back on critical labs helps confirm", a: ["Message accuracy and immediate ownership", "Only courtesy", "That documentation can be skipped"], c: 0, k: "reporting" },
   { q: "Guardian verification at discharge protects", a: ["Release speed only", "Patient safety and legal handoff integrity", "Parking flow"], c: 1, k: "communication" },
   { q: "A high-risk multi-track event should be managed by", a: ["Sequencing urgent controls across safety, reporting, and release", "Choosing whichever issue is loudest and ignoring the rest", "Documenting first and acting later"], c: 0, k: "abuseNeglect" },

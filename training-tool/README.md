@@ -9,6 +9,17 @@ This prototype demonstrates a premium interactive training experience for:
 - Code of Conduct
 - Psychiatric acute care inpatient environment
 
+## Emergency Code Reference
+
+- Code Red: Fire
+- Code Orange: Missing Patient
+- Code Blue: Medical Emergency
+- Code Purple: Psychiatric Emergency/Support
+- Code Silver: Active Shooter
+- Code Yellow: Internal/external disaster
+- Code Black: Bomb Threats
+- Code Green: Severe Weather
+
 ## Run
 
 Open `index.html` in a browser.
@@ -21,7 +32,7 @@ Configure runtime settings in `runtime-config.js` for production backend routing
 - Five built-in annual modules:
   - Observation precaution reassessment and handoff clarity
   - Leave return screening and contraband re-entry control
-  - Dining room behavioral emergency response and team role assignment
+  - Dining room Code Purple response and team role assignment
   - Critical lab result escalation and provider read-back
   - Discharge transportation release and guardian verification
 - Facility Role Builder module toggles (enable/disable modules by role without code changes)
