@@ -70,6 +70,7 @@ const defaultRoleConfigs = [
       "code-silver-active-shooter-response",
       "code-black-bomb-threat-response",
       "code-green-severe-weather-response",
+      "code-yellow-disaster-response",
     ],
   },
   {
@@ -88,6 +89,7 @@ const defaultRoleConfigs = [
       "code-silver-active-shooter-response",
       "code-black-bomb-threat-response",
       "code-green-severe-weather-response",
+      "code-yellow-disaster-response",
     ],
   },
   {
@@ -106,6 +108,7 @@ const defaultRoleConfigs = [
       "code-silver-active-shooter-response",
       "code-black-bomb-threat-response",
       "code-green-severe-weather-response",
+      "code-yellow-disaster-response",
     ],
   },
 ];
@@ -121,6 +124,7 @@ const MODULE_LIBRARY = [
   { id: "code-silver-active-shooter-response", title: "Code Silver Active Shooter Response and Lockdown Support" },
   { id: "code-black-bomb-threat-response", title: "Code Black Bomb Threat Response and Area Safety" },
   { id: "code-green-severe-weather-response", title: "Code Green Severe Weather Response and Shelter Support" },
+  { id: "code-yellow-disaster-response", title: "Code Yellow Internal/External Disaster Response and Surge Coordination" },
 ];
 
 const MODULE_IDS = new Set(MODULE_LIBRARY.map((item) => item.id));
@@ -279,7 +283,7 @@ function loadRoleConfigs() {
   const raw = localStorage.getItem(ROLE_CONFIG_KEY);
   if (!raw) return [...defaultRoleConfigs];
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response"];
 
   try {
     const parsed = JSON.parse(raw);
@@ -319,7 +323,7 @@ async function loadRoleConfigsFromBackend() {
     return false;
   }
 
-  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response"];
+  const requiredModules = ["emergency-code-reference-and-response-priorities", "code-blue-medical-emergency-response", "code-silver-active-shooter-response", "code-black-bomb-threat-response", "code-green-severe-weather-response", "code-yellow-disaster-response"];
 
   roleConfigs = rows.map((item) => ({
     id: item.id,
@@ -832,6 +836,13 @@ const roleDepartmentSpotlights = {
         "Stay alert for relocation or lockdown instructions and keep communication focused on safety updates.",
       ],
     },
+    {
+      title: "Code Yellow Disaster Response Example",
+      points: [
+        "Follow the disaster plan and incident-command structure immediately when surge conditions affect the facility.",
+        "Prepare space, supplies, and transport routes while keeping routine operations controlled and clearly communicated.",
+      ],
+    },
   ],
   nonclinical: [
     {
@@ -902,6 +913,13 @@ const roleDepartmentSpotlights = {
       points: [
         "Move people to interior areas away from windows or other exposed spaces as directed.",
         "Keep corridors clear so relocation or shelter actions can happen quickly and quietly.",
+      ],
+    },
+    {
+      title: "Code Yellow Access Support",
+      points: [
+        "Clear routes, staging areas, and access points so surge traffic or disaster response can move without delay.",
+        "Relay only the approved disaster-plan instructions and avoid adding unnecessary noise or speculation.",
       ],
     },
   ],
@@ -997,6 +1015,10 @@ const TRAINING_CATEGORIES = {
     label: "Code Green Severe Weather Response and Shelter Support",
     retryModule: "Review the Code Green module to strengthen shelter guidance, interior relocation, and severe-weather communication discipline.",
   },
+  disaster: {
+    label: "Code Yellow Internal/External Disaster Response and Surge Coordination",
+    retryModule: "Review the Code Yellow module to strengthen incident-command awareness, surge staging, and disaster-plan execution.",
+  },
   conduct: {
     label: "Code Purple Team Roles and Scene Discipline",
     retryModule: "Review dining-room Code Purple scenarios to reinforce explicit role assignment and scene control discipline.",
@@ -1069,6 +1091,10 @@ const roleFeedbackSnippets = {
       good: "Clinical lens: moving patients to a safer interior area quickly is the right protective response.",
       bad: "Clinical lens: severe-weather response requires immediate sheltering and hazard reduction, not delay.",
     },
+    disaster: {
+      good: "Clinical lens: disaster planning protects patient flow, safety, and continuity under surge conditions.",
+      bad: "Clinical lens: disaster response requires following the plan and staging resources, not improvisation.",
+    },
     abuseNeglect: {
       good: "Clinical lens: immediate safety check plus reporting is the correct protective sequence.",
       bad: "Clinical lens: critical-safety concerns require urgent documentation and escalation.",
@@ -1110,6 +1136,10 @@ const roleFeedbackSnippets = {
     severeWeather: {
       good: "Access-point lens: clear the route, guide people to shelter, and keep the flow orderly.",
       bad: "Access-point lens: blocked corridors or unclear directions slow the response and increase exposure.",
+    },
+    disaster: {
+      good: "Access-point lens: staging supplies and keeping routes clear helps the whole facility absorb surge safely.",
+      bad: "Access-point lens: confusion at the access point slows every disaster-control step behind it.",
     },
     abuseNeglect: {
       good: "Access-point lens: your response balanced immediate support with proper escalation.",
@@ -1153,6 +1183,10 @@ const roleFeedbackSnippets = {
       good: "Leadership lens: clear shelter guidance and fast relocation keep the team aligned during severe weather.",
       bad: "Leadership lens: delay or mixed messages can expose the unit to avoidable weather risk.",
     },
+    disaster: {
+      good: "Leadership lens: incident-command discipline and resource staging are essential when a disaster creates surge.",
+      bad: "Leadership lens: mixed messages or delayed staging weaken the entire response chain.",
+    },
     abuseNeglect: {
       good: "Leadership lens: this protects vulnerable patients and sets a clear reporting standard.",
       bad: "Leadership lens: delayed action on critical-safety concerns is unacceptable risk.",
@@ -1174,6 +1208,7 @@ const adaptiveHintBank = {
   activeThreat: "Hint: Get to cover, lock or secure the area if directed, and communicate only what is necessary for safety.",
   bombThreat: "Hint: Preserve the scene, reduce movement, and follow the bomb-threat procedure exactly as written.",
   severeWeather: "Hint: Move to interior shelter areas quickly and keep people away from windows and exterior hazards.",
+  disaster: "Hint: Follow the disaster plan, stage resources, and keep routes and roles clear for surge coordination.",
   abuseNeglect: "Hint: Prioritize immediate safety, factual documentation, and urgent escalation pathways.",
   knowledgeCheck: "Hint: Select the option that protects people first and aligns with policy under pressure.",
 };
@@ -1430,6 +1465,21 @@ const coreLessons = [
     categoryKey: "severeWeather",
     recap: "Checkpoint: Code Green means move to safer interior shelter, stay away from windows, and follow severe-weather guidance immediately.",
   },
+  {
+    moduleId: "code-yellow-disaster-response",
+    spotlightIndex: 10,
+    title: "Lesson 11: Code Yellow Internal/External Disaster Response and Surge Coordination",
+    body: "Code Yellow response requires following the disaster plan, incident-command structure, and surge staging steps so the facility can absorb internal or external disaster pressure without losing control.",
+    check: "A Code Yellow announcement reports a major community incident with incoming surge patients. Best immediate action?",
+    answers: [
+      { text: "Activate the disaster plan, follow the incident-command chain, stage supplies and space, and keep the unit's movement and communication controlled.", good: true, score: 8 },
+      { text: "Continue routine operations until the emergency department sends a second update.", good: false, score: 2 },
+      { text: "Send staff to speculate about the event while waiting for more details.", good: false, score: 1 },
+    ],
+    why: "Code Yellow requires immediate disaster-plan execution and surge coordination, not passive waiting.",
+    categoryKey: "disaster",
+    recap: "Checkpoint: Code Yellow means follow incident command, stage resources, and keep patient flow controlled during disaster surge conditions.",
+  },
 ];
 
 const scenarios = [
@@ -1654,6 +1704,19 @@ const scenarios = [
     categoryKey: "severeWeather",
     recap: "Scenario recap: Code Green response moves people to safer interior shelter, away from windows and other hazards.",
   },
+  {
+    title: "Scenario 18: Code Yellow After a Nearby Mass Casualty Event",
+    category: "Code Yellow - Disaster Surge Response",
+    roles: ["clinical", "nonclinical", "leadership"],
+    prompt: "A nearby highway incident is sending multiple casualties toward the facility and Code Yellow is announced. Best first move?",
+    choices: [
+      { text: "Follow the disaster plan, assign surge roles, stage supplies and space, and keep communication aligned with incident-command instructions.", score: 20, good: true, feedback: "Correct. Code Yellow depends on structured disaster coordination and resource staging." },
+      { text: "Keep the unit operating normally until the first casualties arrive.", score: 3, good: false, feedback: "Waiting removes the chance to stage resources before the surge lands." },
+      { text: "Send staff to the road to figure out the scale of the incident.", score: 2, good: false, feedback: "Uncontrolled reconnaissance is not a disaster response plan." },
+    ],
+    categoryKey: "disaster",
+    recap: "Scenario recap: Code Yellow response starts with disaster-plan activation, staged resources, and controlled surge coordination.",
+  },
 ];
 
 const lightningQuestions = [
@@ -1748,6 +1811,16 @@ const lightningQuestions = [
     categoryKey: "severeWeather",
   },
   {
+    q: "Code Yellow means",
+    answers: [
+      { text: "Internal or external disaster response and surge coordination", score: 12, good: true },
+      { text: "Bomb threat response", score: 3, good: false },
+      { text: "Medical emergency response", score: 1, good: false },
+    ],
+    why: "Code Yellow is the disaster alert and should trigger incident-command and surge staging steps.",
+    categoryKey: "disaster",
+  },
+  {
     q: "Code Purple stabilization starts with",
     answers: [
       { text: "Observation, hazard control, and staff roles", score: 12, good: true },
@@ -1790,6 +1863,7 @@ const finalAssessment = [
   { q: "After Code Purple de-escalation, the next step is", a: ["Safety plan, environment check, and handoff update", "Send everyone home immediately", "Wait until the next day shift to review"], c: 0, k: "conduct" },
   { q: "A calm patient after Code Purple still needs", a: ["Documented closure and observation alignment", "No further follow-up", "Only a verbal promise to stay calm"], c: 0, k: "conduct" },
   { q: "Code Green response starts with", a: ["Interior sheltering away from windows", "Waiting for the storm to pass", "Checking outside conditions firsthand"], c: 0, k: "severeWeather" },
+  { q: "Code Yellow response starts with", a: ["Incident-command guided disaster staging", "Normal operations until more details arrive", "Sending staff outside to investigate"], c: 0, k: "disaster" },
 ];
 
 const panels = {
