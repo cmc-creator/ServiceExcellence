@@ -87,6 +87,7 @@ The training runtime also emits xAPI-shaped interaction statements alongside the
 - Department scenario packs: `content/department-scenario-packs.md`
 - Hospital buyer readiness scorecard: `docs/hospital-buyer-readiness-scorecard.md`
 - Pilot outcomes plan: `docs/pilot-outcomes-plan.md`
+- No PHI / BAA position statement: `docs/no-phi-baa-position-statement.md`
 
 ## Backend Integration
 

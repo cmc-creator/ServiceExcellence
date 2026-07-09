@@ -29,7 +29,7 @@ Target: `>= 30/40` before formal hospital procurement.
 ## 3) Security and Procurement Readiness (0-10)
 
 - Security overview and data flow summary prepared: score `0-2`; evidence security packet.
-- BAA/HIPAA handling stance documented: score `0-2`; evidence legal + security notes.
+- BAA/HIPAA handling stance documented: score `0-2`; evidence `docs/no-phi-baa-position-statement.md` + legal/security notes.
 - Audit/export capability for completion events defined: score `0-2`; evidence analytics/export docs.
 - Access control model documented (OWNER/ADMIN/MANAGER): score `0-2`; evidence backend docs.
 - Incident and support escalation contacts prepared: score `0-2`; evidence support runbook.
