@@ -85,6 +85,8 @@ The training runtime also emits xAPI-shaped interaction statements alongside the
 - Manager toolkit: `docs/manager-toolkit.md`
 - Audio voiceover pack: `content/audio-voiceover-pack.md`
 - Department scenario packs: `content/department-scenario-packs.md`
+- Hospital buyer readiness scorecard: `docs/hospital-buyer-readiness-scorecard.md`
+- Pilot outcomes plan: `docs/pilot-outcomes-plan.md`
 
 ## Backend Integration
 
